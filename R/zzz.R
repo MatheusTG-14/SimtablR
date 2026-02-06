@@ -1,6 +1,6 @@
 .onAttach <- function(libname, pkgname) {
   ver <- utils::packageVersion(pkgname)
-  msg <- cli::rule(left = paste0("SimtabR ", ver), right = "Simple R functions for usefull tables")
+  msg <- cli::rule(left = paste0("SimtablR ", ver), right = "Simple R functions for usefull tables")
   packageStartupMessage(cli::col_cyan(msg))
   packageStartupMessage(
     cli::col_green(cli::symbol$tick), " ", cli::col_blue("tb()"),    cli::col_white(": Descriptive tables (One-Table)\n"),
