@@ -24,3 +24,5 @@ Imports:
 Depends: 
     R (>= 3.5)
 LazyData: true
+URL: https://github.com/MatheusTG-14/SimtableR
+BugReports: https://github.com/MatheusTG-14/SimtableR/issues
