@@ -1,4 +1,4 @@
-# SimtablR: Publication-Ready Tables and Regression Analysis <img src="man/figures/logo.png" ... />
+# SimtablR: Publication-Ready Tables and Regression Analysis <img src="Simtable.png" ... />
 
 <!-- badges: start -->
 <!-- badges: end -->
