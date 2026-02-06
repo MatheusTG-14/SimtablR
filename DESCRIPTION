@@ -1,0 +1,26 @@
+Package: SimtableR
+Title: Publication-Ready Tables and Regression Analysis 
+Version: 0.1.0
+Authors@R: 
+    person("Matheus", "Trabuco", , "matheustrabucogonzalez@gmail.com", role = c("aut", "cre"))
+Description: SimtableR streamlines the creation of descriptive frequency tables ('Table 1'), 
+    diagnostic test accuracy evaluations (sensitivity, specificity, predictive values), 
+    and multi-outcome regression summaries. Features automatic tables, 
+    prevalence and odds ratio calculations, and seamless integration with 'flextable' 
+    for exporting results to Microsoft Word and PowerPoint.
+License: MIT + file LICENSE
+Encoding: UTF-8
+Roxygen: list(markdown = TRUE)
+RoxygenNote: 7.3.2
+Imports: 
+    cli,
+    dplyr,
+    flextable,
+    lmtest,
+    sandwich,
+    stats,
+    tidyr,
+    utils
+Depends: 
+    R (>= 3.5)
+LazyData: true
