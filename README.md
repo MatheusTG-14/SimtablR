@@ -1,6 +1,4 @@
-<img src="Simtable.png" ... />
-# SimtablR: Publication-Ready Tables and Regression Analysis 
-
+# SimtablR <img src="Simtable.png" align="right" height="139" alt="Logo SimtablR" />
 <!-- badges: start -->
 <!-- badges: end -->
 
