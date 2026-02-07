@@ -2,7 +2,7 @@
 #'
 #' A simulated dataset containing demographic, clinical, and outcome variables
 #' for 500 individuals. Designed for demonstrating table creation and
-#' diagnostic testing analysis using SimtablR.
+#' diagnostic testing analysis.
 #'
 #' @format A data frame with 500 rows and 19 variables:
 #' \describe{
@@ -26,14 +26,10 @@
 #'   \item{cholesterol}{Total cholesterol in mg/dL}
 #'   \item{region}{Geographic region (North, South, East, West)}
 #' }
-#' @source Simulated data for the tableR package.
+#' @source Simulated data for the SimtablR package.
 #' @examples
 #' data(epitabl)
 #'
 #' # Basic description
 #' tb(epitabl, sex, disease)
-#'
-#' # Diagnostic accuracy
-#' diag_test(epitabl, test = rapid_test, ref = lab_confirmed,
-#'           positive = "Yes", test_positive = "Positive")
 "epitabl"

@@ -39,19 +39,19 @@ If FALSE, prints as simple matrix. Default: TRUE.}
 
 \item{style}{Character. Format for displaying counts and percentages. Options:
 \itemize{
-\item "n_pct": "100 (25.0\\%)" (default)
-\item "pct_n": "25.0\\% (100)"
-\item Custom template using {n} and {p} placeholders, e.g., "{n} \link[={p}\\\%]{{p}\\%}"
+\item \code{"n_pct"}: "100 (25.0\\%)" (default)
+\item \code{"pct_n"}: "25.0\\% (100)"
+\item Custom template using \code{{n}} and \code{{p}} placeholders, e.g., \code{"{n} [{p}\%]"}.
 }}
 
-\item{style.rp}{Character. Format string for Prevalence Ratio. Default: "{rp} ({lower} - {upper})".}
+\item{style.rp}{Character. Format string for Prevalence Ratio. Default: \code{"{rp} ({lower} - {upper})"}.}
 
-\item{style.or}{Character. Format string for Odds Ratio. Default: "{or} ({lower} - {upper})".}
+\item{style.or}{Character. Format string for Odds Ratio. Default: \code{"{or} ({lower} - {upper})"}.}
 
 \item{test}{Logical or Character. Performs statistical test on 2x2+ tables.
 \itemize{
-\item TRUE: Automatic selection (chi-squared for categorical)
-\item "chisq", "fisher", "mcnemar"
+\item \code{TRUE}: Automatic selection (chi-squared for categorical)
+\item \code{"chisq"}, \code{"fisher"}, \code{"mcnemar"}
 }}
 
 \item{subset}{Logical expression for row filtering.}
@@ -66,7 +66,11 @@ If FALSE, prints as simple matrix. Default: TRUE.}
 
 \item{conf.level}{Numeric. Confidence level for intervals (0-1). Default: 0.95.}
 
-\item{var.type}{Named character vector specifying variable types.}
+\item{var.type}{Named character vector specifying variable types.
+\itemize{
+\item select the line variable and choose between "continuous" and "cont"
+\item ex: tb(epitabl, age, sex, var.type = c(age = "continuous"))
+}}
 
 \item{stat.cont}{Character. "mean" (Mean/SD) or "median" (Median/IQR).}
 }

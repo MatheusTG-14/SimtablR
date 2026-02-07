@@ -13,16 +13,16 @@
 #'   If FALSE, prints as simple matrix. Default: TRUE.
 #' @param style Character. Format for displaying counts and percentages. Options:
 #'   \itemize{
-#'     \item "n_pct": "100 (25.0\%)" (default)
-#'     \item "pct_n": "25.0\% (100)"
-#'     \item Custom template using {n} and {p} placeholders, e.g., "{n} [{p}\%]"
+#'     \item \code{"n_pct"}: "100 (25.0\%)" (default)
+#'     \item \code{"pct_n"}: "25.0\% (100)"
+#'     \item Custom template using \code{{n}} and \code{{p}} placeholders, e.g., \code{"{n} [{p}\%]"}.
 #'   }
-#' @param style.rp Character. Format string for Prevalence Ratio. Default: "{rp} ({lower} - {upper})".
-#' @param style.or Character. Format string for Odds Ratio. Default: "{or} ({lower} - {upper})".
+#' @param style.rp Character. Format string for Prevalence Ratio. Default: \code{"{rp} ({lower} - {upper})"}.
+#' @param style.or Character. Format string for Odds Ratio. Default: \code{"{or} ({lower} - {upper})"}.
 #' @param test Logical or Character. Performs statistical test on 2x2+ tables.
 #'   \itemize{
-#'     \item TRUE: Automatic selection (chi-squared for categorical)
-#'     \item "chisq", "fisher", "mcnemar"
+#'     \item \code{TRUE}: Automatic selection (chi-squared for categorical)
+#'     \item \code{"chisq"}, \code{"fisher"}, \code{"mcnemar"}
 #'   }
 #' @param subset Logical expression for row filtering.
 #' @param strat Variable for column stratification. Disables PR/OR calculations.
@@ -31,6 +31,10 @@
 #' @param ref Character or numeric. Specifies the reference level for PR/OR calculations.
 #' @param conf.level Numeric. Confidence level for intervals (0-1). Default: 0.95.
 #' @param var.type Named character vector specifying variable types.
+#'  \itemize{
+#'      \item select the line variable and choose between "continuous" and "cont"
+#'      \item ex: tb(epitabl, age, sex, var.type = c(age = "continuous"))
+#'      }
 #' @param stat.cont Character. "mean" (Mean/SD) or "median" (Median/IQR).
 #'
 #' @return An object of class \code{tb}.
@@ -593,6 +597,19 @@ as.data.frame.tb <- function(x, ...) {
   return(df)
 }
 #integração com o flextable
+
+#' Convert tb object to flextable
+#'
+#' Converts a \code{tb} object into a \code{flextable} for high-quality reporting
+#' in Word or PowerPoint.
+#'
+#' @param x A \code{tb} object.
+#' @param ... Additional arguments passed to \code{flextable::flextable}.
+#'
+#' @return A \code{flextable} object ready for printing or exporting.
+#'
+#' @importFrom flextable as_flextable
+#' @method as_flextable tb
 #' @export
 as_flextable.tb <- function(x, ...) {
   if (!requireNamespace("flextable", quietly = TRUE)) stop("Package 'flextable' needed.", call. = FALSE)

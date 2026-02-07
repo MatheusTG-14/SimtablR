@@ -17,6 +17,7 @@ Imports:
     dplyr,
     flextable,
     lmtest,
+    openxlsx,
     sandwich,
     stats,
     tidyr,

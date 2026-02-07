@@ -1,67 +1,42 @@
 #' Diagnostic Test Accuracy Assessment
 #'
 #' Computes a comprehensive confusion matrix and diagnostic performance metrics
-#' for binary classification tests. Calculates sensitivity, specificity, predictive
-#' values, likelihood ratios, and additional diagnostic indices with confidence intervals.
+#' for binary classification tests.
 #'
 #' @param data A data.frame containing the test and reference variables.
-#' @param test Unquoted name of the diagnostic test variable (binary). This is
-#'   the test being evaluated (e.g., new screening tool, biomarker result).
-#' @param ref Unquoted name of the reference standard variable (binary). This is
-#'   the gold standard or true disease status.
-#' @param positive Character or numeric. The level representing "Positive" in the
-#'   REFERENCE variable (true disease/condition). If NULL, the function attempts
-#'   to detect automatically using common labels ("1", "Yes", "Positive", etc.)
-#'   or defaults to the last factor level.
-#' @param test_positive Character or numeric. The level representing "Positive"
-#'   in the TEST variable. If NULL, assumes it matches the reference positive level.
-#'   Specify this when test and reference use different labeling schemes.
-#' @param conf.level Numeric. Confidence level for interval estimation (0-1).
-#'   Default: 0.95 (95\% confidence intervals).
+#' @param test Unquoted name of the diagnostic test variable (binary).
+#' @param ref Unquoted name of the reference standard variable (binary).
+#' @param positive Character or numeric. Level representing "Positive" in REFERENCE.
+#' @param test_positive Character or numeric. Level representing "Positive" in TEST.
+#' @param conf.level Numeric. Confidence level (0-1). Default: 0.95.
 #'
 #' @details
-#' ## Confusion Matrix Structure
+#' \strong{Confusion Matrix Structure}
 #' The function creates a 2x2 confusion matrix:
-#' \preformatted{
-#'                Reference
-#'           Positive  Negative
-#' Test Pos    TP        FP
-#'      Neg    FN        TN
-#' }
-#'
-#' Where:
 #' \itemize{
-#'   \item TP = True Positives (correctly identified cases)
-#'   \item TN = True Negatives (correctly identified non-cases)
-#'   \item FP = False Positives (Type I error)
-#'   \item FN = False Negatives (Type II error)
+#'   \item TP: True Positives
+#'   \item TN: True Negatives
+#'   \item FP: False Positives
+#'   \item FN: False Negatives
 #' }
 #'
-#' ## Metrics Calculated
+#' \strong{Metrics Calculated}
 #' \itemize{
-#'   \item \strong{Sensitivity (Recall)}: TP / (TP + FN)
-#'   \item \strong{Specificity}: TN / (TN + FP)
-#'   \item \strong{PPV (Precision)}: TP / (TP + FP)
-#'   \item \strong{NPV}: TN / (TN + FN)
-#'   \item \strong{Accuracy}: (TP + TN) / Total
-#'   \item \strong{Prevalence}: (TP + FN) / Total
-#'   \item \strong{LR+}: Sensitivity / (1 - Specificity)
-#'   \item \strong{LR-}: (1 - Sensitivity) / Specificity
-#'   \item \strong{Youden's Index}: Sensitivity + Specificity - 1
-#'   \item \strong{F1 Score}: 2 * (PPV * Sensitivity) / (PPV + Sensitivity)
+#'   \item Sensitivity, Specificity, PPV, NPV
+#'   \item Accuracy, Prevalence
+#'   \item Likelihood Ratios, Youden's Index, F1 Score
 #' }
-#'
-#' ## Confidence Intervals
-#' 95\% CIs for proportions are calculated using the Clopper-Pearson (exact binomial)
-#' method via \code{binom.test()}.
 #'
 #' @return An object of class \code{diag_test} containing:
-#'   \item{table}{2x2 confusion matrix}
-#'   \item{stats}{Data frame with metrics, estimates, and CIs}
-#'   \item{labels}{List with labels used}
-#'   \item{sample_size}{Total valid observations}
+#' \itemize{
+#'   \item \code{table}: 2x2 confusion matrix
+#'   \item \code{stats}: Data frame with metrics and CIs
+#'   \item \code{labels}: List with labels used
+#'   \item \code{sample_size}: Total valid observations
+#' }
 #'
 #' @export
+
 diag_test <- function(data, test, ref, positive = NULL, test_positive = NULL,
                       conf.level = 0.95) {
 
