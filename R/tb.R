@@ -62,7 +62,7 @@ tb <- function(data, ..., m = FALSE, d = 1, format = TRUE, style = "n_pct",
   if (is.character(test)) {
     test <- tolower(test)
     valid_tests <- c("chisq", "chsqr", "fisher", "mcnemar")
-    if (!test %in% valid_tests) stop("Invalid test method.", call. = FALSE)
+    if (!test %in% valid_tests) stop("Invalid test method, use one of chisq, fisher or mcnemar", call. = FALSE)
   }
 
   # Capturar argumentos
