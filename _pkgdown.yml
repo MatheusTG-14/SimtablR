@@ -1,0 +1,70 @@
+url: https://MatheusTG-14.github.io/SimtablR/
+
+template:
+  bootstrap: 5
+  bootswatch: flatly
+  bs_theme:
+    base_font:
+      google: "Hanken Grotesk"
+    heading_font:
+      google: "Hanken Grotesk"
+    code_font:
+      google: "Fira Code"
+    primary: "#2c3e50"
+    secondary: "#18bc9c"
+
+#Barra de Navegação
+navbar:
+  title: "SimtablR"
+  left:
+    - text: "Home"
+      href: index.html
+    - text: "Reference"
+      href: reference/index.html
+    - text: "Articles"
+      menu:
+        - text: "Introduction to SimtablR"
+          href: articles/tb_tutorial.html
+    - text: "News"
+      href: news/index.html
+  right:
+    - icon: fa-github
+      href: https://github.com/MatheusTG-14/SimtablR
+
+development:
+  mode: auto
+  version_label: default
+authors:
+  Matheus Trabuco:
+    href: https://linktr.ee/matheustrabucogonzalez/
+opengraph:
+  image:
+    src: man/figures/Simtable.png
+    alt: "SimtablR: Publication-Ready Tables"
+
+reference:
+  - title: "Descriptive Statistics"
+    desc: "Functions for summary tables and descriptive analysis."
+    contents:
+      - tb
+      - as_flextable.tb
+
+  - title: "Diagnostic Accuracy"
+    desc: "Tools for evaluating diagnostic tests."
+    contents:
+      - diag_test
+      - plot.diag_test
+      - as.data.frame.diag_test
+      - print.diag_test
+
+  - title: "Regression Analysis"
+    desc: "Multi-outcome regression tools."
+    contents:
+      - regtab
+      - export_regtab_csv
+      - export_regtab_xlsx
+      - print.regtab
+
+  - title: "Data"
+    contents:
+      - epitabl

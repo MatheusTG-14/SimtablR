@@ -13,7 +13,6 @@ knitr::opts_chunk$set(
   comment = "#>"
 )
 ```
- <img src="img/logo.png" align="right" height="250" alt="Logo SimtablR" />
 
 ## Welcome to SimtablR!
 
@@ -47,8 +46,6 @@ Our study includes demographics (age, sex, education), health behaviors (smoking
 ```{r}
 tb(epitabl, disease)
 ```
-
-*ps: the tables look better in R than here 🤷‍♂️*
 
 ------------------------------------------------------------------------
 
