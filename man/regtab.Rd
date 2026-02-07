@@ -98,11 +98,11 @@ This provides protection against heteroskedasticity and mild model misspecificat
 \subsection{Exponentiation}{
 
 \itemize{
-\item \strong{Poisson regression}: exp(β) = Incidence Rate Ratio
+\item \strong{Poisson regression}: exp(beta) = Incidence Rate Ratio
 - IRR = 1: No association
 - IRR > 1: Increased rate
 - IRR < 1: Decreased rate
-\item \strong{Logistic regression}: exp(β) = Odds Ratio
+\item \strong{Logistic regression}: exp(beta) = Odds Ratio
 - OR = 1: No association
 - OR > 1: Increased odds
 - OR < 1: Decreased odds
