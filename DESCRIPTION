@@ -1,8 +1,8 @@
 Package: SimtablR
-Title: Publication-Ready Tables and Regression Analysis 
+Title: Publication-Ready Tables and Regression Analysis
 Version: 1.0.0
 Authors@R: 
-    person("Matheus", "Trabuco", , "matheustrabucogonzalez@gmail.com", role = c("aut", "cre"))
+    person(given = "Matheus", family = "Trabuco Gonzalez", email = "matheustrabucogonzalez@gmail.com", role = c("aut", "cre"))
 Description: SimtableR streamlines the creation of descriptive frequency tables ('Table 1'), 
     diagnostic test accuracy evaluations (sensitivity, specificity, predictive values), 
     and multi-outcome regression summaries. Features automatic tables, 
@@ -22,8 +22,13 @@ Imports:
     stats,
     tidyr,
     utils
+Suggests: 
+    knitr,
+    rmarkdown,
+    testthat
+VignetteBuilder: knitr
 Depends: 
     R (>= 3.5)
 LazyData: true
-URL: https://github.com/MatheusTG-14/SimtableR
+URL: https://github.com/MatheusTG-14/SimtableR, https://MatheusTG-14.github.io/SimtablR/
 BugReports: https://github.com/MatheusTG-14/SimtableR/issues
