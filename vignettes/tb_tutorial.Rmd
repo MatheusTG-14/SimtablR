@@ -1,0 +1,80 @@
+---
+title: "Introduction to SimtablR: Tables Made Simple"
+output: rmarkdown::html_vignette
+vignette: >
+  %\VignetteIndexEntry{tb_tutorial}
+  %\VignetteEngine{knitr::rmarkdown}
+  %\VignetteEncoding{UTF-8}
+---
+
+```{r, include = FALSE}
+knitr::opts_chunk$set(
+  collapse = TRUE,
+  comment = "#>"
+)
+```
+
+## Welcome to SimtablR!
+
+**SimtblR** brings together three essential tools for epidemiologic analysis:
+
+- **`tb()`** – Create publication-ready descriptive tables
+- **`diag_test()`** – Evaluate diagnostic test performance  
+- **`regtab()`** – Generate multi-outcome regression tables
+
+Let's explore each function through practical examples using a realistic dataset.
+
+---
+
+## Getting Started
+
+First, load the package and example data:
+
+```{r load-package}
+library(SimtableR)
+data(epitabl)
+```
+
+## Meet Our Data
+
+The `epitabl` dataset comes from a hypothetical cross-sectional study of 500 adults examining risk factors for a chronic disease. Let's get acquainted:
+
+Our study includes demographics (age, sex, education), health behaviors (smoking, exercise), clinical measures (BMI, blood pressure, cholesterol), and outcomes (disease status, healthcare utilization, hospitalization).
+**A note on the disease**: About 30% of participants have the disease, making this a realistic prevalence for many chronic conditions:
+```{r disease-prevalence}
+tb(epitabl, disease, p)
+```
+
+
+
+
+
+
+The tb() function is the Swiss Army knife of SimtablR. It is designed to replace the base R table() function for a good part of your workflow.
+
+It handles:
+
+1.  Counts and Percentages (Row, Column, Total)
+2.  Statistical Tests (Chi-squared, Fisher, McNemar)
+3.  Effect Measures (Prevalence Ratios, Odds Ratios)
+4.  Stratification (3-way tables)
+5.  Formatting for publication (Flextable integration)
+
+
+## 1. Univariate Tables (Frequency)
+
+The simplest use case is checking the distribution of a single variable. By default, tb() shows counts and percentages.
+
+``` r
+# Distribution of Smoking Status
+tb(epitabl, smoking)
+```
+
+## 2.Bivariate Tables (Cross-Tabulation)
+
+``` r
+# Disease status by Sex
+tb(epitabl, disease, sex)
+```
+
+You can control which percentage is calculated using the flags col (column %), row (row %), or p (total %).
