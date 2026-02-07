@@ -294,7 +294,7 @@ clinical_model <- regtab(
 print(clinical_model)
 ```
 
-These are **linear (**β) **coefficients** (not exponentiated)
+These are **linear (beta) coefficients** (not exponentiated)
 
 ## Exporting Your Table
 
