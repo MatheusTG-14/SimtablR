@@ -8,3 +8,5 @@
 ^pkgdown$
 ^articles$
 ^\.github$
+^SimtablR\.Rproj$
+^readme\.md$
