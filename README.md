@@ -1,9 +1,8 @@
-# SimtablR: Publication-Ready Tables and Regression Analysis 
-
+# SimtablR: Publication-Ready Tables and Regression Analysis  <img src="Simtable.png" align="right" height="300" alt="Logo SimtablR" />
 <!-- badges: start -->
 <!-- badges: end -->
 
-## Overview
+### Overview
 **SimtablR** provides a streamlined toolkit for tabulating data and calculating multi-outcome regression or diagnostic accuracy metrics. The aim of this package is to provide a simple, easy-to-use core set of functions that can quickly generate pre-formatted tables ready for export to Excel, PowerPoint/Word (via flextable), or simply as formatted dataframes. 
 
 The `tb()` function is built to replace and enhance the base R `table()` function. With just a single word-argument, you can add percentages, Prevalence Ratios (with CIs!), and Odds Ratios. What used to be a time-consuming process of iterating through variables is now done by a single, fast function. 
