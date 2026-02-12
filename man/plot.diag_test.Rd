@@ -15,6 +15,9 @@
 
 \item{...}{Additional arguments passed to \code{fourfoldplot}.}
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Visualizes the confusion matrix using a fourfold plot.
 }

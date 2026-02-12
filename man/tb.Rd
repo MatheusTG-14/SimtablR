@@ -68,14 +68,15 @@ If FALSE, prints as simple matrix. Default: TRUE.}
 
 \item{var.type}{Named character vector specifying variable types.
 \itemize{
-\item select the line variable and choose between "continuous" and "cont"
-\item ex: tb(epitabl, age, sex, var.type = c(age = "continuous"))
+\item Select the line variable and choose between "continuous" and "cont".
+\item Example: \code{tb(epitabl, age, sex, var.type = c(age = "continuous"))}
 }}
 
 \item{stat.cont}{Character. "mean" (Mean/SD) or "median" (Median/IQR).}
 }
 \value{
-An object of class \code{tb}.
+An object of class \code{tb} which is a matrix with attributes containing
+statistics, formatted flags, and class information.
 }
 \description{
 Creates comprehensive tables for categorical or continuous variables with formatting,

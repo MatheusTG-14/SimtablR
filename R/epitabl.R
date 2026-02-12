@@ -9,7 +9,7 @@
 #'   \item{id}{Unique patient identifier}
 #'   \item{age}{Age in years (Numeric)}
 #'   \item{sex}{Biological sex (Female, Male)}
-#'   \item{bmi}{Body Mass Index in kg/m² (Numeric, contains NAs)}
+#'   \item{bmi}{Body Mass Index in kg/m2 (Numeric, contains NAs)}
 #'   \item{smoking}{Smoking status (Never, Former, Current)}
 #'   \item{exercise}{Physical activity level (Low, Moderate, High)}
 #'   \item{education}{Educational attainment (High School, Some College, College+)}

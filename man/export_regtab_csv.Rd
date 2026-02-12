@@ -13,6 +13,9 @@ export_regtab_csv(x, file, ...)
 
 \item{...}{Additional arguments passed to write.csv}
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Export regtab Results to CSV
 }

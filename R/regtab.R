@@ -46,25 +46,21 @@
 #'
 #' ## Robust Standard Errors
 #' When \code{robust = TRUE}, the function:
-#' \enumerate{
-#'   \item Fits the model with standard GLM
-#'   \item Computes sandwich covariance matrix (HC0 estimator)
-#'   \item Calculates Wald-type CIs based on robust SEs
-#' }
+#' 1. Fits the model with standard GLM.
+#' 2. Computes sandwich covariance matrix (HC0 estimator).
+#' 3. Calculates Wald-type CIs based on robust SEs.
 #'
 #' This provides protection against heteroskedasticity and mild model misspecification.
 #'
 #' ## Exponentiation
-#' \itemize{
-#'   \item \strong{Poisson regression}: exp(beta) = Incidence Rate Ratio
-#'     - IRR = 1: No association
-#'     - IRR > 1: Increased rate
-#'     - IRR < 1: Decreased rate
-#'   \item \strong{Logistic regression}: exp(beta) = Odds Ratio
-#'     - OR = 1: No association
-#'     - OR > 1: Increased odds
-#'     - OR < 1: Decreased odds
-#' }
+#' * **Poisson regression**: exp(beta) = Incidence Rate Ratio
+#'     * IRR = 1: No association
+#'     * IRR > 1: Increased rate
+#'     * IRR < 1: Decreased rate
+#' * **Logistic regression**: exp(beta) = Odds Ratio
+#'     * OR = 1: No association
+#'     * OR > 1: Increased odds
+#'     * OR < 1: Decreased odds
 #'
 #' ## Output Format
 #' Returns a wide-format data.frame:
@@ -75,7 +71,6 @@
 #' age         | 1.05 (1.02-1.08) | 1.03 (1.01-1.06) | ...
 #' sex         | 0.87 (0.75-1.01) | 0.92 (0.81-1.05) | ...
 #' }
-#'
 #' Each cell contains: "Estimate (Lower CI - Upper CI)"
 #'
 #' ## Missing Data
@@ -84,15 +79,13 @@
 #'
 #' ## Convergence Issues
 #' If a model fails to converge or encounters errors:
-#' \itemize{
-#'   \item A warning is issued with the outcome name and error message
-#'   \item That outcome column is skipped in the output
-#'   \item Other outcomes continue processing
-#' }
+#' * A warning is issued with the outcome name and error message
+#' * That outcome column is skipped in the output
+#' * Other outcomes continue processing
 #'
 #' @return A data.frame in wide format with:
-#'   \item{Variable}{Predictor names (first column)}
-#'   \item{Outcome columns}{One column per outcome with formatted estimates and CIs}
+#' * **Variable**: Predictor names (first column)
+#' * **Outcome columns**: One column per outcome with formatted estimates and CIs
 #'
 #' Can be directly exported to Excel, Word, or LaTeX for publication.
 #'
@@ -384,6 +377,7 @@ regtab <- function(data, outcomes, predictors,
 #'
 #' @param x A data.frame returned by regtab
 #' @param ... Additional arguments passed to print
+#' @return No return value, called for side effects
 #'
 #' @export
 print.regtab <- function(x, ...) {
@@ -422,6 +416,7 @@ print.regtab <- function(x, ...) {
 #' @param x A data.frame from regtab
 #' @param file File path for export
 #' @param ... Additional arguments passed to write.csv
+#' @return No return value, called for side effects
 #'
 #' @export
 export_regtab_csv <- function(x, file, ...) {
@@ -437,6 +432,7 @@ export_regtab_csv <- function(x, file, ...) {
 #' @param x A data.frame from regtab
 #' @param file File path for export (.xlsx)
 #' @param ... Additional arguments passed to openxlsx::write.xlsx
+#' @return No return value, called for side effects
 #'
 #' @export
 export_regtab_xlsx <- function(x, file, ...) {

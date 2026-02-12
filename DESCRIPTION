@@ -1,6 +1,6 @@
 Package: SimtablR
 Title: Easy Publication-Ready Tables and Regression Analysis
-Version: 1.0.0
+Version: 1.0.1
 Authors@R: 
     person(given = "Matheus", family = "Trabuco Gonzalez", email = "matheustrabucogonzalez@gmail.com", role = c("aut", "cre"))
 Description: Streamlines the creation of descriptive frequency tables ('Table 1'), 

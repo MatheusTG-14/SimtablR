@@ -11,29 +11,23 @@
 #' @param conf.level Numeric. Confidence level (0-1). Default: 0.95.
 #'
 #' @details
-#' \strong{Confusion Matrix Structure}
+#' **Confusion Matrix Structure**
 #' The function creates a 2x2 confusion matrix:
-#' \itemize{
-#'   \item TP: True Positives
-#'   \item TN: True Negatives
-#'   \item FP: False Positives
-#'   \item FN: False Negatives
-#' }
+#' * TP: True Positives
+#' * TN: True Negatives
+#' * FP: False Positives
+#' * FN: False Negatives
 #'
-#' \strong{Metrics Calculated}
-#' \itemize{
-#'   \item Sensitivity, Specificity, PPV, NPV
-#'   \item Accuracy, Prevalence
-#'   \item Likelihood Ratios, Youden's Index, F1 Score
-#' }
+#' **Metrics Calculated**
+#' * Sensitivity, Specificity, PPV, NPV
+#' * Accuracy, Prevalence
+#' * Likelihood Ratios, Youden's Index, F1 Score
 #'
 #' @return An object of class \code{diag_test} containing:
-#' \itemize{
-#'   \item \code{table}: 2x2 confusion matrix
-#'   \item \code{stats}: Data frame with metrics and CIs
-#'   \item \code{labels}: List with labels used
-#'   \item \code{sample_size}: Total valid observations
-#' }
+#' * \code{table}: 2x2 confusion matrix
+#' * \code{stats}: Data frame with metrics and CIs
+#' * \code{labels}: List with labels used
+#' * \code{sample_size}: Total valid observations
 #'
 #' @export
 
@@ -263,6 +257,7 @@ diag_test <- function(data, test, ref, positive = NULL, test_positive = NULL,
 #' @param x A diag_test object
 #' @param digits Number of decimal places for metrics (default: 3)
 #' @param ... Additional arguments (unused)
+#' @return No return value, called for side effects
 #'
 #' @export
 print.diag_test <- function(x, digits = 3, ...) {
@@ -329,6 +324,7 @@ print.diag_test <- function(x, digits = 3, ...) {
 #' @param ... Additional arguments (unused)
 #'
 #' @return A data.frame containing the performance metrics
+#'
 #' @export
 as.data.frame.diag_test <- function(x, ...) {
   return(x$stats)
@@ -342,6 +338,8 @@ as.data.frame.diag_test <- function(x, ...) {
 #' @param col Vector of 2 colors for Negative and Positive outcomes.
 #' @param main Title of the plot.
 #' @param ... Additional arguments passed to \code{fourfoldplot}.
+#' @return No return value, called for side effects
+#'
 #' @export
 #teste
 plot.diag_test <- function(x, col = c("#ffcccc", "#ccffcc"), main = "Confusion Matrix", ...) {

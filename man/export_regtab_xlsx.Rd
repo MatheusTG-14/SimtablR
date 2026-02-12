@@ -13,6 +13,9 @@ export_regtab_xlsx(x, file, ...)
 
 \item{...}{Additional arguments passed to openxlsx::write.xlsx}
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Requires the 'openxlsx' package
 }

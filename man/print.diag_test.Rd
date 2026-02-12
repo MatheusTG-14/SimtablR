@@ -13,6 +13,9 @@
 
 \item{...}{Additional arguments (unused)}
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Print Method for diag_test Objects
 }

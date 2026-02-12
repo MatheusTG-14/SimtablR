@@ -11,6 +11,9 @@
 
 \item{...}{Additional arguments passed to print}
 }
+\value{
+No return value, called for side effects
+}
 \description{
 Print Method for regtab Results
 }

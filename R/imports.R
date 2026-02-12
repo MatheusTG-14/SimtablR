@@ -4,5 +4,9 @@
 #' @importFrom stats update wilcox.test
 #' @importFrom utils write.csv
 #' @importFrom dplyr %>%
+#' @keywords internal
+"_PACKAGE"
+
+# The following block is strictly for namespace management
 NULL
 utils::globalVariables(c("Variable", "Result", "Outcome", "P_Value"))

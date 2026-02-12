@@ -32,14 +32,14 @@
 #' @param conf.level Numeric. Confidence level for intervals (0-1). Default: 0.95.
 #' @param var.type Named character vector specifying variable types.
 #'  \itemize{
-#'      \item select the line variable and choose between "continuous" and "cont"
-#'      \item ex: tb(epitabl, age, sex, var.type = c(age = "continuous"))
+#'      \item Select the line variable and choose between "continuous" and "cont".
+#'      \item Example: \code{tb(epitabl, age, sex, var.type = c(age = "continuous"))}
 #'      }
 #' @param stat.cont Character. "mean" (Mean/SD) or "median" (Median/IQR).
 #'
-#' @return An object of class \code{tb}.
+#' @return An object of class \code{tb} which is a matrix with attributes containing
+#'   statistics, formatted flags, and class information.
 #' @export
-
 #principal função
 
 tb <- function(data, ..., m = FALSE, d = 1, format = TRUE, style = "n_pct",
@@ -378,6 +378,14 @@ tb <- function(data, ..., m = FALSE, d = 1, format = TRUE, style = "n_pct",
 }
 
 #Função para garantir a apresentação formatada dos dados em um grid. Os dados em output são processados e centralizados e colocados em um grid
+#' Print Method for tb Objects
+#'
+#' Prints a formatted table with flags and attributes.
+#'
+#' @param x A \code{tb} object.
+#' @param digits Number of decimal places to display.
+#' @param ... Additional arguments.
+#' @return No return value, called for side effects
 #' @export
 print.tb <- function(x, digits = NULL, ...) {
   flags <- attr(x, "flags"); use_format <- attr(x, "format"); style <- attr(x, "style")
@@ -528,6 +536,13 @@ print.tb <- function(x, digits = NULL, ...) {
   invisible(x)
 }
 #Pega o output e transforma em dataframe na mesma formatação (é útil para exportar par apowerpoint via officer, por exemplo), se usar o results, a tabela perde a formatação pois n passou pela s3
+#' Convert tb to Data Frame
+#'
+#' Extracts the data from a tb object as a standard data.frame.
+#'
+#' @param x A \code{tb} object.
+#' @param ... Additional arguments.
+#' @return A data.frame with the formatted table.
 #' @export
 as.data.frame.tb <- function(x, ...) {
   flags <- attr(x, "flags"); digits <- if (!is.null(attr(x, "digits"))) attr(x, "digits") else 1
