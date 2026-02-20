@@ -58,7 +58,7 @@ You can install the development version directly from GitHub:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("MatheusTG-14/tableR")
+devtools::install_github("MatheusTG-14/SimtablR")
 ```
 
 ------------------------------------------------------------------------
