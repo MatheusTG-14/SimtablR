@@ -28,13 +28,13 @@ positive labels (\code{"Yes"}, \code{"1"}, \code{"Positive"}, etc.) or the last 
 the \strong{test} variable. If \code{NULL} (default), mirrors \code{positive} when the
 same label exists in the test variable, then falls back to auto-detection.}
 
-\item{conf.level}{Numeric. Confidence level for binomial CIs (0–1).
+\item{conf.level}{Numeric. Confidence level for binomial CIs (0-1).
 Default: \code{0.95}.}
 }
 \value{
-An object of class \code{diag_test} — a named list with:
+An object of class \code{diag_test} - a named list with:
 \itemize{
-\item \verb{$table}: 2×2 \code{table} object (Test × Ref).
+\item \verb{$table}: 2x2 \code{table} object (Test x Ref).
 \item \verb{$stats}: \code{data.frame} with columns \code{Metric}, \code{Estimate}, \code{LowerCI},
 \code{UpperCI}.
 \item \verb{$labels}: named list with \code{ref_pos}, \code{ref_neg}, \code{test_pos}, \code{test_neg}.
@@ -43,7 +43,7 @@ An object of class \code{diag_test} — a named list with:
 }
 }
 \description{
-Computes a 2×2 confusion matrix and comprehensive diagnostic performance
+Computes a 2x2 confusion matrix and comprehensive diagnostic performance
 metrics for a binary classification test, with exact binomial confidence
 intervals.
 }
@@ -65,13 +65,13 @@ Test -     |   FN    |   TN
 \item \strong{NPV} = TN / (TN + FN)
 \item \strong{Accuracy} = (TP + TN) / Total
 \item \strong{Prevalence} = (TP + FN) / Total
-\item \strong{Likelihood Ratio +} = Sensitivity / (1 – Specificity)
-\item \strong{Likelihood Ratio –} = (1 – Sensitivity) / Specificity
-\item \strong{Youden's Index} = Sensitivity + Specificity – 1
-\item \strong{F1 Score} = 2 × (PPV × Sensitivity) / (PPV + Sensitivity)
+\item \strong{Likelihood Ratio +} = Sensitivity / (1 - Specificity)
+\item \strong{Likelihood Ratio -} = (1 - Sensitivity) / Specificity
+\item \strong{Youden's Index} = Sensitivity + Specificity - 1
+\item \strong{F1 Score} = 2 x (PPV x Sensitivity) / (PPV + Sensitivity)
 }
 
-Binomial CIs (exact Clopper–Pearson) are computed for the first six metrics.
+Binomial CIs (exact Clopper-Pearson) are computed for the first six metrics.
 Likelihood Ratios, Youden's Index, and F1 Score do not have CIs.
 }
 }

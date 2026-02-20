@@ -1,6 +1,6 @@
 #' Diagnostic Test Accuracy Assessment
 #'
-#' Computes a 2×2 confusion matrix and comprehensive diagnostic performance
+#' Computes a 2x2 confusion matrix and comprehensive diagnostic performance
 #' metrics for a binary classification test, with exact binomial confidence
 #' intervals.
 #'
@@ -13,7 +13,7 @@
 #' @param test_positive Character or numeric. Level representing "Positive" in
 #'   the **test** variable. If `NULL` (default), mirrors `positive` when the
 #'   same label exists in the test variable, then falls back to auto-detection.
-#' @param conf.level Numeric. Confidence level for binomial CIs (0–1).
+#' @param conf.level Numeric. Confidence level for binomial CIs (0-1).
 #'   Default: `0.95`.
 #'
 #' @details
@@ -32,16 +32,16 @@
 #' * **NPV** = TN / (TN + FN)
 #' * **Accuracy** = (TP + TN) / Total
 #' * **Prevalence** = (TP + FN) / Total
-#' * **Likelihood Ratio +** = Sensitivity / (1 – Specificity)
-#' * **Likelihood Ratio –** = (1 – Sensitivity) / Specificity
-#' * **Youden's Index** = Sensitivity + Specificity – 1
-#' * **F1 Score** = 2 × (PPV × Sensitivity) / (PPV + Sensitivity)
+#' * **Likelihood Ratio +** = Sensitivity / (1 - Specificity)
+#' * **Likelihood Ratio -** = (1 - Sensitivity) / Specificity
+#' * **Youden's Index** = Sensitivity + Specificity - 1
+#' * **F1 Score** = 2 x (PPV x Sensitivity) / (PPV + Sensitivity)
 #'
-#' Binomial CIs (exact Clopper–Pearson) are computed for the first six metrics.
+#' Binomial CIs (exact Clopper-Pearson) are computed for the first six metrics.
 #' Likelihood Ratios, Youden's Index, and F1 Score do not have CIs.
 #'
-#' @return An object of class `diag_test` — a named list with:
-#' * `$table`: 2×2 `table` object (Test × Ref).
+#' @return An object of class `diag_test` - a named list with:
+#' * `$table`: 2x2 `table` object (Test x Ref).
 #' * `$stats`: `data.frame` with columns `Metric`, `Estimate`, `LowerCI`,
 #'   `UpperCI`.
 #' * `$labels`: named list with `ref_pos`, `ref_neg`, `test_pos`, `test_neg`.
@@ -74,7 +74,7 @@ diag_test <- function(
     test_positive = NULL,
     conf.level    = 0.95
 ) {
-  # ── Args ───────────────────────────────────────────────────────
+  #Args
   if (missing(data)) {
     stop("No data provided. Please supply a data.frame.", call. = FALSE)
   }
@@ -90,7 +90,7 @@ diag_test <- function(
          call. = FALSE)
   }
 
-  # ── extrair Args da expressão  ───────────────────────────────
+  #  extrair Args da expressao
   test_expr <- substitute(test)
   ref_expr  <- substitute(ref)
 
@@ -123,7 +123,7 @@ diag_test <- function(
     ), call. = FALSE)
   }
 
-  # ── Remover NA ─────────────────────────────────────────────────
+  #Remover NA
   ok        <- !is.na(val_test) & !is.na(val_ref)
   n_missing <- sum(!ok)
 
@@ -141,14 +141,14 @@ diag_test <- function(
     stop("No valid observations after removing missing values.", call. = FALSE)
   }
 
-  # ── Garantir factor ──────────────────────────────────────────────────────
+  #  Garantir factor
   if (!is.factor(val_test)) val_test <- factor(val_test)
   if (!is.factor(val_ref))  val_ref  <- factor(val_ref)
 
   levs_test <- levels(val_test)
   levs_ref  <- levels(val_ref)
 
-  # ── Necessário binário ────────────────────────────────────────────────────────
+  #  Necessario binario
   if (length(levs_test) != 2) {
     stop(sprintf(
       "'test' must have exactly 2 levels, but has %d: %s",
@@ -162,7 +162,7 @@ diag_test <- function(
     ), call. = FALSE)
   }
 
-  # ── Níveis positivos para teste ───────────────────────────────────────────────
+  #Niveis positivos para teste
   .candidates_ref  <- c("1", "Sim", "Yes", "Positivo", "Positive",
                         "Doente", "Disease", "Case", "Event", "S", "Y",
                         "TRUE", "True")
@@ -177,7 +177,7 @@ diag_test <- function(
   neg_ref  <- setdiff(levs_ref,  pos_ref)[1]
   neg_test <- setdiff(levs_test, pos_test)[1]
 
-  # ── Build ordered confusion matrix ────────────────────────────────────────
+  #  Build ordered confusion matrix
   val_ref_ord  <- factor(val_ref,  levels = c(pos_ref,  neg_ref))
   val_test_ord <- factor(val_test, levels = c(pos_test, neg_test))
 
@@ -188,13 +188,13 @@ diag_test <- function(
   TN    <- tab[2L, 2L]
   Total <- sum(tab)
 
-  # ── Sanity warnings ───────────────────────────────────────────────────────
+  #  Sanity warnings
   if (TP + FN == 0L) warning("No positive cases in reference (TP + FN = 0).", call. = FALSE)
   if (TN + FP == 0L) warning("No negative cases in reference (TN + FP = 0).", call. = FALSE)
   if (TP + FP == 0L) warning("No positive test results (TP + FP = 0).",       call. = FALSE)
   if (TN + FN == 0L) warning("No negative test results (TN + FN = 0).",       call. = FALSE)
 
-  # ── Compute metrics ───────────────────────────────────────────────────────
+  #  Compute metrics
   # Exact Clopper-Pearson CI via binom.test() for proportions.
   .ci <- function(x, n) {
     if (n == 0L) return(c(NA_real_, NA_real_, NA_real_))
@@ -221,7 +221,7 @@ diag_test <- function(
   f1 <- if (!is.na(ppv[1L]) && !is.na(sens[1L]) && (ppv[1L] + sens[1L]) > 0)
     2 * (ppv[1L] * sens[1L]) / (ppv[1L] + sens[1L]) else NA_real_
 
-  # ── Assemble stats data.frame ─────────────────────────────────────────────
+  #  Assemble stats data.frame
   stats_df <- data.frame(
     Metric = c(
       "Sensitivity", "Specificity",
@@ -245,7 +245,7 @@ diag_test <- function(
     stringsAsFactors = FALSE
   )
 
-  # ── Resultado estruturado ──────────────────────────────────────────────
+  #  Resultado estruturado
   structure(
     list(
       table       = tab,
@@ -261,10 +261,10 @@ diag_test <- function(
   )
 }
 
-# Resolve o nível positivo para a variável de referência.
-# Lida com: NULL (detecção automática), correspondência de caracteres, índice numérico.
+# Resolve o nivel positivo para a variavel de referencia.
+# Lida com: NULL (automatica), correspondencia de caracteres, indice numerico.
 .resolve_pos_level <- function(value, levs, candidates, var_label, arg_name) {
-  # NULL → auto-detect
+  # NULL para auto-detect
   if (is.null(value)) {
     matched <- intersect(levs, candidates)
     if (length(matched) > 0L) {
@@ -335,7 +335,7 @@ diag_test <- function(
 }
 
 
-# ── Print  ──────────────────────────────────────────────────────────────
+#  Print
 
 #' Print Method for diag_test Objects
 #'
@@ -356,7 +356,7 @@ print.diag_test <- function(x, digits = 3L, ...) {
   sep_minor <- strrep("-", 60L)
   ci_label  <- sprintf("%.0f%%", x$conf.level * 100)
 
-  # ── Header ────────────────────────────────────────────────────────────────
+  #  Header
   cat("\n", sep_major, "\n", sep = "")
   cat("  DIAGNOSTIC TEST EVALUATION\n")
   cat(sep_major, "\n\n", sep = "")
@@ -372,12 +372,12 @@ print.diag_test <- function(x, digits = 3L, ...) {
   cat(sprintf("    Positive = '%s'   |   Negative = '%s'\n\n",
               x$labels$test_pos, x$labels$test_neg))
 
-  # ── Confusion matrix ──────────────────────────────────────────────────────
+  #  Confusion matrix
   cat(sep_minor, "\n  Confusion Matrix\n", sep_minor, "\n", sep = "")
   print(x$table)
   cat("\n")
 
-  # ── Performance metrics ───────────────────────────────────────────────────
+  #  Performance metrics
   cat(sep_major, "\n", sep = "")
   cat(sprintf("  Performance Metrics  (%s CI)\n", ci_label))
   cat(sep_major, "\n", sep = "")
@@ -386,12 +386,12 @@ print.diag_test <- function(x, digits = 3L, ...) {
   pad_width <- max(nchar(df$Metric))
 
   fmt_ci <- function(est, low, upp) {
-    if (is.na(est)) return("—")
+    if (is.na(est)) return("-")
     fmt <- paste0("%.", digits, "f")
     if (is.na(low)) {
       sprintf(fmt, est)
     } else {
-      sprintf(paste0(fmt, "  (%s – %s)"),
+      sprintf(paste0(fmt, "  (%s - %s)"),
               est,
               sprintf(fmt, low),
               sprintf(fmt, upp))
@@ -412,7 +412,7 @@ print.diag_test <- function(x, digits = 3L, ...) {
 }
 
 
-# ── as.data.frame method ──────────────────────────────────────────────────────
+#  as.data.frame method
 
 #' Convert diag_test to Data Frame
 #'
@@ -427,7 +427,7 @@ print.diag_test <- function(x, digits = 3L, ...) {
 as.data.frame.diag_test <- function(x, ...) x$stats
 
 
-# ── plotar matriz de confusão  ───────────────────────────────────────────────────────────────
+#  plotar matriz de confusao
 
 #' Plot Diagnostic Test Results
 #'

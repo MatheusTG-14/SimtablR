@@ -126,7 +126,7 @@
 #' @export
 
 #FUNCIONA EM 3 PARTES:
-#A função vai iterar sobre cada variável de "outcomes",
+#A funcao vai iterar sobre cada variavel de "outcomes",
 #assumindo o primeiro valor como referencia sempre,
 #e depois extrair os coeficientes e z para calcular RR e IC 95.
 #Por fim, formata os valores e organiza a tabela para exportar.
@@ -143,7 +143,7 @@ regtab <- function(
     include_intercept = FALSE,
     p_values          = FALSE
 ) {
-  # ── Pacotes necessários ───────────────────────────────────────────────
+  #  Pacotes necessarios
   if (!requireNamespace("dplyr", quietly = TRUE)) {
     stop("Package 'dplyr' is required. Install with: install.packages('dplyr')",
          call. = FALSE)
@@ -161,7 +161,7 @@ regtab <- function(
     }
   }
 
-  # ── Inputs corretos ───────────────────────────────────────────────────────
+  #  Inputs corretos
   if (!is.data.frame(data)) {
     stop("'data' must be a data.frame, not ", class(data)[1], ".", call. = FALSE)
   }
@@ -189,7 +189,7 @@ regtab <- function(
 
   d <- as.integer(d)
 
-  # ── Exponeciação necessária? (poisson/binomial) ────────────────────────────────────────────
+  #  Exponeciacao necessaria? (poisson/binomial)
   if (is.null(exponentiate)) {
     fam_name     <- if (is.character(family)) family else family$family
     exponentiate <- fam_name %in%
@@ -202,7 +202,7 @@ regtab <- function(
     }
   }
 
-  # ── Fórmula ───────────────────────────────────────────────
+  #  Formula
   form_rhs <- if (is.character(predictors)) {
     if (!grepl("~", predictors, fixed = TRUE)) {
       predictors <- paste("~", predictors)
@@ -214,10 +214,10 @@ regtab <- function(
     stop("'predictors' must be a formula or character string.", call. = FALSE)
   }
 
-  # ── Formatação ─────────────────────────────────────────────────────
+  #  Formatacao
   fmt <- function(x) format(round(x, d), nsmall = d, trim = TRUE)
 
-  # ── 1 model por outcome  ──────
+  #  1 model por outcome
   results_list <- list()
   n_success    <- 0L
   n_failed     <- 0L
@@ -318,7 +318,7 @@ regtab <- function(
     ))
   }
 
-  # ── Pivot para forma longa ───────
+  #  Pivot para forma longa
 
   final_long <- dplyr::bind_rows(results_list)
 
@@ -350,7 +350,7 @@ regtab <- function(
       )
   }
 
-  # ── Formatar nome colunas─────────
+  #  Formatar nome colunas
   if (!is.null(labels)) {
     if (!is.character(labels) || is.null(names(labels))) {
       warning("'labels' must be a named character vector. Ignoring.", call. = FALSE)
@@ -382,7 +382,7 @@ regtab <- function(
 
   #Remove o intercept
   if (!include_intercept) {
-    final_wide <- dplyr::filter(final_wide, .data$Variable != "(Intercept)")
+    final_wide <- dplyr::filter(final_wide, Variable != "(Intercept)")
   }
 
 
@@ -397,7 +397,7 @@ regtab <- function(
 }
 
 
-# ── Print method ──────────────────────────────────────────────────────────────
+#  Print method
 
 #' Print Method for regtab Results
 #'
@@ -427,7 +427,7 @@ print.regtab <- function(x, ...) {
 }
 
 
-# ── Exportar ────────────────────────────────────────────────────────────
+#  Exportar
 
 #' Export regtab Results to CSV
 #'

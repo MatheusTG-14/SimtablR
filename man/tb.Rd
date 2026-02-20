@@ -59,7 +59,7 @@ Default: \code{"{or} ({lower} - {upper})"}.}
 
 \item{ref}{Character or numeric. Reference level for PR/OR calculations.}
 
-\item{conf.level}{Numeric. Confidence level for intervals (0–1). Default: \code{0.95}.}
+\item{conf.level}{Numeric. Confidence level for intervals (0-1). Default: \code{0.95}.}
 
 \item{var.type}{Named character vector specifying variable types, e.g.
 \code{c(age = "continuous")}.}

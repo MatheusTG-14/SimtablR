@@ -23,7 +23,7 @@
 #' @param rp Logical. Calculate Prevalence Ratios (PR). Default: `FALSE`.
 #' @param or Logical. Calculate Odds Ratios (OR). Default: `FALSE`.
 #' @param ref Character or numeric. Reference level for PR/OR calculations.
-#' @param conf.level Numeric. Confidence level for intervals (0–1). Default: `0.95`.
+#' @param conf.level Numeric. Confidence level for intervals (0-1). Default: `0.95`.
 #' @param var.type Named character vector specifying variable types, e.g.
 #'   `c(age = "continuous")`.
 #' @param stat.cont Character. `"mean"` (Mean/SD) or `"median"` (Median/IQR).
@@ -50,7 +50,7 @@ tb <- function(
     var.type    = NULL,
     stat.cont   = "median"
 ) {
-  # ── Args ────────────────────────────────────────────────────
+  #  Args
   if (missing(data)) {
     stop("No data provided. Please supply a data.frame or vector.", call. = FALSE)
   }
@@ -73,7 +73,7 @@ tb <- function(
 
   d <- as.integer(d)
 
-  # ── Captura de expressões para função ───────────────────────────────────────────────────
+  #  Captura de expressoes para funcao
   subset_expr <- substitute(subset)
   strat_expr  <- substitute(strat)
   dots        <- as.list(substitute(list(...)))[-1]
@@ -89,7 +89,7 @@ tb <- function(
     arg_expr   <- c(list(data_sym), dots)
   }
 
-  # ── Flags na expressão ────────────────────────────────────────────────────
+  #  Flags na expressao
   flag_names <- c("m", "p", "row", "col", "rp", "or")
   flags      <- list(missing = FALSE, percent = FALSE, by = "total")
 
@@ -113,7 +113,7 @@ tb <- function(
 
   if (m) flags$missing <- TRUE
 
-  # ── Vars ────────────────────────────────────────────────────
+  #  Vars
   vars       <- list()
   var_labels <- character()
   var_names  <- character()
@@ -139,7 +139,7 @@ tb <- function(
   if (length(vars) == 0) stop("No variables specified.", call. = FALSE)
   if (length(vars) > 2)  stop("Maximum of 2 variables allowed.", call. = FALSE)
 
-  # ── Strat ───────────────────────────────────────────────
+  #  Strat
   strat_val <- NULL
   if (!is.null(strat_expr)) {
     strat_val <- tryCatch(
@@ -156,7 +156,7 @@ tb <- function(
     }
   }
 
-  # ── Subset ───────────────────────────────────────────────────
+  #  Subset
   if (!is.null(subset_expr)) {
     subset_val <- tryCatch(
       eval(subset_expr, env_data, env_parent),
@@ -168,10 +168,10 @@ tb <- function(
     if (sum(keep) == 0) stop("Subset removed all observations.", call. = FALSE)
 
     vars      <- lapply(vars, `[`, keep)
-    strat_val <- strat_val[keep]  # safe even if strat_val is NULL
+    strat_val <- strat_val[keep]
   }
 
-  # ── Aplica a strat após subset ──────────────
+  #  Aplica a strat apos subset
   if (!is.null(strat_val)) {
     if (length(vars) == 2) {
       if (!flags$missing) {
@@ -188,7 +188,7 @@ tb <- function(
     }
   }
 
-  # ── DEtecta tipo de var ──────────────────────────────────────────────────
+  #  DEtecta tipo de var
   row_var_name  <- var_names[1]
   is_continuous <- FALSE
 
@@ -202,9 +202,9 @@ tb <- function(
   rp_col <- NULL
   or_col <- NULL
 
-  # ═══════════════════════════════════════════════════════════════════════════
-  # BRANCH A: Var contínua
-  # ═══════════════════════════════════════════════════════════════════════════
+  # ===========================================================================
+  # BRANCH A: Var continua
+  # ===========================================================================
   if (is_continuous) {
     y <- vars[[1]]
     x <- if (length(vars) > 1) vars[[2]] else NULL
@@ -292,11 +292,11 @@ tb <- function(
     tab <- out_mat
 
   } else {
-    # ═══════════════════════════════════════════════════════════════════════
-    # BRANCH B:Var categórica
-    # ═══════════════════════════════════════════════════════════════════════
+    # =======================================================================
+    # BRANCH B:Var categorica
+    # =======================================================================
 
-    # Reordenar níveis para cat
+    # Reordenar niveis para cat
     if (!is.null(ref) && length(vars) >= 1) {
       row_var <- if (is.factor(vars[[1]])) vars[[1]] else factor(vars[[1]])
       ref_str <- as.character(ref)
@@ -348,7 +348,7 @@ tb <- function(
 
     z_crit <- qnorm(1 - (1 - conf.level) / 2)
 
-    # ── PR  ────────────────────────────────────────────────────
+    #  PR
     if (rp && length(dim(tab)) == 2 && ncol(tab) >= 2) {
       idx_event <- if (flags$missing && ncol(tab) > 2) ncol(tab) - 1L else ncol(tab)
       events    <- tab[, idx_event]
@@ -396,7 +396,7 @@ tb <- function(
       }
     }
 
-    # ── OR ──────────────────────────────────────────────────────────
+    #  OR
     if (or && length(dim(tab)) == 2 && ncol(tab) >= 2) {
       n_cols_valid <- ncol(tab) - if (flags$missing) 1L else 0L
 
@@ -493,7 +493,7 @@ tb <- function(
     }
   }
 
-  # ── Adiciona e retornar atributos ───────────────────────────────────────────
+  #  Adiciona e retornar atributos
   attr(tab, "flags")         <- flags
   attr(tab, "format")        <- format
   attr(tab, "style")         <- style
@@ -509,10 +509,10 @@ tb <- function(
   tab
 }
 
-# ── Operatdor null in ──────────────────────────────────────
+#  Operatdor null in
 `%||%` <- function(a, b) if (!is.null(a)) a else b
 
-# ── Print  ─────────────────────────────────────────────────────────────
+#  Print
 
 #' Print Method for tb Objects
 #'
@@ -651,7 +651,7 @@ print.tb <- function(x, digits = NULL, ...) {
   }, integer(1))
 
   # Consultar a largura do terminal dinamicamente a cada chamada de print().
-  # getOption("width") é atualizado pelo RStudio/terminal quando o usuário redimensiona a janela, mas apenas se o usuário tiver as opções corretas. cli::console_width() usa ioctl() para ler a largura real do PTY em tempo real, funcionando mesmo sem opções configuradas. Fallback para 80 se cli não estiver disponível e options("width") não tiver sido definido.
+  # getOption("width") e atualizado pelo RStudio/terminal quando o usuario redimensiona a janela, mas apenas se o usuario tiver as opcoes corretas. cli::console_width() usa ioctl() para ler a largura real do PTY em tempo real, funcionando mesmo sem opcoes configuradas. Fallback para 80 se cli nao estiver disponivel e options("width") nao tiver sido definido.
   console_width <- if (requireNamespace("cli", quietly = TRUE)) {
     cli::console_width()
   } else {
@@ -731,7 +731,7 @@ print.tb <- function(x, digits = NULL, ...) {
   }
 }
 
-# ── as.data.frame
+#  as.data.frame
 
 #' Convert tb to Data Frame
 #'
@@ -769,7 +769,7 @@ as.data.frame.tb <- function(x, ...) {
   )
 
   n_core        <- if (length(dim(unclass(x))) == 1) 1L else ncol(unclass(x))
-  # Para table 1D, colnames(x) é NULL; o cabeçalho correto é "Freq"
+  # Para table 1D, colnames(x) e NULL; o cabecalho correto e "Freq"
   # (mesmo nome que .build_display_matrix usa para tabelas univariadas).
   original_cols <- colnames(x) %||% if (n_core == 1L) "Freq" else paste0("Col", seq_len(n_core))
   colnames(df)   <- c(original_cols, extra_col_names)
@@ -791,7 +791,7 @@ as.data.frame.tb <- function(x, ...) {
   df
 }
 
-# ── as_flextable  ───────────────────────────────────────────────────────
+#  as_flextable
 
 #' Convert tb Object to Flextable
 #'
