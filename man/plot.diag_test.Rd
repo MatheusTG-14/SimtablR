@@ -7,17 +7,19 @@
 \method{plot}{diag_test}(x, col = c("#ffcccc", "#ccffcc"), main = "Confusion Matrix", ...)
 }
 \arguments{
-\item{x}{A diag_test object.}
+\item{x}{A \code{diag_test} object.}
 
-\item{col}{Vector of 2 colors for Negative and Positive outcomes.}
+\item{col}{Character vector of length 2. Fill colours for the negative and
+positive quadrants respectively. Default: \code{c("#ffcccc", "#ccffcc")}.}
 
-\item{main}{Title of the plot.}
+\item{main}{Character. Plot title. Default: \code{"Confusion Matrix"}.}
 
-\item{...}{Additional arguments passed to \code{fourfoldplot}.}
+\item{...}{Additional arguments passed to \code{\link[graphics:fourfoldplot]{graphics::fourfoldplot()}}.}
 }
 \value{
-No return value, called for side effects
+Invisibly returns \code{x}.
 }
 \description{
-Visualizes the confusion matrix using a fourfold plot.
+Draws a fourfold display of the confusion matrix with sensitivity and
+specificity annotated on the bottom margin.
 }

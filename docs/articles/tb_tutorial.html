@@ -6,12 +6,11 @@
 <meta http-equiv="X-UA-Compatible" content="IE=edge">
 <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <title>Introduction to SimtablR: Tables Made Simple • SimtablR</title>
-<!-- favicons --><link rel="icon" type="image/png" sizes="16x16" href="../favicon-16x16.png">
-<link rel="icon" type="image/png" sizes="32x32" href="../favicon-32x32.png">
-<link rel="apple-touch-icon" type="image/png" sizes="180x180" href="../apple-touch-icon.png">
-<link rel="apple-touch-icon" type="image/png" sizes="120x120" href="../apple-touch-icon-120x120.png">
-<link rel="apple-touch-icon" type="image/png" sizes="76x76" href="../apple-touch-icon-76x76.png">
-<link rel="apple-touch-icon" type="image/png" sizes="60x60" href="../apple-touch-icon-60x60.png">
+<!-- favicons --><link rel="icon" type="image/png" sizes="96x96" href="../favicon-96x96.png">
+<link rel="icon" type="”image/svg+xml”" href="../favicon.svg">
+<link rel="apple-touch-icon" sizes="180x180" href="../apple-touch-icon.png">
+<link rel="icon" sizes="any" href="../favicon.ico">
+<link rel="manifest" href="../site.webmanifest">
 <script src="../deps/jquery-3.6.0/jquery-3.6.0.min.js"></script><meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 <link href="../deps/bootstrap-5.3.1/bootstrap.min.css" rel="stylesheet">
 <script src="../deps/bootstrap-5.3.1/bootstrap.bundle.min.js"></script><link href="../deps/font-awesome-6.5.2/css/all.min.css" rel="stylesheet">
@@ -26,7 +25,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.0.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">1.2.0</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -59,10 +58,11 @@
 <link href="tb_tutorial_files/tabwid-1.1.3/tabwid.css" rel="stylesheet">
 <script src="tb_tutorial_files/tabwid-1.1.3/tabwid.js"></script><div class="row">
   <main id="main" class="col-md-9"><div class="page-header">
-      <img src="../logo.png" class="logo" alt=""><h1>Introduction to SimtablR: Tables Made Simple</h1>
+
+      <h1>Introduction to SimtablR: Tables Made Simple</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtableR/blob/HEAD/vignettes/tb_tutorial.Rmd" class="external-link"><code>vignettes/tb_tutorial.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/HEAD/vignettes/tb_tutorial.Rmd" class="external-link"><code>vignettes/tb_tutorial.Rmd</code></a></small>
       <div class="d-none name"><code>tb_tutorial.Rmd</code></div>
     </div>
 
@@ -93,8 +93,8 @@ realistic dataset.</p>
 </h3>
 <p>First, load the package and example data:</p>
 <div class="sourceCode" id="cb1"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/MatheusTG-14/SimtableR" class="external-link">SimtablR</a></span><span class="op">)</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">── SimtablR 1.0.0 ───────────────────── Simple R functions for usefull tables ──</span></span></span>
+<code class="sourceCode R"><span><span class="kw"><a href="https://rdrr.io/r/base/library.html" class="external-link">library</a></span><span class="op">(</span><span class="va"><a href="https://github.com/MatheusTG-14/SimtablR" class="external-link">SimtablR</a></span><span class="op">)</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">── SimtablR 1.2.0 ───────────────────── Simple R functions for usefull tables ──</span></span></span>
 <span><span class="co">#&gt; <span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">tb()</span><span style="color: #BBBBBB;">: Descriptive tables (One-Table)</span></span></span>
 <span><span class="co"><span style="color: #BBBBBB;">#&gt; </span><span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">diag_test()</span><span style="color: #BBBBBB;">: Confusion matrix and Diagnostic Values</span></span></span>
 <span><span class="co"><span style="color: #BBBBBB;">#&gt; </span><span style="color: #00BB00;">✔</span> <span style="color: #0000BB;">regtab()</span><span style="color: #BBBBBB;">: Regression Tables by Outcome (GLM)</span></span></span>
@@ -119,7 +119,9 @@ conditions:</p>
 <span><span class="co">#&gt;  Disease status (primary outcome) | Freq </span></span>
 <span><span class="co">#&gt; ----------------------------------+------</span></span>
 <span><span class="co">#&gt;                                No | 331  </span></span>
-<span><span class="co">#&gt;                               Yes | 169</span></span></code></pre></div>
+<span><span class="co">#&gt;                               Yes | 169  </span></span>
+<span><span class="co">#&gt; ----------------------------------+------</span></span>
+<span><span class="co">#&gt;                             Total | 500</span></span></code></pre></div>
 <hr>
 </div>
 <div class="section level2">
@@ -148,7 +150,9 @@ variable. By default, tb() shows counts and percentages.</p>
 <span><span class="co">#&gt; ----------------+------</span></span>
 <span><span class="co">#&gt;           Never | 244  </span></span>
 <span><span class="co">#&gt;          Former | 158  </span></span>
-<span><span class="co">#&gt;         Current |  98</span></span></code></pre></div>
+<span><span class="co">#&gt;         Current |  98  </span></span>
+<span><span class="co">#&gt; ----------------+------</span></span>
+<span><span class="co">#&gt;           Total | 500</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="bivariate-tables-cross-tabulation">2.Bivariate Tables (Cross-Tabulation)<a class="anchor" aria-label="anchor" href="#bivariate-tables-cross-tabulation"></a>
@@ -223,7 +227,7 @@ it manually. For frequency tables, you can set <code>"chsqr"</code>
 <span><span class="co">#&gt; ----------------+-------------------------+-----</span></span>
 <span><span class="co">#&gt;             Sum |     331         169     | 500 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Test: Pearson's Chi-squared test   p-value &lt; 0.001</span></span></code></pre></div>
+<span><span class="co">#&gt;   Test: Pearson's Chi-squared test  p-value &lt; 0.001</span></span></code></pre></div>
 <p>We see something interesting. The prevalence varies across smoking
 groups, and the p-value suggests this is unlikely due to chance
 alone.</p>
@@ -253,7 +257,7 @@ different across smoking categories, we can explore them with
 <span><span class="co">#&gt; ----------------+-------------------------+-----+--------------------</span></span>
 <span><span class="co">#&gt;             Sum |     331         169     | 500 |                    </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Test: Pearson's Chi-squared test   p-value &lt; 0.001</span></span></code></pre></div>
+<span><span class="co">#&gt;   Test: Pearson's Chi-squared test  p-value &lt; 0.001</span></span></code></pre></div>
 <p><em>Note: Without <code>ref</code>, the function uses the first
 factor level alphabetically. You can look at the levels of any variable
 using levels(epitabl$smoking)</em></p>
@@ -282,9 +286,9 @@ outliers. If you prefer mean and standard deviation:</p>
 <span>   var.type <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span>systolic_bp <span class="op">=</span> <span class="st">"continuous"</span><span class="op">)</span>,</span>
 <span>   stat.cont <span class="op">=</span> <span class="st">"mean"</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                                 |       Disease status (primary outcome)       </span></span>
-<span><span class="co">#&gt;  Systolic blood pressure (mmHg) |      No           Yes      |    Total     </span></span>
-<span><span class="co">#&gt; --------------------------------+----------------------------+--------------</span></span>
-<span><span class="co">#&gt;         systolic_bp [Mean (SD)] | 111.6 (10.0)  123.1 (12.0) | 115.5 (12.0)</span></span></code></pre></div>
+<span><span class="co">#&gt;  Systolic blood pressure (mmHg) |      No           Yes          Total     </span></span>
+<span><span class="co">#&gt; --------------------------------+------------------------------------------</span></span>
+<span><span class="co">#&gt;         systolic_bp [Mean (SD)] | 111.6 (10.0)  123.1 (12.0)  115.5 (12.0)</span></span></code></pre></div>
 </div>
 <div class="section level3">
 <h3 id="stratification">Stratification<a class="anchor" aria-label="anchor" href="#stratification"></a>
@@ -318,7 +322,7 @@ separated by Sex.</p>
 <span><span class="co">#&gt; ----------------------------------+-------------------------------+-----</span></span>
 <span><span class="co">#&gt;                               Sum |      77              44       | 500 </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Test: Pearson's Chi-squared test   p-value &lt; 0.001</span></span></code></pre></div>
+<span><span class="co">#&gt;   Test: Pearson's Chi-squared test  p-value &lt; 0.001</span></span></code></pre></div>
 <p>Currently, the columns now show every combination: Female-Never,
 Female-Former, Female-Current, Male-Never, and so on. You can visually
 compare patterns across strata. <em>Note: PRs and ORs will not be
@@ -346,54 +350,54 @@ package</a>.</p>
 <span><span class="va">ft</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://davidgohel.github.io/flextable/reference/autofit.html" class="external-link">autofit</a></span><span class="op">(</span><span class="va">ft</span><span class="op">)</span>  <span class="co"># Optional: Adjust column widths</span></span>
 <span><span class="va">ft</span></span></code></pre></div>
 <div class="tabwid">
-<style>.cl-090b300a{}.cl-08f76b4c{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-08ff7990{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-08ff799a{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-08ff79a4{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-08ffcc92{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcc9c{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcc9d{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcc9e{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcca6{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcca7{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcca8{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccb0{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccb1{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccb2{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccb3{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccba{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccbb{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccc4{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccc5{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccc6{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccce{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcccf{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccd0{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccd1{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccd2{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccd8{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccd9{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffccda{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-08ffcce2{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style>
-<table data-quarto-disable-processing="true" class="table cl-090b300a">
+<style>.cl-0e4508f6{}.cl-0e349962{font-family:'Arial';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-0e3ab9dc{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-0e3ab9e6{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-0e3ab9f0{margin:0;text-align:right;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-0e3b04b4{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04be{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04bf{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04c0{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04c8{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04c9{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04ca{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04cb{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04d2{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04d3{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04d4{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04dc{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04dd{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04de{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04df{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04e6{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04e7{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04e8{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04e9{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04ea{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04f0{width:1.33in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04f1{width:1.117in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04fa{width:1.033in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04fb{width:0.75in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0e3b04fc{width:1.457in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style>
+<table data-quarto-disable-processing="true" class="table cl-0e4508f6">
 <thead>
 <tr style="overflow-wrap:break-word;">
-<th class="cl-08ffcc92"><p class="cl-08ff7990"><span class="cl-08f76b4c"></span></p></th>
-<th colspan="2" class="cl-08ffcc9c"><p class="cl-08ff7990"><span class="cl-08f76b4c">Disease status (primary outcome)</span></p></th>
-<th class="cl-08ffcc9e"><p class="cl-08ff7990"><span class="cl-08f76b4c"></span></p></th>
-<th class="cl-08ffcca6"><p class="cl-08ff7990"><span class="cl-08f76b4c"></span></p></th>
+<th class="cl-0e3b04b4"><p class="cl-0e3ab9dc"><span class="cl-0e349962"></span></p></th>
+<th colspan="2" class="cl-0e3b04be"><p class="cl-0e3ab9dc"><span class="cl-0e349962">Disease status (primary outcome)</span></p></th>
+<th class="cl-0e3b04c0"><p class="cl-0e3ab9dc"><span class="cl-0e349962"></span></p></th>
+<th class="cl-0e3b04c8"><p class="cl-0e3ab9dc"><span class="cl-0e349962"></span></p></th>
 </tr>
 <tr style="overflow-wrap:break-word;">
-<th class="cl-08ffcca7"><p class="cl-08ff7990"><span class="cl-08f76b4c">Smoking status</span></p></th>
-<th class="cl-08ffcca8"><p class="cl-08ff7990"><span class="cl-08f76b4c">No</span></p></th>
-<th class="cl-08ffccb0"><p class="cl-08ff7990"><span class="cl-08f76b4c">Yes</span></p></th>
-<th class="cl-08ffccb1"><p class="cl-08ff7990"><span class="cl-08f76b4c">Sum</span></p></th>
-<th class="cl-08ffccb2"><p class="cl-08ff7990"><span class="cl-08f76b4c">PR (95% CI)</span></p></th>
+<th class="cl-0e3b04c9"><p class="cl-0e3ab9dc"><span class="cl-0e349962">Smoking status</span></p></th>
+<th class="cl-0e3b04ca"><p class="cl-0e3ab9dc"><span class="cl-0e349962">No</span></p></th>
+<th class="cl-0e3b04cb"><p class="cl-0e3ab9dc"><span class="cl-0e349962">Yes</span></p></th>
+<th class="cl-0e3b04d2"><p class="cl-0e3ab9dc"><span class="cl-0e349962">Sum</span></p></th>
+<th class="cl-0e3b04d3"><p class="cl-0e3ab9dc"><span class="cl-0e349962">PR (95% CI)</span></p></th>
 </tr>
 </thead>
 <tbody>
 <tr style="overflow-wrap:break-word;">
-<td class="cl-08ffccb3"><p class="cl-08ff799a"><span class="cl-08f76b4c">Never</span></p></td>
-<td class="cl-08ffccba"><p class="cl-08ff7990"><span class="cl-08f76b4c">179 (54.1%)</span></p></td>
-<td class="cl-08ffccbb"><p class="cl-08ff7990"><span class="cl-08f76b4c">65 (38.5%)</span></p></td>
-<td class="cl-08ffccc4"><p class="cl-08ff7990"><span class="cl-08f76b4c">244</span></p></td>
-<td class="cl-08ffccc5"><p class="cl-08ff7990"><span class="cl-08f76b4c">1.00 (Ref)</span></p></td>
+<td class="cl-0e3b04d4"><p class="cl-0e3ab9e6"><span class="cl-0e349962">Never</span></p></td>
+<td class="cl-0e3b04dc"><p class="cl-0e3ab9dc"><span class="cl-0e349962">179 (54.1%)</span></p></td>
+<td class="cl-0e3b04dd"><p class="cl-0e3ab9dc"><span class="cl-0e349962">65 (38.5%)</span></p></td>
+<td class="cl-0e3b04de"><p class="cl-0e3ab9dc"><span class="cl-0e349962">244</span></p></td>
+<td class="cl-0e3b04df"><p class="cl-0e3ab9dc"><span class="cl-0e349962">1.00 (Ref)</span></p></td>
 </tr>
 <tr style="overflow-wrap:break-word;">
-<td class="cl-08ffccb3"><p class="cl-08ff799a"><span class="cl-08f76b4c">Former</span></p></td>
-<td class="cl-08ffccba"><p class="cl-08ff7990"><span class="cl-08f76b4c">107 (32.3%)</span></p></td>
-<td class="cl-08ffccbb"><p class="cl-08ff7990"><span class="cl-08f76b4c">51 (30.2%)</span></p></td>
-<td class="cl-08ffccc4"><p class="cl-08ff7990"><span class="cl-08f76b4c">158</span></p></td>
-<td class="cl-08ffccc5"><p class="cl-08ff7990"><span class="cl-08f76b4c">1.21 (0.89 - 1.65)</span></p></td>
+<td class="cl-0e3b04d4"><p class="cl-0e3ab9e6"><span class="cl-0e349962">Former</span></p></td>
+<td class="cl-0e3b04dc"><p class="cl-0e3ab9dc"><span class="cl-0e349962">107 (32.3%)</span></p></td>
+<td class="cl-0e3b04dd"><p class="cl-0e3ab9dc"><span class="cl-0e349962">51 (30.2%)</span></p></td>
+<td class="cl-0e3b04de"><p class="cl-0e3ab9dc"><span class="cl-0e349962">158</span></p></td>
+<td class="cl-0e3b04df"><p class="cl-0e3ab9dc"><span class="cl-0e349962">1.21 (0.89 - 1.65)</span></p></td>
 </tr>
 <tr style="overflow-wrap:break-word;">
-<td class="cl-08ffccb3"><p class="cl-08ff799a"><span class="cl-08f76b4c">Current</span></p></td>
-<td class="cl-08ffccba"><p class="cl-08ff7990"><span class="cl-08f76b4c">45 (13.6%)</span></p></td>
-<td class="cl-08ffccbb"><p class="cl-08ff7990"><span class="cl-08f76b4c">53 (31.4%)</span></p></td>
-<td class="cl-08ffccc4"><p class="cl-08ff7990"><span class="cl-08f76b4c">98</span></p></td>
-<td class="cl-08ffccc5"><p class="cl-08ff7990"><span class="cl-08f76b4c">2.03 (1.54 - 2.68)</span></p></td>
+<td class="cl-0e3b04d4"><p class="cl-0e3ab9e6"><span class="cl-0e349962">Current</span></p></td>
+<td class="cl-0e3b04dc"><p class="cl-0e3ab9dc"><span class="cl-0e349962">45 (13.6%)</span></p></td>
+<td class="cl-0e3b04dd"><p class="cl-0e3ab9dc"><span class="cl-0e349962">53 (31.4%)</span></p></td>
+<td class="cl-0e3b04de"><p class="cl-0e3ab9dc"><span class="cl-0e349962">98</span></p></td>
+<td class="cl-0e3b04df"><p class="cl-0e3ab9dc"><span class="cl-0e349962">2.03 (1.54 - 2.68)</span></p></td>
 </tr>
 <tr style="overflow-wrap:break-word;">
-<td class="cl-08ffccc6"><p class="cl-08ff799a"><span class="cl-08f76b4c">Sum</span></p></td>
-<td class="cl-08ffccce"><p class="cl-08ff7990"><span class="cl-08f76b4c">331</span></p></td>
-<td class="cl-08ffcccf"><p class="cl-08ff7990"><span class="cl-08f76b4c">169</span></p></td>
-<td class="cl-08ffccd0"><p class="cl-08ff7990"><span class="cl-08f76b4c">500</span></p></td>
-<td class="cl-08ffccd1"><p class="cl-08ff7990"><span class="cl-08f76b4c"></span></p></td>
+<td class="cl-0e3b04e6"><p class="cl-0e3ab9e6"><span class="cl-0e349962">Sum</span></p></td>
+<td class="cl-0e3b04e7"><p class="cl-0e3ab9dc"><span class="cl-0e349962">331</span></p></td>
+<td class="cl-0e3b04e8"><p class="cl-0e3ab9dc"><span class="cl-0e349962">169</span></p></td>
+<td class="cl-0e3b04e9"><p class="cl-0e3ab9dc"><span class="cl-0e349962">500</span></p></td>
+<td class="cl-0e3b04ea"><p class="cl-0e3ab9dc"><span class="cl-0e349962"></span></p></td>
 </tr>
 </tbody>
-<tfoot><tr style="overflow-wrap:break-word;"><td colspan="5" class="cl-08ffccd2"><p class="cl-08ff79a4"><span class="cl-08f76b4c">Pearson's Chi-squared test: p-value &lt; 0.001</span></p></td></tr></tfoot>
+<tfoot><tr style="overflow-wrap:break-word;"><td colspan="5" class="cl-0e3b04f0"><p class="cl-0e3ab9f0"><span class="cl-0e349962">Pearson's Chi-squared test: p-value &lt; 0.001</span></p></td></tr></tfoot>
 </table>
 </div>
 <div class="sourceCode" id="cb13"><pre class="downlit sourceCode r">
@@ -434,17 +438,17 @@ result in both the test and the reference.</p>
 <span><span class="co">#&gt;   DIAGNOSTIC TEST EVALUATION</span></span>
 <span><span class="co">#&gt; ============================================================</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Sample Size:       485 </span></span>
-<span><span class="co">#&gt; Confidence Level:  95% </span></span>
+<span><span class="co">#&gt;   Sample size      : 485</span></span>
+<span><span class="co">#&gt;   Confidence level : 95%</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Reference Standard (Gold Standard):</span></span>
-<span><span class="co">#&gt;   Positive: 'Yes'  |  Negative: 'No'</span></span>
+<span><span class="co">#&gt;   Reference standard (gold standard):</span></span>
+<span><span class="co">#&gt;     Positive = 'Yes'   |   Negative = 'No'</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Diagnostic Test:</span></span>
-<span><span class="co">#&gt;   Positive: 'Positive'  |  Negative: 'Negative'</span></span>
+<span><span class="co">#&gt;   Diagnostic test:</span></span>
+<span><span class="co">#&gt;     Positive = 'Positive'   |   Negative = 'Negative'</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; Confusion Matrix:</span></span>
+<span><span class="co">#&gt;   Confusion Matrix</span></span>
 <span><span class="co">#&gt; ------------------------------------------------------------</span></span>
 <span><span class="co">#&gt;           Ref</span></span>
 <span><span class="co">#&gt; Test       Yes  No</span></span>
@@ -452,24 +456,24 @@ result in both the test and the reference.</p>
 <span><span class="co">#&gt;   Negative  22 283</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; ============================================================</span></span>
-<span><span class="co">#&gt; Performance Metrics (with 95% CI):</span></span>
+<span><span class="co">#&gt;   Performance Metrics  (95% CI)</span></span>
 <span><span class="co">#&gt; ============================================================</span></span>
-<span><span class="co">#&gt; Sensitivity (Recall)  : 0.867 (0.805 - 0.915)</span></span>
-<span><span class="co">#&gt; Specificity           : 0.884 (0.844 - 0.917)</span></span>
-<span><span class="co">#&gt; Pos Pred Value (PPV)  : 0.794 (0.728 - 0.851)</span></span>
-<span><span class="co">#&gt; Neg Pred Value (NPV)  : 0.928 (0.893 - 0.954)</span></span>
-<span><span class="co">#&gt; Accuracy              : 0.878 (0.846 - 0.906)</span></span>
-<span><span class="co">#&gt; Prevalence            : 0.340 (0.298 - 0.384)</span></span>
+<span><span class="co">#&gt; Sensitivity           :  0.867  (0.805 – 0.915)</span></span>
+<span><span class="co">#&gt; Specificity           :  0.884  (0.844 – 0.917)</span></span>
+<span><span class="co">#&gt; Pos Pred Value (PPV)  :  0.794  (0.728 – 0.851)</span></span>
+<span><span class="co">#&gt; Neg Pred Value (NPV)  :  0.928  (0.893 – 0.954)</span></span>
+<span><span class="co">#&gt; Accuracy              :  0.878  (0.846 – 0.906)</span></span>
+<span><span class="co">#&gt; Prevalence            :  0.340  (0.298 – 0.384)</span></span>
 <span><span class="co">#&gt; ------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; Likelihood Ratio +    : 7.495</span></span>
-<span><span class="co">#&gt; Likelihood Ratio -    : 0.151</span></span>
-<span><span class="co">#&gt; Youden Index          : 0.751</span></span>
-<span><span class="co">#&gt; F1 Score              : 0.829</span></span></code></pre></div>
+<span><span class="co">#&gt; Likelihood Ratio +    :  7.495</span></span>
+<span><span class="co">#&gt; Likelihood Ratio -    :  0.151</span></span>
+<span><span class="co">#&gt; Youden Index          :  0.751</span></span>
+<span><span class="co">#&gt; F1 Score              :  0.829</span></span></code></pre></div>
 <p>You can quickly visualize the Confusion Matrix using the generic
 <code><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot()</a></code> function on the result object.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/graphics/plot.default.html" class="external-link">plot</a></span><span class="op">(</span><span class="va">results</span>, main <span class="op">=</span> <span class="st">"Rapid Test Performance"</span><span class="op">)</span></span></code></pre></div>
-<p><img src="tb_tutorial_files/figure-html/unnamed-chunk-12-1.png" width="700"></p>
+<p><img src="tb_tutorial_files/figure-html/unnamed-chunk-12-1.png" class="r-plt" alt="" width="700"></p>
 <p>The area of each quadrant reflects the number of observations. Large
 areas in the true positive and true negative quadrants indicate good
 performance.</p>
@@ -484,7 +488,7 @@ containing all the important metrics:</p>
 <code class="sourceCode R"><span><span class="va">metrics_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">results</span><span class="op">)</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">metrics_table</span><span class="op">)</span></span>
 <span><span class="co">#&gt;                  Metric  Estimate   LowerCI   UpperCI</span></span>
-<span><span class="co">#&gt; 1  Sensitivity (Recall) 0.8666667 0.8051165 0.9145175</span></span>
+<span><span class="co">#&gt; 1           Sensitivity 0.8666667 0.8051165 0.9145175</span></span>
 <span><span class="co">#&gt; 2           Specificity 0.8843750 0.8441612 0.9172694</span></span>
 <span><span class="co">#&gt; 3  Pos Pred Value (PPV) 0.7944444 0.7279793 0.8509482</span></span>
 <span><span class="co">#&gt; 4  Neg Pred Value (NPV) 0.9278689 0.8928271 0.9542465</span></span>
@@ -535,13 +539,12 @@ status, and smoking affect each type of visit?</p>
 <span><span class="co">#&gt; Auto-detected family 'poisson': Coefficients will be exponentiated.</span></span>
 <span>  </span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">healthcare_model</span><span class="op">)</span></span>
-<span><span class="co">#&gt;         Variable             Result  Outcome</span></span>
-<span><span class="co">#&gt; 1    (Intercept) 2.33 (1.91 - 2.83) outcome1</span></span>
-<span><span class="co">#&gt; 2            age 1.01 (1.00 - 1.01) outcome1</span></span>
-<span><span class="co">#&gt; 3        sexMale 1.02 (0.94 - 1.11) outcome1</span></span>
-<span><span class="co">#&gt; 4     diseaseYes 1.62 (1.49 - 1.77) outcome1</span></span>
-<span><span class="co">#&gt; 5  smokingFormer 0.99 (0.90 - 1.09) outcome1</span></span>
-<span><span class="co">#&gt; 6 smokingCurrent 1.00 (0.90 - 1.12) outcome1</span></span></code></pre></div>
+<span><span class="co">#&gt;         Variable       Primary Care         Specialist     Emergency Dept</span></span>
+<span><span class="co">#&gt; 1            age 1.01 (1.00 - 1.01) 1.00 (0.99 - 1.00) 1.00 (0.99 - 1.02)</span></span>
+<span><span class="co">#&gt; 2        sexMale 1.02 (0.94 - 1.11) 0.94 (0.84 - 1.06) 0.87 (0.69 - 1.10)</span></span>
+<span><span class="co">#&gt; 3     diseaseYes 1.62 (1.49 - 1.77) 2.21 (1.95 - 2.50) 2.25 (1.71 - 2.96)</span></span>
+<span><span class="co">#&gt; 4  smokingFormer 0.99 (0.90 - 1.09) 1.03 (0.90 - 1.18) 0.84 (0.64 - 1.10)</span></span>
+<span><span class="co">#&gt; 5 smokingCurrent 1.00 (0.90 - 1.12) 0.96 (0.83 - 1.12) 1.19 (0.87 - 1.63)</span></span></code></pre></div>
 <p>The function fitted three separate Poisson regression models (one per
 outcome) using the same predictors and outputs IIRs and CIs</p>
 </div>
@@ -560,13 +563,12 @@ Yes/No).</p>
 <span><span class="co">#&gt; Auto-detected family 'binomial': Coefficients will be exponentiated.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">hospital_model</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            Variable             Result      Outcome</span></span>
-<span><span class="co">#&gt; 1       (Intercept) 0.01 (0.00 - 0.03) hospitalized</span></span>
-<span><span class="co">#&gt; 2               age 1.05 (1.02 - 1.07) hospitalized</span></span>
-<span><span class="co">#&gt; 3        diseaseYes 3.01 (1.76 - 5.13) hospitalized</span></span>
-<span><span class="co">#&gt; 4     smokingFormer 0.58 (0.30 - 1.12) hospitalized</span></span>
-<span><span class="co">#&gt; 5    smokingCurrent 2.74 (1.51 - 4.96) hospitalized</span></span>
-<span><span class="co">#&gt; 6 comorbidity_score 1.25 (0.83 - 1.89) hospitalized</span></span></code></pre></div>
+<span><span class="co">#&gt;            Variable       hospitalized</span></span>
+<span><span class="co">#&gt; 1               age 1.05 (1.02 - 1.07)</span></span>
+<span><span class="co">#&gt; 2        diseaseYes 3.01 (1.76 - 5.13)</span></span>
+<span><span class="co">#&gt; 3     smokingFormer 0.58 (0.30 - 1.12)</span></span>
+<span><span class="co">#&gt; 4    smokingCurrent 2.74 (1.51 - 4.96)</span></span>
+<span><span class="co">#&gt; 5 comorbidity_score 1.25 (0.83 - 1.89)</span></span></code></pre></div>
 <p>The coefficients are now <strong>odds ratios</strong></p>
 </div>
 <div class="section level4">
@@ -583,13 +585,12 @@ Yes/No).</p>
 <span><span class="co">#&gt; Auto-detected family 'binomial': Coefficients will be exponentiated.</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">hospital_model_p</span><span class="op">)</span></span>
-<span><span class="co">#&gt;            Variable             Result      Outcome P_Value</span></span>
-<span><span class="co">#&gt; 1       (Intercept) 0.01 (0.00 - 0.03) hospitalized  &lt;0.001</span></span>
-<span><span class="co">#&gt; 2               age 1.05 (1.02 - 1.07) hospitalized  &lt;0.001</span></span>
-<span><span class="co">#&gt; 3        diseaseYes 3.01 (1.76 - 5.13) hospitalized  &lt;0.001</span></span>
-<span><span class="co">#&gt; 4     smokingFormer 0.58 (0.30 - 1.12) hospitalized   0.106</span></span>
-<span><span class="co">#&gt; 5    smokingCurrent 2.74 (1.51 - 4.96) hospitalized  &lt;0.001</span></span>
-<span><span class="co">#&gt; 6 comorbidity_score 1.25 (0.83 - 1.89) hospitalized   0.288</span></span></code></pre></div>
+<span><span class="co">#&gt;            Variable       hospitalized P_hospitalized</span></span>
+<span><span class="co">#&gt; 1               age 1.05 (1.02 - 1.07)         &lt;0.001</span></span>
+<span><span class="co">#&gt; 2        diseaseYes 3.01 (1.76 - 5.13)         &lt;0.001</span></span>
+<span><span class="co">#&gt; 3     smokingFormer 0.58 (0.30 - 1.12)          0.106</span></span>
+<span><span class="co">#&gt; 4    smokingCurrent 2.74 (1.51 - 4.96)         &lt;0.001</span></span>
+<span><span class="co">#&gt; 5 comorbidity_score 1.25 (0.83 - 1.89)          0.288</span></span></code></pre></div>
 <p>Now each outcome gets both an estimate column and a p-value
 column.</p>
 </div>
@@ -612,17 +613,16 @@ outcomes, so we use <strong>Gaussian regression</strong>:</p>
 <span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/print.html" class="external-link">print</a></span><span class="op">(</span><span class="va">clinical_model</span><span class="op">)</span></span>
-<span><span class="co">#&gt;           Variable             Result     Outcome</span></span>
-<span><span class="co">#&gt; 1      (Intercept) 71.2 (66.0 - 76.3) systolic_bp</span></span>
-<span><span class="co">#&gt; 2              age    0.5 (0.4 - 0.6) systolic_bp</span></span>
-<span><span class="co">#&gt; 3          sexMale  -1.0 (-2.6 - 0.6) systolic_bp</span></span>
-<span><span class="co">#&gt; 4              bmi    0.8 (0.6 - 1.0) systolic_bp</span></span>
-<span><span class="co">#&gt; 5 exerciseModerate -5.1 (-6.9 - -3.3) systolic_bp</span></span>
-<span><span class="co">#&gt; 6     exerciseHigh -6.5 (-8.8 - -4.2) systolic_bp</span></span>
-<span><span class="co">#&gt; 7    smokingFormer   1.1 (-0.8 - 3.0) systolic_bp</span></span>
-<span><span class="co">#&gt; 8   smokingCurrent    3.1 (1.0 - 5.2) systolic_bp</span></span></code></pre></div>
-<p>These are <strong>linear (</strong>β) <strong>coefficients</strong>
-(not exponentiated)</p>
+<span><span class="co">#&gt;           Variable Systolic BP (mmHg)  Cholesterol (mg/dL)</span></span>
+<span><span class="co">#&gt; 1              age    0.5 (0.4 - 0.6)      0.7 (0.5 - 0.9)</span></span>
+<span><span class="co">#&gt; 2          sexMale  -1.0 (-2.6 - 0.6)      4.4 (0.2 - 8.6)</span></span>
+<span><span class="co">#&gt; 3              bmi    0.8 (0.6 - 1.0)      1.0 (0.5 - 1.4)</span></span>
+<span><span class="co">#&gt; 4 exerciseModerate -5.1 (-6.9 - -3.3)  -9.3 (-14.0 - -4.6)</span></span>
+<span><span class="co">#&gt; 5     exerciseHigh -6.5 (-8.8 - -4.2) -12.4 (-18.0 - -6.9)</span></span>
+<span><span class="co">#&gt; 6    smokingFormer   1.1 (-0.8 - 3.0)    -3.2 (-7.9 - 1.5)</span></span>
+<span><span class="co">#&gt; 7   smokingCurrent    3.1 (1.0 - 5.2)     3.5 (-2.4 - 9.3)</span></span></code></pre></div>
+<p>These are <strong>linear (beta) coefficients</strong> (not
+exponentiated)</p>
 </div>
 <div class="section level3">
 <h3 id="exporting-your-table">Exporting Your Table<a class="anchor" aria-label="anchor" href="#exporting-your-table"></a>
@@ -670,7 +670,7 @@ tables.</p>
 </div>
 
 <div class="pkgdown-footer-right">
-  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.1.1.</p>
+  <p>Site built with <a href="https://pkgdown.r-lib.org/" class="external-link">pkgdown</a> 2.2.0.</p>
 </div>
 
     </footer>

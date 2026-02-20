@@ -54,6 +54,12 @@ format everything into a single table ready for export.
 
 ## Installation
 
+SimtblR is available trough CRAN:
+
+``` r
+install.packages("SimtablR")
+```
+
 You can install the development version directly from GitHub:
 
 ``` r

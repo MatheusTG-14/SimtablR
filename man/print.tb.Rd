@@ -11,11 +11,11 @@
 
 \item{digits}{Number of decimal places to display.}
 
-\item{...}{Additional arguments.}
+\item{...}{Additional arguments (unused).}
 }
 \value{
-No return value, called for side effects
+Invisibly returns \code{x}, called for side effects.
 }
 \description{
-Prints a formatted table with flags and attributes.
+Print Method for tb Objects
 }

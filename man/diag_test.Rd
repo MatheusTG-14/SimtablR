@@ -14,45 +14,83 @@ diag_test(
 )
 }
 \arguments{
-\item{data}{A data.frame containing the test and reference variables.}
+\item{data}{A data.frame containing \code{test} and \code{ref} variables.}
 
-\item{test}{Unquoted name of the diagnostic test variable (binary).}
+\item{test}{Unquoted name of the diagnostic test variable (must be binary).}
 
-\item{ref}{Unquoted name of the reference standard variable (binary).}
+\item{ref}{Unquoted name of the reference standard variable (must be binary).}
 
-\item{positive}{Character or numeric. Level representing "Positive" in REFERENCE.}
+\item{positive}{Character or numeric. Level representing "Positive" in the
+\strong{reference} variable. If \code{NULL} (default), auto-detected from common
+positive labels (\code{"Yes"}, \code{"1"}, \code{"Positive"}, etc.) or the last level.}
 
-\item{test_positive}{Character or numeric. Level representing "Positive" in TEST.}
+\item{test_positive}{Character or numeric. Level representing "Positive" in
+the \strong{test} variable. If \code{NULL} (default), mirrors \code{positive} when the
+same label exists in the test variable, then falls back to auto-detection.}
 
-\item{conf.level}{Numeric. Confidence level (0-1). Default: 0.95.}
+\item{conf.level}{Numeric. Confidence level for binomial CIs (0–1).
+Default: \code{0.95}.}
 }
 \value{
-An object of class \code{diag_test} containing:
+An object of class \code{diag_test} — a named list with:
 \itemize{
-\item \code{table}: 2x2 confusion matrix
-\item \code{stats}: Data frame with metrics and CIs
-\item \code{labels}: List with labels used
-\item \code{sample_size}: Total valid observations
+\item \verb{$table}: 2×2 \code{table} object (Test × Ref).
+\item \verb{$stats}: \code{data.frame} with columns \code{Metric}, \code{Estimate}, \code{LowerCI},
+\code{UpperCI}.
+\item \verb{$labels}: named list with \code{ref_pos}, \code{ref_neg}, \code{test_pos}, \code{test_neg}.
+\item \verb{$sample_size}: integer, total valid observations.
+\item \verb{$conf.level}: numeric, confidence level used.
 }
 }
 \description{
-Computes a comprehensive confusion matrix and diagnostic performance metrics
-for binary classification tests.
+Computes a 2×2 confusion matrix and comprehensive diagnostic performance
+metrics for a binary classification test, with exact binomial confidence
+intervals.
 }
 \details{
-\strong{Confusion Matrix Structure}
-The function creates a 2x2 confusion matrix:
-\itemize{
-\item TP: True Positives
-\item TN: True Negatives
-\item FP: False Positives
-\item FN: False Negatives
+\subsection{Confusion Matrix Layout}{
+
+\if{html}{\out{<div class="sourceCode">}}\preformatted{           | Ref +   | Ref -
+-----------+---------+--------
+Test +     |   TP    |   FP
+Test -     |   FN    |   TN
+}\if{html}{\out{</div>}}
 }
 
-\strong{Metrics Calculated}
+\subsection{Metrics Computed}{
 \itemize{
-\item Sensitivity, Specificity, PPV, NPV
-\item Accuracy, Prevalence
-\item Likelihood Ratios, Youden's Index, F1 Score
+\item \strong{Sensitivity} (Recall) = TP / (TP + FN)
+\item \strong{Specificity} = TN / (TN + FP)
+\item \strong{PPV} (Precision) = TP / (TP + FP)
+\item \strong{NPV} = TN / (TN + FN)
+\item \strong{Accuracy} = (TP + TN) / Total
+\item \strong{Prevalence} = (TP + FN) / Total
+\item \strong{Likelihood Ratio +} = Sensitivity / (1 – Specificity)
+\item \strong{Likelihood Ratio –} = (1 – Sensitivity) / Specificity
+\item \strong{Youden's Index} = Sensitivity + Specificity – 1
+\item \strong{F1 Score} = 2 × (PPV × Sensitivity) / (PPV + Sensitivity)
 }
+
+Binomial CIs (exact Clopper–Pearson) are computed for the first six metrics.
+Likelihood Ratios, Youden's Index, and F1 Score do not have CIs.
+}
+}
+\examples{
+set.seed(1)
+n   <- 200
+ref <- factor(sample(c("No", "Yes"), n, replace = TRUE, prob = c(.55, .45)))
+tst <- ifelse(ref == "Yes",
+              ifelse(runif(n) < .80, "Yes", "No"),
+              ifelse(runif(n) < .85, "No",  "Yes"))
+df  <- data.frame(rapid_test = factor(tst), lab = ref)
+
+result <- diag_test(df, test = rapid_test, ref = lab,
+                    positive = "Yes", test_positive = "Yes")
+print(result)
+as.data.frame(result)
+
+}
+\seealso{
+\code{\link[=print.diag_test]{print.diag_test()}}, \code{\link[=as.data.frame.diag_test]{as.data.frame.diag_test()}},
+\code{\link[=plot.diag_test]{plot.diag_test()}}
 }

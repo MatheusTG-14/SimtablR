@@ -9,11 +9,11 @@
 \arguments{
 \item{x}{A \code{tb} object.}
 
-\item{...}{Additional arguments.}
+\item{...}{Additional arguments (unused).}
 }
 \value{
 A data.frame with the formatted table.
 }
 \description{
-Extracts the data from a tb object as a standard data.frame.
+Convert tb to Data Frame
 }

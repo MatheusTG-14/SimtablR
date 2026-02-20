@@ -47,6 +47,8 @@ reference:
     desc: "Functions for summary tables and descriptive analysis."
     contents:
       - tb
+      - as.data.frame.tb
+      - print.tb
       - as_flextable.tb
 
   - title: "Diagnostic Accuracy"

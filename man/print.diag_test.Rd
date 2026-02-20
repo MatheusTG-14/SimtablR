@@ -4,18 +4,19 @@
 \alias{print.diag_test}
 \title{Print Method for diag_test Objects}
 \usage{
-\method{print}{diag_test}(x, digits = 3, ...)
+\method{print}{diag_test}(x, digits = 3L, ...)
 }
 \arguments{
-\item{x}{A diag_test object}
+\item{x}{A \code{diag_test} object.}
 
-\item{digits}{Number of decimal places for metrics (default: 3)}
+\item{digits}{Integer. Decimal places for metrics. Default: \code{3}.}
 
-\item{...}{Additional arguments (unused)}
+\item{...}{Additional arguments (unused).}
 }
 \value{
-No return value, called for side effects
+Invisibly returns \code{x}.
 }
 \description{
-Print Method for diag_test Objects
+Displays a formatted summary of the confusion matrix and all diagnostic
+performance metrics with confidence intervals.
 }

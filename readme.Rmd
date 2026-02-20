@@ -38,11 +38,17 @@ The `tb()` function is built to replace and enhance the base R `table()` functio
 ---
 
 ## Installation
+SimtblR is available trough CRAN:
+
+``` r
+install.packages("SimtablR")
+```
+
 You can install the development version directly from GitHub:
 
 ``` r
 # install.packages("devtools")
-devtools::install_github("MatheusTG-14/tableR")
+devtools::install_github("MatheusTG-14/SimtablR")
 ```
 
 ---

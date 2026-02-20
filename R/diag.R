@@ -1,40 +1,80 @@
 #' Diagnostic Test Accuracy Assessment
 #'
-#' Computes a comprehensive confusion matrix and diagnostic performance metrics
-#' for binary classification tests.
+#' Computes a 2×2 confusion matrix and comprehensive diagnostic performance
+#' metrics for a binary classification test, with exact binomial confidence
+#' intervals.
 #'
-#' @param data A data.frame containing the test and reference variables.
-#' @param test Unquoted name of the diagnostic test variable (binary).
-#' @param ref Unquoted name of the reference standard variable (binary).
-#' @param positive Character or numeric. Level representing "Positive" in REFERENCE.
-#' @param test_positive Character or numeric. Level representing "Positive" in TEST.
-#' @param conf.level Numeric. Confidence level (0-1). Default: 0.95.
+#' @param data A data.frame containing `test` and `ref` variables.
+#' @param test Unquoted name of the diagnostic test variable (must be binary).
+#' @param ref Unquoted name of the reference standard variable (must be binary).
+#' @param positive Character or numeric. Level representing "Positive" in the
+#'   **reference** variable. If `NULL` (default), auto-detected from common
+#'   positive labels (`"Yes"`, `"1"`, `"Positive"`, etc.) or the last level.
+#' @param test_positive Character or numeric. Level representing "Positive" in
+#'   the **test** variable. If `NULL` (default), mirrors `positive` when the
+#'   same label exists in the test variable, then falls back to auto-detection.
+#' @param conf.level Numeric. Confidence level for binomial CIs (0–1).
+#'   Default: `0.95`.
 #'
 #' @details
-#' **Confusion Matrix Structure**
-#' The function creates a 2x2 confusion matrix:
-#' * TP: True Positives
-#' * TN: True Negatives
-#' * FP: False Positives
-#' * FN: False Negatives
+#' ## Confusion Matrix Layout
+#' ```
+#'            | Ref +   | Ref -
+#' -----------+---------+--------
+#' Test +     |   TP    |   FP
+#' Test -     |   FN    |   TN
+#' ```
 #'
-#' **Metrics Calculated**
-#' * Sensitivity, Specificity, PPV, NPV
-#' * Accuracy, Prevalence
-#' * Likelihood Ratios, Youden's Index, F1 Score
+#' ## Metrics Computed
+#' * **Sensitivity** (Recall) = TP / (TP + FN)
+#' * **Specificity** = TN / (TN + FP)
+#' * **PPV** (Precision) = TP / (TP + FP)
+#' * **NPV** = TN / (TN + FN)
+#' * **Accuracy** = (TP + TN) / Total
+#' * **Prevalence** = (TP + FN) / Total
+#' * **Likelihood Ratio +** = Sensitivity / (1 – Specificity)
+#' * **Likelihood Ratio –** = (1 – Sensitivity) / Specificity
+#' * **Youden's Index** = Sensitivity + Specificity – 1
+#' * **F1 Score** = 2 × (PPV × Sensitivity) / (PPV + Sensitivity)
 #'
-#' @return An object of class \code{diag_test} containing:
-#' * \code{table}: 2x2 confusion matrix
-#' * \code{stats}: Data frame with metrics and CIs
-#' * \code{labels}: List with labels used
-#' * \code{sample_size}: Total valid observations
+#' Binomial CIs (exact Clopper–Pearson) are computed for the first six metrics.
+#' Likelihood Ratios, Youden's Index, and F1 Score do not have CIs.
+#'
+#' @return An object of class `diag_test` — a named list with:
+#' * `$table`: 2×2 `table` object (Test × Ref).
+#' * `$stats`: `data.frame` with columns `Metric`, `Estimate`, `LowerCI`,
+#'   `UpperCI`.
+#' * `$labels`: named list with `ref_pos`, `ref_neg`, `test_pos`, `test_neg`.
+#' * `$sample_size`: integer, total valid observations.
+#' * `$conf.level`: numeric, confidence level used.
+#'
+#' @seealso [print.diag_test()], [as.data.frame.diag_test()],
+#'   [plot.diag_test()]
+#'
+#' @examples
+#' set.seed(1)
+#' n   <- 200
+#' ref <- factor(sample(c("No", "Yes"), n, replace = TRUE, prob = c(.55, .45)))
+#' tst <- ifelse(ref == "Yes",
+#'               ifelse(runif(n) < .80, "Yes", "No"),
+#'               ifelse(runif(n) < .85, "No",  "Yes"))
+#' df  <- data.frame(rapid_test = factor(tst), lab = ref)
+#'
+#' result <- diag_test(df, test = rapid_test, ref = lab,
+#'                     positive = "Yes", test_positive = "Yes")
+#' print(result)
+#' as.data.frame(result)
 #'
 #' @export
-
-diag_test <- function(data, test, ref, positive = NULL, test_positive = NULL,
-                      conf.level = 0.95) {
-
-  #verificar que args são válidos
+diag_test <- function(
+    data,
+    test,
+    ref,
+    positive      = NULL,
+    test_positive = NULL,
+    conf.level    = 0.95
+) {
+  # ── Args ───────────────────────────────────────────────────────
   if (missing(data)) {
     stop("No data provided. Please supply a data.frame.", call. = FALSE)
   }
@@ -44,51 +84,54 @@ diag_test <- function(data, test, ref, positive = NULL, test_positive = NULL,
   if (nrow(data) == 0) {
     stop("'data' is empty (0 rows).", call. = FALSE)
   }
-
-  # Validate confidence level
-  if (!is.numeric(conf.level) || length(conf.level) != 1) {
-    stop("'conf.level' must be a single numeric value.", call. = FALSE)
-  }
-  if (conf.level <= 0 || conf.level >= 1) {
-    stop("'conf.level' must be between 0 and 1 (e.g., 0.95 for 95%).", call. = FALSE)
+  if (!is.numeric(conf.level) || length(conf.level) != 1 ||
+      conf.level <= 0 || conf.level >= 1) {
+    stop("'conf.level' must be a single numeric value between 0 and 1.",
+         call. = FALSE)
   }
 
+  # ── extrair Args da expressão  ───────────────────────────────
   test_expr <- substitute(test)
-  ref_expr <- substitute(ref)
+  ref_expr  <- substitute(ref)
 
   if (is.null(test_expr) || identical(test_expr, quote(expr = ))) {
     stop("'test' variable not specified.", call. = FALSE)
   }
   if (is.null(ref_expr) || identical(ref_expr, quote(expr = ))) {
-    stop("'ref' (reference) variable not specified.", call. = FALSE)
+    stop("'ref' variable not specified.", call. = FALSE)
   }
 
   val_test <- tryCatch(
     eval(test_expr, data, parent.frame()),
-    error = function(e) {
-      stop(sprintf("'test' variable not found in data: %s",
-                   deparse(test_expr)), call. = FALSE)
-    }
+    error = function(e) stop(
+      sprintf("'test' variable '%s' not found in data.", deparse(test_expr)),
+      call. = FALSE
+    )
   )
   val_ref <- tryCatch(
     eval(ref_expr, data, parent.frame()),
-    error = function(e) {
-      stop(sprintf("'ref' (reference) variable not found in data: %s",
-                   deparse(ref_expr)), call. = FALSE)
-    }
+    error = function(e) stop(
+      sprintf("'ref' variable '%s' not found in data.", deparse(ref_expr)),
+      call. = FALSE
+    )
   )
 
   if (length(val_test) != length(val_ref)) {
-    stop(sprintf("'test' and 'ref' have different lengths (%d vs %d).",
-                 length(val_test), length(val_ref)), call. = FALSE)
+    stop(sprintf(
+      "'test' and 'ref' have different lengths (%d vs %d).",
+      length(val_test), length(val_ref)
+    ), call. = FALSE)
   }
 
-  ok <- !is.na(val_test) & !is.na(val_ref) #NÃO TIRAR (quebra todo o resto do codigo)
+  # ── Remover NA ─────────────────────────────────────────────────
+  ok        <- !is.na(val_test) & !is.na(val_ref)
   n_missing <- sum(!ok)
 
   if (n_missing > 0) {
-    message(sprintf("Removed %d observation(s) with missing values (%.1f%%).",
-                    n_missing, 100 * n_missing / length(val_test)))
+    message(sprintf(
+      "Removed %d observation(s) with missing values (%.1f%%).",
+      n_missing, 100 * n_missing / length(val_test)
+    ))
   }
 
   val_test <- val_test[ok]
@@ -98,253 +141,328 @@ diag_test <- function(data, test, ref, positive = NULL, test_positive = NULL,
     stop("No valid observations after removing missing values.", call. = FALSE)
   }
 
+  # ── Garantir factor ──────────────────────────────────────────────────────
   if (!is.factor(val_test)) val_test <- factor(val_test)
   if (!is.factor(val_ref))  val_ref  <- factor(val_ref)
 
   levs_test <- levels(val_test)
   levs_ref  <- levels(val_ref)
 
-  # Validate binary
+  # ── Necessário binário ────────────────────────────────────────────────────────
   if (length(levs_test) != 2) {
-    stop(sprintf("'test' must be binary (2 levels), but has %d: %s",
-                 length(levs_test), paste(levs_test, collapse = ", ")), call. = FALSE)
+    stop(sprintf(
+      "'test' must have exactly 2 levels, but has %d: %s",
+      length(levs_test), paste(levs_test, collapse = ", ")
+    ), call. = FALSE)
   }
   if (length(levs_ref) != 2) {
-    stop(sprintf("'ref' must be binary (2 levels), but has %d: %s",
-                 length(levs_ref), paste(levs_ref, collapse = ", ")), call. = FALSE)
+    stop(sprintf(
+      "'ref' must have exactly 2 levels, but has %d: %s",
+      length(levs_ref), paste(levs_ref, collapse = ", ")
+    ), call. = FALSE)
   }
 
-  ## definir referencia
-  pos_ref <- positive
-#tenta advinhar o valor de referencia positivo
-  # se enontrar, utiliza como padrão e printa no console
-  if (is.null(pos_ref)) {
-    candidates <- c("1", "Sim", "Yes", "Positivo", "Positive", "Doente",
-                    "Disease", "Case", "Event", "S", "Y", "TRUE", "True")
-    match_ref <- intersect(levs_ref, candidates)
+  # ── Níveis positivos para teste ───────────────────────────────────────────────
+  .candidates_ref  <- c("1", "Sim", "Yes", "Positivo", "Positive",
+                        "Doente", "Disease", "Case", "Event", "S", "Y",
+                        "TRUE", "True")
+  .candidates_test <- c("1", "Sim", "Yes", "Positivo", "Positive",
+                        "Reagente", "Detected", "S", "Y", "TRUE", "True")
 
-    if (length(match_ref) > 0) {
-      pos_ref <- match_ref[1]
-      message(sprintf("Auto-detected reference positive level: '%s'", pos_ref))
-    } else {
-      pos_ref <- levs_ref[length(levs_ref)]
-      message(sprintf("Using last reference level as positive: '%s'. Specify 'positive' if incorrect.",
-                      pos_ref))
-    }
-  }
+  pos_ref  <- .resolve_pos_level(positive,      levs_ref,  .candidates_ref,
+                                 "reference", "positive")
+  pos_test <- .resolve_pos_level_test(test_positive, levs_test, pos_ref,
+                                      .candidates_test)
 
-  if (!pos_ref %in% levs_ref) {
-    if (is.numeric(positive) && positive %in% 1:2) {
-      pos_ref <- levs_ref[positive]
-      message(sprintf("Using reference level %d as positive: '%s'", positive, pos_ref))
-    } else {
-      stop(sprintf("Positive level '%s' not found in reference levels: %s",
-                   pos_ref, paste(levs_ref, collapse = ", ")), call. = FALSE)
-    }
-  }
-
-  ## Test Positive
-  pos_test <- test_positive
-
-  if (is.null(pos_test)) {
-    if (pos_ref %in% levs_test) {
-      pos_test <- pos_ref
-    } else {
-      candidates <- c("1", "Sim", "Yes", "Positivo", "Positive", "Reagente",
-                      "Detected", "S", "Y", "TRUE", "True")
-      match_test <- intersect(levs_test, candidates)
-
-      if (length(match_test) > 0) {
-        pos_test <- match_test[1]
-        message(sprintf("Auto-detected test positive level: '%s'", pos_test))
-      } else {
-        stop(sprintf(paste0(
-          "Cannot auto-detect test positive level.\n",
-          "Reference uses '%s', but this is not in test levels: %s\n",
-          "Please specify 'test_positive' argument."),
-          pos_ref, paste(levs_test, collapse = ", ")), call. = FALSE)
-      }
-    }
-  }
-
-  if (!pos_test %in% levs_test) {
-    if (is.numeric(test_positive) && test_positive %in% 1:2) {
-      pos_test <- levs_test[test_positive]
-      message(sprintf("Using test level %d as positive: '%s'", test_positive, pos_test))
-    } else {
-      stop(sprintf("Test positive level '%s' not found in test levels: %s",
-                   pos_test, paste(levs_test, collapse = ", ")), call. = FALSE)
-    }
-  }
-
-  neg_ref  <- setdiff(levs_ref, pos_ref)[1]
+  neg_ref  <- setdiff(levs_ref,  pos_ref)[1]
   neg_test <- setdiff(levs_test, pos_test)[1]
 
-  val_ref_ordered  <- factor(val_ref, levels = c(pos_ref, neg_ref))
-  val_test_ordered <- factor(val_test, levels = c(pos_test, neg_test))
+  # ── Build ordered confusion matrix ────────────────────────────────────────
+  val_ref_ord  <- factor(val_ref,  levels = c(pos_ref,  neg_ref))
+  val_test_ord <- factor(val_test, levels = c(pos_test, neg_test))
 
-  tab <- table(Test = val_test_ordered, Ref = val_ref_ordered)
-#inverter
-  TP <- tab[1, 1]; FP <- tab[1, 2]
-  FN <- tab[2, 1]; TN <- tab[2, 2]
+  tab   <- table(Test = val_test_ord, Ref = val_ref_ord)
+  TP    <- tab[1L, 1L]
+  FP    <- tab[1L, 2L]
+  FN    <- tab[2L, 1L]
+  TN    <- tab[2L, 2L]
   Total <- sum(tab)
 
-  # Catch erros de NA
-  if (TP + FN == 0) warning("No positive cases in reference (TP + FN = 0).", call. = FALSE)
-  if (TN + FP == 0) warning("No negative cases in reference (TN + FP = 0).", call. = FALSE)
-  if (TP + FP == 0) warning("No positive test results (TP + FP = 0).", call. = FALSE)
-  if (TN + FN == 0) warning("No negative test results (TN + FN = 0).", call. = FALSE)
+  # ── Sanity warnings ───────────────────────────────────────────────────────
+  if (TP + FN == 0L) warning("No positive cases in reference (TP + FN = 0).", call. = FALSE)
+  if (TN + FP == 0L) warning("No negative cases in reference (TN + FP = 0).", call. = FALSE)
+  if (TP + FP == 0L) warning("No positive test results (TP + FP = 0).",       call. = FALSE)
+  if (TN + FN == 0L) warning("No negative test results (TN + FN = 0).",       call. = FALSE)
 
-  get_ci <- function(x, n) {
-    if (n == 0) return(c(NA_real_, NA_real_, NA_real_))
+  # ── Compute metrics ───────────────────────────────────────────────────────
+  # Exact Clopper-Pearson CI via binom.test() for proportions.
+  .ci <- function(x, n) {
+    if (n == 0L) return(c(NA_real_, NA_real_, NA_real_))
     ci <- binom.test(x, n, conf.level = conf.level)$conf.int
-    return(c(x / n, ci[1], ci[2]))
+    c(x / n, ci[1L], ci[2L])
   }
 
-  sens <- get_ci(TP, TP + FN)
-  spec <- get_ci(TN, TN + FP)
-  ppv  <- get_ci(TP, TP + FP)
-  npv  <- get_ci(TN, TN + FN)
-  acc  <- get_ci(TP + TN, Total)
-  prev <- get_ci(TP + FN, Total)
+  sens <- .ci(TP,      TP + FN)
+  spec <- .ci(TN,      TN + FP)
+  ppv  <- .ci(TP,      TP + FP)
+  npv  <- .ci(TN,      TN + FN)
+  acc  <- .ci(TP + TN, Total)
+  prev <- .ci(TP + FN, Total)
 
-  lr_pos <- NA_real_; lr_neg <- NA_real_
-  if (!is.na(sens[1]) && !is.na(spec[1])) {
-    if ((1 - spec[1]) > 0) lr_pos <- sens[1] / (1 - spec[1])
-    if (spec[1] > 0)       lr_neg <- (1 - sens[1]) / spec[1]
-  }
+  lr_pos <- if (!is.na(sens[1L]) && !is.na(spec[1L]) && (1 - spec[1L]) > 0)
+    sens[1L] / (1 - spec[1L]) else NA_real_
 
-  youden <- NA_real_
-  if (!is.na(sens[1]) && !is.na(spec[1])) youden <- sens[1] + spec[1] - 1
+  lr_neg <- if (!is.na(sens[1L]) && !is.na(spec[1L]) && spec[1L] > 0)
+    (1 - sens[1L]) / spec[1L] else NA_real_
 
-  f1 <- NA_real_
-  if (!is.na(ppv[1]) && !is.na(sens[1]) && (ppv[1] + sens[1]) > 0) {
-    f1 <- 2 * (ppv[1] * sens[1]) / (ppv[1] + sens[1])
-  }
+  youden <- if (!is.na(sens[1L]) && !is.na(spec[1L]))
+    sens[1L] + spec[1L] - 1 else NA_real_
 
+  f1 <- if (!is.na(ppv[1L]) && !is.na(sens[1L]) && (ppv[1L] + sens[1L]) > 0)
+    2 * (ppv[1L] * sens[1L]) / (ppv[1L] + sens[1L]) else NA_real_
+
+  # ── Assemble stats data.frame ─────────────────────────────────────────────
   stats_df <- data.frame(
-    Metric = c("Sensitivity (Recall)", "Specificity", "Pos Pred Value (PPV)",
-               "Neg Pred Value (NPV)", "Accuracy", "Prevalence",
-               "Likelihood Ratio +", "Likelihood Ratio -", "Youden Index", "F1 Score"),
-    Estimate = c(sens[1], spec[1], ppv[1], npv[1], acc[1], prev[1],
-                 lr_pos, lr_neg, youden, f1),
-    LowerCI = c(sens[2], spec[2], ppv[2], npv[2], acc[2], prev[2],
-                NA, NA, NA, NA),
-    UpperCI = c(sens[3], spec[3], ppv[3], npv[3], acc[3], prev[3],
-                NA, NA, NA, NA),
+    Metric = c(
+      "Sensitivity", "Specificity",
+      "Pos Pred Value (PPV)", "Neg Pred Value (NPV)",
+      "Accuracy",             "Prevalence",
+      "Likelihood Ratio +",   "Likelihood Ratio -",
+      "Youden Index",         "F1 Score"
+    ),
+    Estimate = c(
+      sens[1L], spec[1L], ppv[1L], npv[1L], acc[1L], prev[1L],
+      lr_pos, lr_neg, youden, f1
+    ),
+    LowerCI = c(
+      sens[2L], spec[2L], ppv[2L], npv[2L], acc[2L], prev[2L],
+      NA_real_, NA_real_, NA_real_, NA_real_
+    ),
+    UpperCI = c(
+      sens[3L], spec[3L], ppv[3L], npv[3L], acc[3L], prev[3L],
+      NA_real_, NA_real_, NA_real_, NA_real_
+    ),
     stringsAsFactors = FALSE
   )
 
-  res <- list(
-    table = tab,
-    stats = stats_df,
-    labels = list(ref_pos = pos_ref, ref_neg = neg_ref,
-                  test_pos = pos_test, test_neg = neg_test),
-    sample_size = Total,
-    conf.level = conf.level
+  # ── Resultado estruturado ──────────────────────────────────────────────
+  structure(
+    list(
+      table       = tab,
+      stats       = stats_df,
+      labels      = list(
+        ref_pos  = pos_ref,  ref_neg  = neg_ref,
+        test_pos = pos_test, test_neg = neg_test
+      ),
+      sample_size = Total,
+      conf.level  = conf.level
+    ),
+    class = "diag_test"
   )
-
-  class(res) <- "diag_test"
-  return(res)
 }
 
-# ================
-# FORMATAR OUTPUT
-# ================
+# Resolve o nível positivo para a variável de referência.
+# Lida com: NULL (detecção automática), correspondência de caracteres, índice numérico.
+.resolve_pos_level <- function(value, levs, candidates, var_label, arg_name) {
+  # NULL → auto-detect
+  if (is.null(value)) {
+    matched <- intersect(levs, candidates)
+    if (length(matched) > 0L) {
+      message(sprintf(
+        "Auto-detected %s positive level: '%s'", var_label, matched[1L]
+      ))
+      return(matched[1L])
+    }
+    last <- levs[length(levs)]
+    message(sprintf(
+      "Using last %s level as positive: '%s'. Specify '%s' if incorrect.",
+      var_label, last, arg_name
+    ))
+    return(last)
+  }
+
+  value_chr <- as.character(value)
+
+  if (value_chr %in% levs) return(value_chr)
+
+  #1 ou 2
+  idx <- suppressWarnings(as.integer(value))
+  if (!is.na(idx) && idx >= 1L && idx <= length(levs)) {
+    message(sprintf(
+      "Using %s level %d as positive: '%s'", var_label, idx, levs[idx]
+    ))
+    return(levs[idx])
+  }
+
+  stop(sprintf(
+    "Positive level '%s' not found in %s levels: %s",
+    value_chr, var_label, paste(levs, collapse = ", ")
+  ), call. = FALSE)
+}
+
+.resolve_pos_level_test <- function(value, levs_test, pos_ref, candidates) {
+  if (is.null(value)) {
+
+    if (pos_ref %in% levs_test) return(pos_ref)
+    matched <- intersect(levs_test, candidates)
+    if (length(matched) > 0L) {
+      message(sprintf("Auto-detected test positive level: '%s'", matched[1L]))
+      return(matched[1L])
+    }
+
+    stop(sprintf(paste0(
+      "Cannot auto-detect test positive level.\n",
+      "Reference uses '%s', but this label is not in test levels: %s\n",
+      "Please specify 'test_positive'."
+    ), pos_ref, paste(levs_test, collapse = ", ")), call. = FALSE)
+  }
+
+  value_chr <- as.character(value)
+  if (value_chr %in% levs_test) return(value_chr)
+
+  idx <- suppressWarnings(as.integer(value))
+  if (!is.na(idx) && idx >= 1L && idx <= length(levs_test)) {
+    message(sprintf(
+      "Using test level %d as positive: '%s'", idx, levs_test[idx]
+    ))
+    return(levs_test[idx])
+  }
+
+  stop(sprintf(
+    "Test positive level '%s' not found in test levels: %s",
+    value_chr, paste(levs_test, collapse = ", ")
+  ), call. = FALSE)
+}
+
+
+# ── Print  ──────────────────────────────────────────────────────────────
 
 #' Print Method for diag_test Objects
 #'
-#' @param x A diag_test object
-#' @param digits Number of decimal places for metrics (default: 3)
-#' @param ... Additional arguments (unused)
-#' @return No return value, called for side effects
+#' Displays a formatted summary of the confusion matrix and all diagnostic
+#' performance metrics with confidence intervals.
 #'
+#' @param x A `diag_test` object.
+#' @param digits Integer. Decimal places for metrics. Default: `3`.
+#' @param ... Additional arguments (unused).
+#'
+#' @return Invisibly returns `x`.
 #' @export
-print.diag_test <- function(x, digits = 3, ...) {
-
-  if (!is.numeric(digits) || digits < 0) digits <- 3
+print.diag_test <- function(x, digits = 3L, ...) {
+  if (!is.numeric(digits) || length(digits) != 1L || digits < 0) digits <- 3L
   digits <- as.integer(digits)
 
-  cat("\n", strrep("=", 60), "\n", sep = "")
+  sep_major <- strrep("=", 60L)
+  sep_minor <- strrep("-", 60L)
+  ci_label  <- sprintf("%.0f%%", x$conf.level * 100)
+
+  # ── Header ────────────────────────────────────────────────────────────────
+  cat("\n", sep_major, "\n", sep = "")
   cat("  DIAGNOSTIC TEST EVALUATION\n")
-  cat(strrep("=", 60), "\n\n", sep = "")
+  cat(sep_major, "\n\n", sep = "")
 
-  cat("Sample Size:      ", x$sample_size, "\n")
-  cat("Confidence Level: ", sprintf("%.0f%%", x$conf.level * 100), "\n\n")
+  cat(sprintf("  Sample size      : %d\n",   x$sample_size))
+  cat(sprintf("  Confidence level : %s\n\n", ci_label))
 
-  cat("Reference Standard (Gold Standard):\n")
-  cat("  Positive: '", x$labels$ref_pos, "'  |  Negative: '",
-      x$labels$ref_neg, "'\n\n", sep = "")
+  cat("  Reference standard (gold standard):\n")
+  cat(sprintf("    Positive = '%s'   |   Negative = '%s'\n\n",
+              x$labels$ref_pos, x$labels$ref_neg))
 
-  cat("Diagnostic Test:\n")
-  cat("  Positive: '", x$labels$test_pos, "'  |  Negative: '",
-      x$labels$test_neg, "'\n\n", sep = "")
+  cat("  Diagnostic test:\n")
+  cat(sprintf("    Positive = '%s'   |   Negative = '%s'\n\n",
+              x$labels$test_pos, x$labels$test_neg))
 
-  cat(strrep("-", 60), "\n", sep = "")
-  cat("Confusion Matrix:\n")
-  cat(strrep("-", 60), "\n", sep = "")
+  # ── Confusion matrix ──────────────────────────────────────────────────────
+  cat(sep_minor, "\n  Confusion Matrix\n", sep_minor, "\n", sep = "")
   print(x$table)
   cat("\n")
 
-  cat(strrep("=", 60), "\n", sep = "")
-  cat("Performance Metrics (with ", sprintf("%.0f%%", x$conf.level * 100), " CI):\n", sep = "")
-  cat(strrep("=", 60), "\n", sep = "")
+  # ── Performance metrics ───────────────────────────────────────────────────
+  cat(sep_major, "\n", sep = "")
+  cat(sprintf("  Performance Metrics  (%s CI)\n", ci_label))
+  cat(sep_major, "\n", sep = "")
 
-  df_print <- x$stats
+  df        <- x$stats
+  pad_width <- max(nchar(df$Metric))
 
-  fmt_row <- function(est, low, upp) {
-    if (is.na(est)) return("NA")
+  fmt_ci <- function(est, low, upp) {
+    if (is.na(est)) return("—")
+    fmt <- paste0("%.", digits, "f")
     if (is.na(low)) {
-      return(sprintf(paste0("%.", digits, "f"), est))
+      sprintf(fmt, est)
     } else {
-      return(sprintf(paste0("%.", digits, "f (%.", digits, "f - %.", digits, "f)"),
-                     est, low, upp))
+      sprintf(paste0(fmt, "  (%s – %s)"),
+              est,
+              sprintf(fmt, low),
+              sprintf(fmt, upp))
     }
   }
 
-  formatted <- mapply(fmt_row, df_print$Estimate, df_print$LowerCI, df_print$UpperCI)
-  max_char <- max(nchar(df_print$Metric))
+  formatted <- mapply(fmt_ci, df$Estimate, df$LowerCI, df$UpperCI,
+                      SIMPLIFY = TRUE)
 
-  for (i in 1:nrow(df_print)) {
-    if (i == 7) cat(strrep("-", 60), "\n", sep = "")
-    pad <- paste(rep(" ", max_char - nchar(df_print$Metric[i]) + 2), collapse = "")
-    cat(df_print$Metric[i], pad, ": ", formatted[i], "\n", sep = "")
+  for (i in seq_len(nrow(df))) {
+    if (i == 7L) cat(sep_minor, "\n", sep = "")
+    pad <- strrep(" ", pad_width - nchar(df$Metric[i]) + 2L)
+    cat(df$Metric[i], pad, ":  ", formatted[i], "\n", sep = "")
   }
   cat("\n")
+
   invisible(x)
 }
 
-# ============================================================================
-# DATA.FRAME
-# ============================================================================
 
-#' Convert diag_test Object to Data Frame
+# ── as.data.frame method ──────────────────────────────────────────────────────
+
+#' Convert diag_test to Data Frame
 #'
-#' @param x A diag_test object
-#' @param ... Additional arguments (unused)
+#' Extracts the performance metrics table as a plain `data.frame`.
 #'
-#' @return A data.frame containing the performance metrics
+#' @param x A `diag_test` object.
+#' @param ... Additional arguments (unused).
 #'
+#' @return A `data.frame` with columns `Metric`, `Estimate`, `LowerCI`,
+#'   `UpperCI`.
 #' @export
-as.data.frame.diag_test <- function(x, ...) {
-  return(x$stats)
-}
+as.data.frame.diag_test <- function(x, ...) x$stats
+
+
+# ── plotar matriz de confusão  ───────────────────────────────────────────────────────────────
 
 #' Plot Diagnostic Test Results
 #'
-#' Visualizes the confusion matrix using a fourfold plot.
+#' Draws a fourfold display of the confusion matrix with sensitivity and
+#' specificity annotated on the bottom margin.
 #'
-#' @param x A diag_test object.
-#' @param col Vector of 2 colors for Negative and Positive outcomes.
-#' @param main Title of the plot.
-#' @param ... Additional arguments passed to \code{fourfoldplot}.
-#' @return No return value, called for side effects
+#' @param x A `diag_test` object.
+#' @param col Character vector of length 2. Fill colours for the negative and
+#'   positive quadrants respectively. Default: `c("#ffcccc", "#ccffcc")`.
+#' @param main Character. Plot title. Default: `"Confusion Matrix"`.
+#' @param ... Additional arguments passed to [graphics::fourfoldplot()].
 #'
+#' @return Invisibly returns `x`.
 #' @export
-#teste
-plot.diag_test <- function(x, col = c("#ffcccc", "#ccffcc"), main = "Confusion Matrix", ...) {
-  tbl <- x$table
-  graphics::fourfoldplot(tbl, color = col, conf.level = 0, margin = 1, main = main, ...)
-  graphics::mtext(paste("Sens:", round(x$stats$Estimate[1], 2),
-                        " Spec:", round(x$stats$Estimate[2], 2)), side = 1, line = 1)
+plot.diag_test <- function(
+    x,
+    col  = c("#ffcccc", "#ccffcc"),
+    main = "Confusion Matrix",
+    ...
+) {
+  sens <- round(x$stats$Estimate[x$stats$Metric == "Sensitivity"], 2L)
+  spec <- round(x$stats$Estimate[x$stats$Metric == "Specificity"],          2L)
+
+  graphics::fourfoldplot(
+    x$table,
+    color      = col,
+    conf.level = 0,
+    margin     = 1L,
+    main       = main,
+    ...
+  )
+  graphics::mtext(
+    sprintf("Sensitivity: %.2f   |   Specificity: %.2f", sens, spec),
+    side = 1L, line = 1L
+  )
+
+  invisible(x)
 }

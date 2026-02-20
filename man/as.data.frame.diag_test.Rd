@@ -2,18 +2,19 @@
 % Please edit documentation in R/diag.R
 \name{as.data.frame.diag_test}
 \alias{as.data.frame.diag_test}
-\title{Convert diag_test Object to Data Frame}
+\title{Convert diag_test to Data Frame}
 \usage{
 \method{as.data.frame}{diag_test}(x, ...)
 }
 \arguments{
-\item{x}{A diag_test object}
+\item{x}{A \code{diag_test} object.}
 
-\item{...}{Additional arguments (unused)}
+\item{...}{Additional arguments (unused).}
 }
 \value{
-A data.frame containing the performance metrics
+A \code{data.frame} with columns \code{Metric}, \code{Estimate}, \code{LowerCI},
+\code{UpperCI}.
 }
 \description{
-Convert diag_test Object to Data Frame
+Extracts the performance metrics table as a plain \code{data.frame}.
 }

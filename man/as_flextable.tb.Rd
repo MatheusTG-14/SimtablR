@@ -2,19 +2,18 @@
 % Please edit documentation in R/tb.R
 \name{as_flextable.tb}
 \alias{as_flextable.tb}
-\title{Convert tb object to flextable}
+\title{Convert tb Object to Flextable}
 \usage{
 \method{as_flextable}{tb}(x, ...)
 }
 \arguments{
 \item{x}{A \code{tb} object.}
 
-\item{...}{Additional arguments passed to \code{flextable::flextable}.}
+\item{...}{Additional arguments passed to \code{flextable::flextable()}.}
 }
 \value{
-A \code{flextable} object ready for printing or exporting.
+A \code{flextable} object.
 }
 \description{
-Converts a \code{tb} object into a \code{flextable} for high-quality reporting
-in Word or PowerPoint.
+Convert tb Object to Flextable
 }

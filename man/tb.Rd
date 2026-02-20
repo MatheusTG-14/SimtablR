@@ -27,59 +27,50 @@ tb(
 \arguments{
 \item{data}{A data.frame or atomic vector.}
 
-\item{...}{Variables to be tabulated. Can include variable names and/or flags
-(m, p, row, col, rp, or) for controlling output format.}
+\item{...}{Variables to be tabulated. Accepts variable names and/or flags
+(\code{m}, \code{p}, \code{row}, \code{col}, \code{rp}, \code{or}) for controlling output format.}
 
-\item{m}{Logical. If TRUE, includes missing values (NA) in the table. Default: FALSE.}
+\item{m}{Logical. Include missing values (NA) in the table. Default: \code{FALSE}.}
 
-\item{d}{Integer. Number of decimal places for percentages and statistics. Default: 1.}
+\item{d}{Integer. Decimal places for percentages and statistics. Default: \code{1}.}
 
-\item{format}{Logical. If TRUE, renders a formatted grid output (Stata-style).
-If FALSE, prints as simple matrix. Default: TRUE.}
+\item{format}{Logical. Render a formatted grid output. Default: \code{TRUE}.}
 
-\item{style}{Character. Format for displaying counts and percentages. Options:
-\itemize{
-\item \code{"n_pct"}: "100 (25.0\\%)" (default)
-\item \code{"pct_n"}: "25.0\\% (100)"
-\item Custom template using \code{{n}} and \code{{p}} placeholders, e.g., \code{"{n} [{p}\%]"}.
-}}
+\item{style}{Character. Format for displaying counts and percentages.
+Options: \code{"n_pct"} (default), \code{"pct_n"}, or a custom template with \code{{n}} and
+\code{{p}} placeholders, e.g. \code{"{n} [{p}\%]"}.}
 
-\item{style.rp}{Character. Format string for Prevalence Ratio. Default: \code{"{rp} ({lower} - {upper})"}.}
+\item{style.rp}{Character. Format string for Prevalence Ratio.
+Default: \code{"{rp} ({lower} - {upper})"}.}
 
-\item{style.or}{Character. Format string for Odds Ratio. Default: \code{"{or} ({lower} - {upper})"}.}
+\item{style.or}{Character. Format string for Odds Ratio.
+Default: \code{"{or} ({lower} - {upper})"}.}
 
 \item{test}{Logical or Character. Performs statistical test on 2x2+ tables.
-\itemize{
-\item \code{TRUE}: Automatic selection (chi-squared for categorical)
-\item \code{"chisq"}, \code{"fisher"}, \code{"mcnemar"}
-}}
+\code{TRUE} for automatic selection, or one of \code{"chisq"}, \code{"fisher"}, \code{"mcnemar"}.}
 
 \item{subset}{Logical expression for row filtering.}
 
 \item{strat}{Variable for column stratification. Disables PR/OR calculations.}
 
-\item{rp}{Logical. If TRUE, calculates Prevalence Ratios (PR).}
+\item{rp}{Logical. Calculate Prevalence Ratios (PR). Default: \code{FALSE}.}
 
-\item{or}{Logical. If TRUE, calculates Odds Ratios (OR).}
+\item{or}{Logical. Calculate Odds Ratios (OR). Default: \code{FALSE}.}
 
-\item{ref}{Character or numeric. Specifies the reference level for PR/OR calculations.}
+\item{ref}{Character or numeric. Reference level for PR/OR calculations.}
 
-\item{conf.level}{Numeric. Confidence level for intervals (0-1). Default: 0.95.}
+\item{conf.level}{Numeric. Confidence level for intervals (0–1). Default: \code{0.95}.}
 
-\item{var.type}{Named character vector specifying variable types.
-\itemize{
-\item Select the line variable and choose between "continuous" and "cont".
-\item Example: \code{tb(epitabl, age, sex, var.type = c(age = "continuous"))}
-}}
+\item{var.type}{Named character vector specifying variable types, e.g.
+\code{c(age = "continuous")}.}
 
-\item{stat.cont}{Character. "mean" (Mean/SD) or "median" (Median/IQR).}
+\item{stat.cont}{Character. \code{"mean"} (Mean/SD) or \code{"median"} (Median/IQR).
+Default: \code{"median"}.}
 }
 \value{
-An object of class \code{tb} which is a matrix with attributes containing
-statistics, formatted flags, and class information.
+An object of class \code{tb} (a matrix with attributes).
 }
 \description{
 Creates comprehensive tables for categorical or continuous variables with formatting,
 statistical tests, prevalence ratios (PR), odds ratios (OR), and column stratification.
-Supports both univariate and bivariate analysis with flexible output formatting.
 }
