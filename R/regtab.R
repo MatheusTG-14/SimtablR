@@ -130,34 +130,38 @@
 #assumindo o primeiro valor como referencia sempre,
 #e depois extrair os coeficientes e z para calcular RR e IC 95.
 #Por fim, formata os valores e organiza a tabela para exportar.
-
-regtab <- function(data, outcomes, predictors,
-                   family = poisson(link = "log"),
-                   robust = TRUE,
-                   exponentiate = NULL,
-                   labels = NULL,
-                   d = 2,
-                   conf.level = 0.95,
-                   include_intercept = FALSE,
-                   p_values = FALSE) {
-
-  #VERIFICAR ERROS PRÉVIOS
+regtab <- function(
+    data,
+    outcomes,
+    predictors,
+    family            = poisson(link = "log"),
+    robust            = TRUE,
+    exponentiate      = NULL,
+    labels            = NULL,
+    d                 = 2,
+    conf.level        = 0.95,
+    include_intercept = FALSE,
+    p_values          = FALSE
+) {
+  # ── Pacotes necessários ───────────────────────────────────────────────
   if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required. Install with: install.packages('dplyr')", call. = FALSE)
+    stop("Package 'dplyr' is required. Install with: install.packages('dplyr')",
+         call. = FALSE)
   }
   if (!requireNamespace("tidyr", quietly = TRUE)) {
-    stop("Package 'tidyr' is required. Install with: install.packages('tidyr')", call. = FALSE)
+    stop("Package 'tidyr' is required. Install with: install.packages('tidyr')",
+         call. = FALSE)
   }
   if (robust) {
     if (!requireNamespace("sandwich", quietly = TRUE)) {
-      stop("Package 'sandwich' is required for robust SEs. Install with: install.packages('sandwich')",
-           call. = FALSE)
+      stop("Package 'sandwich' is required for robust SEs.", call. = FALSE)
     }
     if (!requireNamespace("lmtest", quietly = TRUE)) {
-      stop("Package 'lmtest' is required for robust SEs. Install with: install.packages('lmtest')",
-           call. = FALSE)
+      stop("Package 'lmtest' is required for robust SEs.", call. = FALSE)
     }
   }
+
+  # ── Inputs corretos ───────────────────────────────────────────────────────
   if (!is.data.frame(data)) {
     stop("'data' must be a data.frame, not ", class(data)[1], ".", call. = FALSE)
   }
@@ -165,75 +169,78 @@ regtab <- function(data, outcomes, predictors,
     stop("'data' is empty (0 rows).", call. = FALSE)
   }
   if (!is.character(outcomes) || length(outcomes) == 0) {
-    stop("'outcomes' must be a character vector of variable names.", call. = FALSE)
-  }
-  missing_outcomes <- setdiff(outcomes, names(data))
-  if (length(missing_outcomes) > 0) {
-    stop(sprintf("Outcome variable(s) not found in data: %s",
-                 paste(missing_outcomes, collapse = ", ")), call. = FALSE)
+    stop("'outcomes' must be a non-empty character vector.", call. = FALSE)
   }
 
-  # VERIFICAR SE OS PARAMETROS ESTÃO CORRETOS, SE NÃO, CORRIGIR
+  missing_outcomes <- setdiff(outcomes, names(data))
+  if (length(missing_outcomes) > 0) {
+    stop(
+      "Outcome(s) not found in data: ",
+      paste(missing_outcomes, collapse = ", "),
+      call. = FALSE
+    )
+  }
   if (!is.numeric(d) || d < 0 || d > 10) {
     stop("'d' must be a number between 0 and 10.", call. = FALSE)
   }
+  if (!is.numeric(conf.level) || conf.level <= 0 || conf.level >= 1) {
+    stop("'conf.level' must be between 0 and 1 (e.g., 0.95).", call. = FALSE)
+  }
+
   d <- as.integer(d)
 
-  if (!is.numeric(conf.level) || conf.level <= 0 || conf.level >= 1) {
-    stop("'conf.level' must be between 0 and 1 (e.g., 0.95 for 95%).", call. = FALSE)
-  }
-
-  #Exponenciar (para RR)
+  # ── Exponeciação necessária? (poisson/binomial) ────────────────────────────────────────────
   if (is.null(exponentiate)) {
-    fam_name <- if (is.character(family)) {
-      family
-    } else {
-      family$family
-    }
-
-    # poisson e binomial
-    exponentiate <- fam_name %in% c("poisson", "binomial", "quasipoisson", "quasibinomial")
-
+    fam_name     <- if (is.character(family)) family else family$family
+    exponentiate <- fam_name %in%
+      c("poisson", "binomial", "quasipoisson", "quasibinomial")
     if (exponentiate) {
-      message(sprintf("Auto-detected family '%s': Coefficients will be exponentiated.", fam_name))
+      message(sprintf(
+        "Auto-detected family '%s': Coefficients will be exponentiated.",
+        fam_name
+      ))
     }
   }
-  if (is.character(predictors)) {
-    # adicionar o ~
-    if (!grepl("~", predictors)) {
+
+  # ── Fórmula ───────────────────────────────────────────────
+  form_rhs <- if (is.character(predictors)) {
+    if (!grepl("~", predictors, fixed = TRUE)) {
       predictors <- paste("~", predictors)
     }
-    form_rhs <- as.formula(predictors)
+    as.formula(predictors)
   } else if (inherits(predictors, "formula")) {
-    form_rhs <- predictors
+    predictors
   } else {
     stop("'predictors' must be a formula or character string.", call. = FALSE)
   }
 
-  #iterar fómula para cada variável de outcome
-  results_list <- list() #abre a lista
-  n_success <- 0
-  n_failed <- 0
+  # ── Formatação ─────────────────────────────────────────────────────
+  fmt <- function(x) format(round(x, d), nsmall = d, trim = TRUE)
+
+  # ── 1 model por outcome  ──────
+  results_list <- list()
+  n_success    <- 0L
+  n_failed     <- 0L
 
   for (outcome in outcomes) {
-
-    # construir a call para cada valor, copia e cola
     full_formula <- update(form_rhs, paste(outcome, "~ ."))
 
-#ERRO 2: se uma variável falhar, todas as outras falham.
     res_df <- tryCatch({
       model <- glm(full_formula, family = family, data = data)
 
       if (!model$converged) {
-        warning(sprintf("Model for '%s' did not converge. Results may be unreliable.",
-                        outcome), call. = FALSE, immediate. = TRUE)
+        warning(
+          sprintf("Model for '%s' did not converge. Results may be unreliable.", outcome),
+          call. = FALSE, immediate. = TRUE
+        )
       }
 
-      #IC 95% E P-VALOR
-      coefs <- coef(model)
+      coefs    <- coef(model)
+      vcov_mat <- NULL
+
       if (robust) {
         vcov_mat <- sandwich::vcovHC(model, type = "HC0")
-        cis <- lmtest::coefci(model, vcov. = vcov_mat, level = conf.level)
+        cis      <- lmtest::coefci(model, vcov. = vcov_mat, level = conf.level)
       } else {
         cis <- suppressMessages(confint(model, level = conf.level))
       }
@@ -244,203 +251,212 @@ regtab <- function(data, outcomes, predictors,
       } else {
         ests <- coefs
       }
+
       p_vals <- NULL
       if (p_values) {
-        if (robust) {
+        if (robust && !is.null(vcov_mat)) {
           se_robust <- sqrt(diag(vcov_mat))
-          z_stats <- coefs / se_robust
-          p_vals <- 2 * pnorm(-abs(z_stats))
+          z_stats   <- coefs / se_robust
+          p_vals    <- 2 * pnorm(-abs(z_stats))
         } else {
-          p_vals <- summary(model)$coefficients[, "Pr(>|z|)"]
+
+          coef_table <- summary(model)$coefficients
+          p_col      <- intersect(
+            c("Pr(>|z|)", "Pr(>|t|)"),
+            colnames(coef_table)
+          )[1]
+          p_vals <- coef_table[, p_col]
         }
       }
 
-      # formatar
-      fmt <- function(x) {
-        formatted <- format(round(x, d), nsmall = d, trim = TRUE)
-        # formatted <- gsub("^0\\.", ".", formatted)
-        return(formatted)
-      }
+      combined <- paste0(
+        fmt(ests), " (",
+        fmt(cis[, 1L]), " - ",
+        fmt(cis[, 2L]), ")"
+      )
 
-      est_str <- fmt(ests)
-      lo_str  <- fmt(cis[, 1])
-      hi_str  <- fmt(cis[, 2])
-      combined <- paste0(est_str, " (", lo_str, " - ", hi_str, ")")
-  # Organizar em banco dataframe
       result_df <- data.frame(
         Variable = names(ests),
-        Result = combined,
-        Outcome = outcome,
+        Result   = combined,
+        Outcome  = outcome,
         stringsAsFactors = FALSE
       )
 
-      if (p_values) {
-        p_formatted <- ifelse(p_vals < 0.001, "<0.001",
-                              sprintf(paste0("%.", max(3, d), "f"), p_vals))
-        result_df$P_Value <- p_formatted
+      if (!is.null(p_vals)) {
+        result_df$P_Value <- ifelse(
+          p_vals < 0.001, "<0.001",
+          sprintf(paste0("%.", max(3L, d), "f"), p_vals)
+        )
       }
 
-      n_success <- n_success + 1
-      return(result_df)
+      n_success <<- n_success + 1L
+      result_df
 
     }, error = function(e) {
-      warning(sprintf("Model fitting failed for outcome '%s': %s",
-                      outcome, e$message), call. = FALSE, immediate. = TRUE)
-      n_failed <- n_failed + 1
-      return(NULL)
+
+      warning(
+        sprintf("Model fitting failed for outcome '%s': %s", outcome, e$message),
+        call. = FALSE, immediate. = TRUE
+      )
+      n_failed <<- n_failed + 1L
+      NULL
     })
+
     if (!is.null(res_df)) {
       results_list[[outcome]] <- res_df
     }
   }
+
   if (length(results_list) == 0) {
-    stop("All models failed to fit. Check your data and model specification.", call. = FALSE)
+    stop("All models failed to fit. Check your data and model specification.",
+         call. = FALSE)
   }
-
   if (n_failed > 0) {
-    message(sprintf("Successfully fit %d/%d models. %d failed.",
-                    n_success, length(outcomes), n_failed))
+    message(sprintf(
+      "Successfully fit %d/%d models. %d failed.",
+      n_success, length(outcomes), n_failed
+    ))
   }
 
-# Combinar
+  # ── Pivot para forma longa ───────
+
   final_long <- dplyr::bind_rows(results_list)
+
   if (p_values) {
-    est_wide <- final_long %>%
-      dplyr::select(Variable, Result, Outcome) %>%
+    est_wide <- final_long |>
+      dplyr::select("Variable", "Result", "Outcome") |>
       tidyr::pivot_wider(
-        names_from = Outcome,
-        values_from = Result
+        names_from  = "Outcome",
+        values_from = "Result"
       )
 
-    p_wide <- final_long %>%
-      dplyr::select(Variable, P_Value, Outcome) %>%
+    p_wide <- final_long |>
+      dplyr::select("Variable", "P_Value", "Outcome") |>
       tidyr::pivot_wider(
-        names_from = Outcome,
-        values_from = P_Value,
+        names_from   = "Outcome",
+        values_from  = "P_Value",
         names_prefix = "P_"
       )
 
     final_wide <- dplyr::left_join(est_wide, p_wide, by = "Variable")
 
   } else {
-    final_wide <- final_long %>%
+
+        final_wide <- final_long |>
+      dplyr::select("Variable", "Result", "Outcome") |>
       tidyr::pivot_wider(
-        names_from = Outcome,
-        values_from = Result
+        names_from  = "Outcome",
+        values_from = "Result"
       )
   }
 
+  # ── Formatar nome colunas─────────
   if (!is.null(labels)) {
     if (!is.character(labels) || is.null(names(labels))) {
       warning("'labels' must be a named character vector. Ignoring.", call. = FALSE)
     } else {
-      cols_present <- intersect(names(final_wide), names(labels))
-      if (length(cols_present) > 0) {
-        final_wide <- final_wide %>%
-          dplyr::rename_with(~ labels[.x], .cols = dplyr::all_of(cols_present))
-        if (p_values) {
-          p_cols_present <- intersect(names(final_wide), paste0("P_", names(labels)))
-          if (length(p_cols_present) > 0) {
-            p_labels <- setNames(paste0("P_", labels[names(labels)]),
-                                 paste0("P_", names(labels)))
-            p_cols_to_rename <- intersect(names(final_wide), names(p_labels))
-            if (length(p_cols_to_rename) > 0) {
-              final_wide <- final_wide %>%
-                dplyr::rename_with(~ p_labels[.x], .cols = dplyr::all_of(p_cols_to_rename))
-            }
-          }
+      cols_to_rename <- intersect(names(final_wide), names(labels))
+      if (length(cols_to_rename) > 0) {
+        final_wide <- dplyr::rename_with(
+          final_wide,
+          .fn   = function(x) labels[x],
+          .cols = dplyr::all_of(cols_to_rename)
+        )
+      }
+      if (p_values) {
+        p_labels       <- stats::setNames(
+          paste0("P_", labels[names(labels)]),
+          paste0("P_", names(labels))
+        )
+        p_cols_present <- intersect(names(final_wide), names(p_labels))
+        if (length(p_cols_present) > 0) {
+          final_wide <- dplyr::rename_with(
+            final_wide,
+            .fn   = function(x) p_labels[x],
+            .cols = dplyr::all_of(p_cols_present)
+          )
         }
       }
     }
   }
-#opção para omitir a linha de intercept do modelo
+
+  #Remove o intercept
   if (!include_intercept) {
-    final_wide <- final_wide %>%
-      dplyr::filter(Variable != "(Intercept)")
+    final_wide <- dplyr::filter(final_wide, .data$Variable != "(Intercept)")
   }
 
-    final_wide <- as.data.frame(final_wide)
 
-  # atributos do dataframe
-  attr(final_wide, "family") <- if (is.character(family)) family else family$family
+  final_wide <- as.data.frame(final_wide, stringsAsFactors = FALSE)
+
+  attr(final_wide, "family")        <- if (is.character(family)) family else family$family
   attr(final_wide, "exponentiated") <- exponentiate
-  attr(final_wide, "robust") <- robust
-  attr(final_wide, "conf.level") <- conf.level
+  attr(final_wide, "robust")        <- robust
+  attr(final_wide, "conf.level")    <- conf.level
 
-  return(final_wide)
+  final_wide
 }
 
 
-# Formatação
+# ── Print method ──────────────────────────────────────────────────────────────
 
 #' Print Method for regtab Results
 #'
-#' @param x A data.frame returned by regtab
-#' @param ... Additional arguments passed to print
-#' @return No return value, called for side effects
-#'
+#' @param x A data.frame returned by `regtab()`.
+#' @param ... Additional arguments passed to `print()`.
+#' @return Invisibly returns `x`.
 #' @export
 print.regtab <- function(x, ...) {
   family <- attr(x, "family")
-  exp <- attr(x, "exponentiated")
+  exp    <- attr(x, "exponentiated")
   robust <- attr(x, "robust")
-  conf <- attr(x, "conf.level")
+  conf   <- attr(x, "conf.level")
 
   if (!is.null(family)) {
     cat("\nMulti-Outcome Regression Table\n")
     cat(strrep("=", 60), "\n")
     cat("Family:         ", family, "\n")
-    if (!is.null(exp)) {
-      cat("Exponentiated:  ", if (exp) "Yes (IRR/OR)" else "No (log scale)", "\n")
-    }
-    if (!is.null(robust)) {
-      cat("Standard Errors:", if (robust) "Robust (HC0)" else "Model-based", "\n")
-    }
-    if (!is.null(conf)) {
-      cat("Confidence:     ", sprintf("%.0f%%", conf * 100), "\n")
-    }
+    if (!is.null(exp))    cat("Exponentiated:  ", if (exp) "Yes (IRR/OR)" else "No (log scale)", "\n")
+    if (!is.null(robust)) cat("Standard Errors:", if (robust) "Robust (HC0)" else "Model-based", "\n")
+    if (!is.null(conf))   cat("Confidence:     ", sprintf("%.0f%%", conf * 100), "\n")
     cat(strrep("=", 60), "\n\n")
   }
 
-  #cria um "resumo"dos resultados
   print(as.data.frame(x), row.names = FALSE)
   cat("\n")
-
   invisible(x)
 }
 
-#EXPORTAR RESUTADOS (usa fórmulas de outros pacotes)
+
+# ── Exportar ────────────────────────────────────────────────────────────
 
 #' Export regtab Results to CSV
 #'
-#' @param x A data.frame from regtab
-#' @param file File path for export
-#' @param ... Additional arguments passed to write.csv
-#' @return No return value, called for side effects
-#'
+#' @param x A data.frame from `regtab()`.
+#' @param file File path.
+#' @param ... Additional arguments passed to `write.csv()`.
+#' @return Invisibly returns `x`.
 #' @export
 export_regtab_csv <- function(x, file, ...) {
   write.csv(x, file, row.names = FALSE, ...)
   message(sprintf("Table exported to: %s", file))
+  invisible(x)
 }
-
 
 #' Export regtab Results to Excel
 #'
-#' Requires the 'openxlsx' package
+#' Requires the `openxlsx` package.
 #'
-#' @param x A data.frame from regtab
-#' @param file File path for export (.xlsx)
-#' @param ... Additional arguments passed to openxlsx::write.xlsx
-#' @return No return value, called for side effects
-#'
+#' @param x A data.frame from `regtab()`.
+#' @param file File path (.xlsx).
+#' @param ... Additional arguments passed to `openxlsx::write.xlsx()`.
+#' @return Invisibly returns `x`.
 #' @export
 export_regtab_xlsx <- function(x, file, ...) {
   if (!requireNamespace("openxlsx", quietly = TRUE)) {
     stop("Package 'openxlsx' required. Install with: install.packages('openxlsx')",
          call. = FALSE)
   }
-
   openxlsx::write.xlsx(x, file, ...)
   message(sprintf("Table exported to: %s", file))
+  invisible(x)
 }

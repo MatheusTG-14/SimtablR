@@ -7,15 +7,15 @@
 export_regtab_xlsx(x, file, ...)
 }
 \arguments{
-\item{x}{A data.frame from regtab}
+\item{x}{A data.frame from \code{regtab()}.}
 
-\item{file}{File path for export (.xlsx)}
+\item{file}{File path (.xlsx).}
 
-\item{...}{Additional arguments passed to openxlsx::write.xlsx}
+\item{...}{Additional arguments passed to \code{openxlsx::write.xlsx()}.}
 }
 \value{
-No return value, called for side effects
+Invisibly returns \code{x}.
 }
 \description{
-Requires the 'openxlsx' package
+Requires the \code{openxlsx} package.
 }

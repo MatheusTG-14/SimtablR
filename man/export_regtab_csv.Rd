@@ -7,14 +7,14 @@
 export_regtab_csv(x, file, ...)
 }
 \arguments{
-\item{x}{A data.frame from regtab}
+\item{x}{A data.frame from \code{regtab()}.}
 
-\item{file}{File path for export}
+\item{file}{File path.}
 
-\item{...}{Additional arguments passed to write.csv}
+\item{...}{Additional arguments passed to \code{write.csv()}.}
 }
 \value{
-No return value, called for side effects
+Invisibly returns \code{x}.
 }
 \description{
 Export regtab Results to CSV

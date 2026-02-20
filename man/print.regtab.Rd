@@ -7,12 +7,12 @@
 \method{print}{regtab}(x, ...)
 }
 \arguments{
-\item{x}{A data.frame returned by regtab}
+\item{x}{A data.frame returned by \code{regtab()}.}
 
-\item{...}{Additional arguments passed to print}
+\item{...}{Additional arguments passed to \code{print()}.}
 }
 \value{
-No return value, called for side effects
+Invisibly returns \code{x}.
 }
 \description{
 Print Method for regtab Results
