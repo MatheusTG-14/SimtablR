@@ -1,270 +1,35 @@
-#' Diagnostic Test Accuracy Assessment
-#'
-#' Computes a 2x2 confusion matrix and comprehensive diagnostic performance
-#' metrics for a binary classification test, with exact binomial confidence
-#' intervals.
-#'
-#' @param data A data.frame containing `test` and `ref` variables.
-#' @param test Unquoted name of the diagnostic test variable (must be binary).
-#' @param ref Unquoted name of the reference standard variable (must be binary).
-#' @param positive Character or numeric. Level representing "Positive" in the
-#'   **reference** variable. If `NULL` (default), auto-detected from common
-#'   positive labels (`"Yes"`, `"1"`, `"Positive"`, etc.) or the last level.
-#' @param test_positive Character or numeric. Level representing "Positive" in
-#'   the **test** variable. If `NULL` (default), mirrors `positive` when the
-#'   same label exists in the test variable, then falls back to auto-detection.
-#' @param conf.level Numeric. Confidence level for binomial CIs (0-1).
-#'   Default: `0.95`.
-#'
-#' @details
-#' ## Confusion Matrix Layout
-#' ```
-#'            | Ref +   | Ref -
-#' -----------+---------+--------
-#' Test +     |   TP    |   FP
-#' Test -     |   FN    |   TN
-#' ```
-#'
-#' ## Metrics Computed
-#' * **Sensitivity** (Recall) = TP / (TP + FN)
-#' * **Specificity** = TN / (TN + FP)
-#' * **PPV** (Precision) = TP / (TP + FP)
-#' * **NPV** = TN / (TN + FN)
-#' * **Accuracy** = (TP + TN) / Total
-#' * **Prevalence** = (TP + FN) / Total
-#' * **Likelihood Ratio +** = Sensitivity / (1 - Specificity)
-#' * **Likelihood Ratio -** = (1 - Sensitivity) / Specificity
-#' * **Youden's Index** = Sensitivity + Specificity - 1
-#' * **F1 Score** = 2 x (PPV x Sensitivity) / (PPV + Sensitivity)
-#'
-#' Binomial CIs (exact Clopper-Pearson) are computed for the first six metrics.
-#' Likelihood Ratios, Youden's Index, and F1 Score do not have CIs.
-#'
-#' @return An object of class `diag_test` - a named list with:
-#' * `$table`: 2x2 `table` object (Test x Ref).
-#' * `$stats`: `data.frame` with columns `Metric`, `Estimate`, `LowerCI`,
-#'   `UpperCI`.
-#' * `$labels`: named list with `ref_pos`, `ref_neg`, `test_pos`, `test_neg`.
-#' * `$sample_size`: integer, total valid observations.
-#' * `$conf.level`: numeric, confidence level used.
-#'
-#' @seealso [print.diag_test()], [as.data.frame.diag_test()],
-#'   [plot.diag_test()]
-#'
-#' @examples
-#' set.seed(1)
-#' n   <- 200
-#' ref <- factor(sample(c("No", "Yes"), n, replace = TRUE, prob = c(.55, .45)))
-#' tst <- ifelse(ref == "Yes",
-#'               ifelse(runif(n) < .80, "Yes", "No"),
-#'               ifelse(runif(n) < .85, "No",  "Yes"))
-#' df  <- data.frame(rapid_test = factor(tst), lab = ref)
-#'
-#' result <- diag_test(df, test = rapid_test, ref = lab,
-#'                     positive = "Yes", test_positive = "Yes")
-#' print(result)
-#' as.data.frame(result)
-#'
-#' @export
-diag_test <- function(
-    data,
-    test,
-    ref,
-    positive      = NULL,
-    test_positive = NULL,
-    conf.level    = 0.95
-) {
-  #Args
-  if (missing(data)) {
-    stop("No data provided. Please supply a data.frame.", call. = FALSE)
-  }
-  if (!is.data.frame(data)) {
-    stop("'data' must be a data.frame, not ", class(data)[1], ".", call. = FALSE)
-  }
-  if (nrow(data) == 0) {
-    stop("'data' is empty (0 rows).", call. = FALSE)
-  }
-  if (!is.numeric(conf.level) || length(conf.level) != 1 ||
-      conf.level <= 0 || conf.level >= 1) {
-    stop("'conf.level' must be a single numeric value between 0 and 1.",
-         call. = FALSE)
-  }
+# DIAGNOSTIC TEST ACCURACY AND CONFUSION MATRIX HELPERS
+# Evaluates binary index tests against reference standards (sensitivity, specificity, predictive values).
+# Preserves unrounded metrics, 2x2 confusion counts, and provides console, tabular, and graphical renderers.
 
-  #  extrair Args da expressao
-  test_expr <- substitute(test)
-  ref_expr  <- substitute(ref)
+#########
+# METRIC LABELS AND LEVEL RESOLUTION
+# Label mapping and positive classification level resolution for index test and reference standard.
 
-  if (is.null(test_expr) || identical(test_expr, quote(expr = ))) {
-    stop("'test' variable not specified.", call. = FALSE)
-  }
-  if (is.null(ref_expr) || identical(ref_expr, quote(expr = ))) {
-    stop("'ref' variable not specified.", call. = FALSE)
-  }
-
-  val_test <- tryCatch(
-    eval(test_expr, data, parent.frame()),
-    error = function(e) stop(
-      sprintf("'test' variable '%s' not found in data.", deparse(test_expr)),
-      call. = FALSE
-    )
-  )
-  val_ref <- tryCatch(
-    eval(ref_expr, data, parent.frame()),
-    error = function(e) stop(
-      sprintf("'ref' variable '%s' not found in data.", deparse(ref_expr)),
-      call. = FALSE
-    )
-  )
-
-  if (length(val_test) != length(val_ref)) {
-    stop(sprintf(
-      "'test' and 'ref' have different lengths (%d vs %d).",
-      length(val_test), length(val_ref)
-    ), call. = FALSE)
-  }
-
-  #Remover NA
-  ok        <- !is.na(val_test) & !is.na(val_ref)
-  n_missing <- sum(!ok)
-
-  if (n_missing > 0) {
-    message(sprintf(
-      "Removed %d observation(s) with missing values (%.1f%%).",
-      n_missing, 100 * n_missing / length(val_test)
-    ))
-  }
-
-  val_test <- val_test[ok]
-  val_ref  <- val_ref[ok]
-
-  if (length(val_test) == 0) {
-    stop("No valid observations after removing missing values.", call. = FALSE)
-  }
-
-  #  Garantir factor
-  if (!is.factor(val_test)) val_test <- factor(val_test)
-  if (!is.factor(val_ref))  val_ref  <- factor(val_ref)
-
-  levs_test <- levels(val_test)
-  levs_ref  <- levels(val_ref)
-
-  #  Necessario binario
-  if (length(levs_test) != 2) {
-    stop(sprintf(
-      "'test' must have exactly 2 levels, but has %d: %s",
-      length(levs_test), paste(levs_test, collapse = ", ")
-    ), call. = FALSE)
-  }
-  if (length(levs_ref) != 2) {
-    stop(sprintf(
-      "'ref' must have exactly 2 levels, but has %d: %s",
-      length(levs_ref), paste(levs_ref, collapse = ", ")
-    ), call. = FALSE)
-  }
-
-  #Niveis positivos para teste
-  .candidates_ref  <- c("1", "Sim", "Yes", "Positivo", "Positive",
-                        "Doente", "Disease", "Case", "Event", "S", "Y",
-                        "TRUE", "True")
-  .candidates_test <- c("1", "Sim", "Yes", "Positivo", "Positive",
-                        "Reagente", "Detected", "S", "Y", "TRUE", "True")
-
-  pos_ref  <- .resolve_pos_level(positive,      levs_ref,  .candidates_ref,
-                                 "reference", "positive")
-  pos_test <- .resolve_pos_level_test(test_positive, levs_test, pos_ref,
-                                      .candidates_test)
-
-  neg_ref  <- setdiff(levs_ref,  pos_ref)[1]
-  neg_test <- setdiff(levs_test, pos_test)[1]
-
-  #  Build ordered confusion matrix
-  val_ref_ord  <- factor(val_ref,  levels = c(pos_ref,  neg_ref))
-  val_test_ord <- factor(val_test, levels = c(pos_test, neg_test))
-
-  tab   <- table(Test = val_test_ord, Ref = val_ref_ord)
-  TP    <- tab[1L, 1L]
-  FP    <- tab[1L, 2L]
-  FN    <- tab[2L, 1L]
-  TN    <- tab[2L, 2L]
-  Total <- sum(tab)
-
-  #  Sanity warnings
-  if (TP + FN == 0L) warning("No positive cases in reference (TP + FN = 0).", call. = FALSE)
-  if (TN + FP == 0L) warning("No negative cases in reference (TN + FP = 0).", call. = FALSE)
-  if (TP + FP == 0L) warning("No positive test results (TP + FP = 0).",       call. = FALSE)
-  if (TN + FN == 0L) warning("No negative test results (TN + FN = 0).",       call. = FALSE)
-
-  #  Compute metrics
-  # Exact Clopper-Pearson CI via binom.test() for proportions.
-  .ci <- function(x, n) {
-    if (n == 0L) return(c(NA_real_, NA_real_, NA_real_))
-    ci <- binom.test(x, n, conf.level = conf.level)$conf.int
-    c(x / n, ci[1L], ci[2L])
-  }
-
-  sens <- .ci(TP,      TP + FN)
-  spec <- .ci(TN,      TN + FP)
-  ppv  <- .ci(TP,      TP + FP)
-  npv  <- .ci(TN,      TN + FN)
-  acc  <- .ci(TP + TN, Total)
-  prev <- .ci(TP + FN, Total)
-
-  lr_pos <- if (!is.na(sens[1L]) && !is.na(spec[1L]) && (1 - spec[1L]) > 0)
-    sens[1L] / (1 - spec[1L]) else NA_real_
-
-  lr_neg <- if (!is.na(sens[1L]) && !is.na(spec[1L]) && spec[1L] > 0)
-    (1 - sens[1L]) / spec[1L] else NA_real_
-
-  youden <- if (!is.na(sens[1L]) && !is.na(spec[1L]))
-    sens[1L] + spec[1L] - 1 else NA_real_
-
-  f1 <- if (!is.na(ppv[1L]) && !is.na(sens[1L]) && (ppv[1L] + sens[1L]) > 0)
-    2 * (ppv[1L] * sens[1L]) / (ppv[1L] + sens[1L]) else NA_real_
-
-  #  Assemble stats data.frame
-  stats_df <- data.frame(
-    Metric = c(
-      "Sensitivity", "Specificity",
-      "Pos Pred Value (PPV)", "Neg Pred Value (NPV)",
-      "Accuracy",             "Prevalence",
-      "Likelihood Ratio +",   "Likelihood Ratio -",
-      "Youden Index",         "F1 Score"
-    ),
-    Estimate = c(
-      sens[1L], spec[1L], ppv[1L], npv[1L], acc[1L], prev[1L],
-      lr_pos, lr_neg, youden, f1
-    ),
-    LowerCI = c(
-      sens[2L], spec[2L], ppv[2L], npv[2L], acc[2L], prev[2L],
-      NA_real_, NA_real_, NA_real_, NA_real_
-    ),
-    UpperCI = c(
-      sens[3L], spec[3L], ppv[3L], npv[3L], acc[3L], prev[3L],
-      NA_real_, NA_real_, NA_real_, NA_real_
-    ),
-    stringsAsFactors = FALSE
-  )
-
-  #  Resultado estruturado
-  structure(
-    list(
-      table       = tab,
-      stats       = stats_df,
-      labels      = list(
-        ref_pos  = pos_ref,  ref_neg  = neg_ref,
-        test_pos = pos_test, test_neg = neg_test
-      ),
-      sample_size = Total,
-      conf.level  = conf.level
-    ),
-    class = "diag_test"
+#' Lookup named vector of clinical metric labels
+#' @keywords internal
+#' @noRd
+.diag_metric_labels <- function() {
+  c(
+    sensitivity = "Sensitivity",
+    specificity = "Specificity",
+    ppv = "Pos Pred Value (PPV)",
+    npv = "Neg Pred Value (NPV)",
+    accuracy = "Accuracy",
+    prevalence = "Prevalence",
+    lr_pos = "Likelihood Ratio +",
+    lr_neg = "Likelihood Ratio -",
+    youden_j = "Youden Index",
+    f1 = "F1 Score",
+    dor = "Diagnostic Odds Ratio",
+    kappa = "Cohen's Kappa"
   )
 }
 
-# Resolve o nivel positivo para a variavel de referencia.
-# Lida com: NULL (automatica), correspondencia de caracteres, indice numerico.
+#' Resolve positive classification level for the reference standard
+#' @keywords internal
+#' @noRd
 .resolve_pos_level <- function(value, levs, candidates, var_label, arg_name) {
-  # NULL para auto-detect
   if (is.null(value)) {
     matched <- intersect(levs, candidates)
     if (length(matched) > 0L) {
@@ -273,6 +38,7 @@ diag_test <- function(
       ))
       return(matched[1L])
     }
+
     last <- levs[length(levs)]
     message(sprintf(
       "Using last %s level as positive: '%s'. Specify '%s' if incorrect.",
@@ -282,10 +48,10 @@ diag_test <- function(
   }
 
   value_chr <- as.character(value)
+  if (value_chr %in% levs) {
+    return(value_chr)
+  }
 
-  if (value_chr %in% levs) return(value_chr)
-
-  #1 ou 2
   idx <- suppressWarnings(as.integer(value))
   if (!is.na(idx) && idx >= 1L && idx <= length(levs)) {
     message(sprintf(
@@ -294,31 +60,40 @@ diag_test <- function(
     return(levs[idx])
   }
 
-  stop(sprintf(
-    "Positive level '%s' not found in %s levels: %s",
-    value_chr, var_label, paste(levs, collapse = ", ")
-  ), call. = FALSE)
+  simtab_abort_input(c(
+    "Positive level {.val {value_chr}} not found in {var_label} levels.",
+    "i" = "Levels available: {.val {levs}}.",
+    "v" = "Name one of the listed levels, or pass its position as a number."
+  ))
 }
 
+#' Resolve positive classification level for the index diagnostic test
+#' @keywords internal
+#' @noRd
 .resolve_pos_level_test <- function(value, levs_test, pos_ref, candidates) {
   if (is.null(value)) {
+    if (pos_ref %in% levs_test) {
+      return(pos_ref)
+    }
 
-    if (pos_ref %in% levs_test) return(pos_ref)
     matched <- intersect(levs_test, candidates)
     if (length(matched) > 0L) {
       message(sprintf("Auto-detected test positive level: '%s'", matched[1L]))
       return(matched[1L])
     }
 
-    stop(sprintf(paste0(
-      "Cannot auto-detect test positive level.\n",
-      "Reference uses '%s', but this label is not in test levels: %s\n",
-      "Please specify 'test_positive'."
-    ), pos_ref, paste(levs_test, collapse = ", ")), call. = FALSE)
+    simtab_abort_input(c(
+      "Cannot auto-detect the test positive level.",
+      "i" = "The reference standard uses {.val {pos_ref}}, which is not among the
+             index-test levels {.val {levs_test}}.",
+      "v" = "Name it explicitly with {.arg test_positive}."
+    ))
   }
 
   value_chr <- as.character(value)
-  if (value_chr %in% levs_test) return(value_chr)
+  if (value_chr %in% levs_test) {
+    return(value_chr)
+  }
 
   idx <- suppressWarnings(as.integer(value))
   if (!is.na(idx) && idx >= 1L && idx <= length(levs_test)) {
@@ -328,141 +103,464 @@ diag_test <- function(
     return(levs_test[idx])
   }
 
-  stop(sprintf(
-    "Test positive level '%s' not found in test levels: %s",
-    value_chr, paste(levs_test, collapse = ", ")
-  ), call. = FALSE)
+  simtab_abort_input(c(
+    "Test positive level {.val {value_chr}} not found in the index-test levels.",
+    "i" = "Levels available: {.val {levs_test}}.",
+    "v" = "Name one of the listed levels, or pass its position as a number."
+  ))
 }
 
+#########
+# DISPLAY AND TABULAR FORMATTING
+# Terminal summary and tabular presentation builders for diagnostic accuracy evidence.
 
-#  Print
+#' Validate diagnostic test result class and inheritance
+#' @keywords internal
+#' @noRd
+.diag_validate_result <- function(x) {
+  x <- validate_simtab_result(x)
+  if (!inherits(x, "simtab_diag")) {
+    simtab_abort_input(c(
+      "{.arg x} must be a {.fn diag_test} result.",
+      "i" = "Received an object of class {.cls {class(x)[[1]]}}.",
+      "v" = "Build one with {.code diag_test(data, test = rapid, ref = gold)}."
+    ))
+  }
+  x
+}
 
-#' Print Method for diag_test Objects
-#'
-#' Displays a formatted summary of the confusion matrix and all diagnostic
-#' performance metrics with confidence intervals.
-#'
-#' @param x A `diag_test` object.
-#' @param digits Integer. Decimal places for metrics. Default: `3`.
-#' @param ... Additional arguments (unused).
-#'
-#' @return Invisibly returns `x`.
-#' @export
-print.diag_test <- function(x, digits = 3L, ...) {
-  if (!is.numeric(digits) || length(digits) != 1L || digits < 0) digits <- 3L
+#' Resolve journal typography and formatting options for diagnostic results
+#' @keywords internal
+#' @noRd
+.diag_style_spec <- function(x) {
+  .resolve_table_style(x$meta$style %||% x$spec$style %||% "default")
+}
+
+#' Extract raw confusion matrix attribute from result object
+#' @keywords internal
+#' @noRd
+.diag_confusion_matrix_attr <- function(x) {
+  x$data$confusion_matrix
+}
+
+#' Assemble formatted presentation data frame of diagnostic metrics
+#' @keywords internal
+#' @noRd
+.diag_display_frame <- function(x) {
+  style_spec <- .diag_style_spec(x)
+  metrics <- x$data$metrics
+  labels <- x$meta$metric_labels[rownames(metrics)]
+  digits <- x$spec$fmt$d %||% style_spec$digits_est
+  as_percent <- isTRUE(x$meta$percent)
+  prop_rows <- c("sensitivity", "specificity", "ppv", "npv", "accuracy", "prevalence")
+  row_names <- rownames(metrics)
+
+  lp <- substr(style_spec$ci_parens, 1, 1)
+  rp <- substr(style_spec$ci_parens, 2, 2)
+
+  fmt_value <- function(value, scale) {
+    if (is.na(value)) {
+      return(NA_character_)
+    }
+    if (isTRUE(scale)) {
+      paste0(sprintf(paste0("%.", digits, "f"), value * 100), "%")
+    } else {
+      sprintf(paste0("%.", digits, "f"), value)
+    }
+  }
+
+  estimate_chr <- character(nrow(metrics))
+  ci_chr <- character(nrow(metrics))
+  for (i in seq_len(nrow(metrics))) {
+    scale_i <- as_percent && row_names[i] %in% prop_rows
+    est <- metrics[i, "estimate"]
+    estimate_chr[i] <- if (is.na(est)) "-" else fmt_value(est, scale_i)
+
+    lo <- metrics[i, "conf.low"]
+    hi <- metrics[i, "conf.high"]
+    ci_chr[i] <- if (is.na(lo) || is.na(hi)) {
+      ""
+    } else {
+      paste0(lp, fmt_value(lo, scale_i), style_spec$ci_sep, fmt_value(hi, scale_i), rp)
+    }
+  }
+
+  df <- data.frame(
+    Metric = unname(labels),
+    Estimate = estimate_chr,
+    CI = ci_chr
+  )
+
+  attr(df, "confusion_matrix") <- .diag_confusion_matrix_attr(x)
+  df
+}
+
+#' Assemble raw numeric tidy data frame of diagnostic metrics
+#' @keywords internal
+#' @noRd
+.diag_tidy_frame <- function(x) {
+  metrics <- x$data$metrics
+  out <- data.frame(
+    metric = unname(x$meta$metric_labels[rownames(metrics)]),
+    estimate = metrics[, "estimate"],
+    conf.low = metrics[, "conf.low"],
+    conf.high = metrics[, "conf.high"]
+  )
+  attr(out, "confusion_matrix") <- .diag_confusion_matrix_attr(x)
+  out
+}
+
+#' Console display printer for diagnostic accuracy evaluations
+#' @keywords internal
+#' @noRd
+.diag_print <- function(x, digits = NULL, ...) {
+  x <- .diag_validate_result(x)
+  style_spec <- .diag_style_spec(x)
+  if (is.null(digits)) {
+    digits <- x$spec$fmt$d %||% style_spec$digits_est
+  }
+  if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || digits < 0) {
+    digits <- style_spec$digits_est
+  }
   digits <- as.integer(digits)
 
   sep_major <- strrep("=", 60L)
   sep_minor <- strrep("-", 60L)
-  ci_label  <- sprintf("%.0f%%", x$conf.level * 100)
+  display <- .diag_display_frame(x)
+  ci_label <- sprintf("%.0f%%", x$meta$conf.level * 100)
 
-  #  Header
   cat("\n", sep_major, "\n", sep = "")
   cat("  DIAGNOSTIC TEST EVALUATION\n")
   cat(sep_major, "\n\n", sep = "")
 
-  cat(sprintf("  Sample size      : %d\n",   x$sample_size))
-  cat(sprintf("  Confidence level : %s\n\n", ci_label))
+  cat(sprintf("  Sample size      : %d\n", x$meta$sample_size))
+  cat(sprintf("  Confidence level : %s\n", ci_label))
+  cat(sprintf("  CI method        : %s\n\n", x$meta$ci))
 
   cat("  Reference standard (gold standard):\n")
-  cat(sprintf("    Positive = '%s'   |   Negative = '%s'\n\n",
-              x$labels$ref_pos, x$labels$ref_neg))
+  cat(sprintf(
+    "    Positive = '%s'   |   Negative = '%s'\n\n",
+    x$meta$positive$ref,
+    x$meta$negative$ref
+  ))
 
   cat("  Diagnostic test:\n")
-  cat(sprintf("    Positive = '%s'   |   Negative = '%s'\n\n",
-              x$labels$test_pos, x$labels$test_neg))
+  cat(sprintf(
+    "    Positive = '%s'   |   Negative = '%s'\n\n",
+    x$meta$positive$test,
+    x$meta$negative$test
+  ))
 
-  #  Confusion matrix
   cat(sep_minor, "\n  Confusion Matrix\n", sep_minor, "\n", sep = "")
-  print(x$table)
+  print(x$data$confusion_matrix)
   cat("\n")
 
-  #  Performance metrics
   cat(sep_major, "\n", sep = "")
   cat(sprintf("  Performance Metrics  (%s CI)\n", ci_label))
   cat(sep_major, "\n", sep = "")
 
-  df        <- x$stats
-  pad_width <- max(nchar(df$Metric))
-
-  fmt_ci <- function(est, low, upp) {
-    if (is.na(est)) return("-")
-    fmt <- paste0("%.", digits, "f")
-    if (is.na(low)) {
-      sprintf(fmt, est)
-    } else {
-      sprintf(paste0(fmt, "  (%s - %s)"),
-              est,
-              sprintf(fmt, low),
-              sprintf(fmt, upp))
+  metric_width <- max(nchar(display$Metric))
+  estimate_width <- max(nchar(c("Estimate", display$Estimate)))
+  for (i in seq_len(nrow(display))) {
+    if (i == 7L) {
+      cat(sep_minor, "\n", sep = "")
     }
-  }
-
-  formatted <- mapply(fmt_ci, df$Estimate, df$LowerCI, df$UpperCI,
-                      SIMPLIFY = TRUE)
-
-  for (i in seq_len(nrow(df))) {
-    if (i == 7L) cat(sep_minor, "\n", sep = "")
-    pad <- strrep(" ", pad_width - nchar(df$Metric[i]) + 2L)
-    cat(df$Metric[i], pad, ":  ", formatted[i], "\n", sep = "")
+    metric <- formatC(display$Metric[i], width = -metric_width, flag = "-")
+    estimate <- formatC(display$Estimate[i], width = estimate_width)
+    cat(metric, " :  ", estimate, sep = "")
+    if (nzchar(display$CI[i])) {
+      cat("  ", display$CI[i], sep = "")
+    }
+    cat("\n")
   }
   cat("\n")
 
   invisible(x)
 }
 
+#' Convert diagnostic result to wide presentation or long tidy data frame
+#' @keywords internal
+#' @noRd
+.diag_as_data_frame <- function(x, row.names = NULL, optional = FALSE, tidy = FALSE, ...) {
+  x <- .diag_validate_result(x)
+  if (isTRUE(tidy)) {
+    return(.diag_tidy_frame(x))
+  }
+  .diag_display_frame(x)
+}
 
-#  as.data.frame method
+#' Convert diagnostic result into a formatted flextable
+#' @keywords internal
+#' @noRd
+.diag_as_flextable <- function(x, footnotes = NULL, ...) {
+  x <- .diag_validate_result(x)
+  .require_pkg("flextable")
 
-#' Convert diag_test to Data Frame
+  df <- .diag_display_frame(x)
+  ft <- flextable::flextable(df, ...)
+
+  matrix_lines <- c(
+    sprintf(
+      "Confusion Matrix (%s vs %s)",
+      x$meta$test_var,
+      x$meta$ref_var
+    ),
+    sprintf(
+      "Test + (%s): TP = %d, FP = %d",
+      x$meta$positive$test,
+      x$data$confusion_matrix[1, 1],
+      x$data$confusion_matrix[1, 2]
+    ),
+    sprintf(
+      "Test - (%s): FN = %d, TN = %d",
+      x$meta$negative$test,
+      x$data$confusion_matrix[2, 1],
+      x$data$confusion_matrix[2, 2]
+    )
+  )
+
+  ft <- flextable::add_header_lines(ft, values = matrix_lines)
+  ft <- flextable::align(ft, align = "left", part = "header")
+  ft <- flextable::align(ft, j = 1, align = "left", part = "body")
+  ft <- flextable::align(ft, j = 2:3, align = "center", part = "body")
+
+  ft <- .flex_add_footnotes(ft, footnotes)
+  .diag_style_spec(x)$flex(ft)
+}
+
+#########
+# GRAPHICAL VISUALIZATION
+# Fourfold displays and ggplot2 metric forest/heatmap diagnostic plots.
+
+#' Plot diagnostic test results
 #'
-#' Extracts the performance metrics table as a plain `data.frame`.
-#'
-#' @param x A `diag_test` object.
-#' @param ... Additional arguments (unused).
-#'
-#' @return A `data.frame` with columns `Metric`, `Estimate`, `LowerCI`,
-#'   `UpperCI`.
-#' @export
-as.data.frame.diag_test <- function(x, ...) x$stats
-
-
-#  plotar matriz de confusao
-
-#' Plot Diagnostic Test Results
-#'
-#' Draws a fourfold display of the confusion matrix with sensitivity and
+#' Draws a fourfold display of the retained confusion matrix with sensitivity and
 #' specificity annotated on the bottom margin.
 #'
-#' @param x A `diag_test` object.
+#' @param x A `simtab_diag` result.
 #' @param col Character vector of length 2. Fill colours for the negative and
 #'   positive quadrants respectively. Default: `c("#ffcccc", "#ccffcc")`.
 #' @param main Character. Plot title. Default: `"Confusion Matrix"`.
 #' @param ... Additional arguments passed to [graphics::fourfoldplot()].
-#'
 #' @return Invisibly returns `x`.
+#' @examples
+#' d <- diag_test(epitabl, poc_hstn_positive, adjudicated_acs,
+#'                positive = "Yes", test_positive = "Positive")
+#' plot(d)
 #' @export
-plot.diag_test <- function(
+plot.simtab_diag <- function(
     x,
-    col  = c("#ffcccc", "#ccffcc"),
+    col = c("#ffcccc", "#ccffcc"),
     main = "Confusion Matrix",
     ...
 ) {
-  sens <- round(x$stats$Estimate[x$stats$Metric == "Sensitivity"], 2L)
-  spec <- round(x$stats$Estimate[x$stats$Metric == "Specificity"],          2L)
+  x <- .diag_validate_result(x)
+  metrics <- x$data$metrics
+  sens <- metrics["sensitivity", "estimate"]
+  spec <- metrics["specificity", "estimate"]
 
   graphics::fourfoldplot(
-    x$table,
-    color      = col,
+    x$data$confusion_matrix,
+    color = col,
     conf.level = 0,
-    margin     = 1L,
-    main       = main,
+    margin = 1L,
+    main = main,
     ...
   )
   graphics::mtext(
     sprintf("Sensitivity: %.2f   |   Specificity: %.2f", sens, spec),
-    side = 1L, line = 1L
+    side = 1L,
+    line = 1L
   )
 
   invisible(x)
+}
+
+#' Plot a diagnostic accuracy result with ggplot2
+#'
+#' `type = "matrix"` draws the retained confusion matrix as a labelled heatmap;
+#' `type = "metrics"` draws accuracy measures as points with their stored
+#' confidence intervals. Both read `$data` only - no accuracy measure, interval,
+#' or count is recomputed at plot time. Calibration curves are deliberately not
+#' offered: a binary index test produces no risk scale to calibrate.
+#'
+#' @param object A computed `diag_test()` result.
+#' @param type Either `"matrix"` (default) or `"metrics"`.
+#' @param metrics Character vector of metric rows to draw when
+#'   `type = "metrics"`. Defaults to the interval-carrying accuracy measures.
+#' @param ... Unused.
+#' @return A `ggplot` object carrying recommended export dimensions.
+#' @keywords internal
+#' @noRd
+.diag_autoplot <- function(object,
+                           type = c("matrix", "metrics"),
+                           metrics = c("sensitivity", "specificity", "ppv", "npv", "accuracy"),
+                           ...) {
+  object <- .diag_validate_result(object)
+  .require_pkg("ggplot2", "autoplot() on a diagnostic result")
+  type <- match.arg(type)
+
+  if (identical(type, "matrix")) {
+    .diag_autoplot_matrix(object)
+  } else {
+    .diag_autoplot_metrics(object, metrics)
+  }
+}
+
+#' Render ggplot2 tile heatmap of diagnostic confusion matrix
+#' @keywords internal
+#' @noRd
+.diag_autoplot_matrix <- function(object) {
+  cm <- object$data$confusion_matrix
+  frame <- as.data.frame(as.table(cm))
+  names(frame) <- c("test", "reference", "n")
+
+  # Correct classifications sit on the matrix diagonal: positive/positive and
+  # negative/negative. Shading them apart from the errors is the whole point of
+  # showing the matrix rather than a table of four numbers.
+  test_levels <- rownames(cm)
+  ref_levels <- colnames(cm)
+  frame$correct <- (frame$test == test_levels[[1]] & frame$reference == ref_levels[[1]]) |
+    (frame$test == test_levels[[2]] & frame$reference == ref_levels[[2]])
+  frame$test <- factor(frame$test, levels = rev(test_levels))
+  frame$reference <- factor(frame$reference, levels = ref_levels)
+
+  plot <- ggplot2::ggplot(
+    frame,
+    ggplot2::aes(x = .data[["reference"]], y = .data[["test"]])
+  ) +
+    ggplot2::geom_tile(
+      ggplot2::aes(fill = .data[["correct"]]),
+      colour = "white",
+      linewidth = 1.2,
+      show.legend = FALSE
+    ) +
+    ggplot2::geom_text(
+      ggplot2::aes(label = .data[["n"]]),
+      size = 5,
+      fontface = "bold"
+    ) +
+    ggplot2::scale_fill_manual(values = c("TRUE" = "#cfe6d4", "FALSE" = "#f2d5d5")) +
+    ggplot2::labs(
+      x = sprintf("Reference standard (%s)", object$meta$ref_var %||% "reference"),
+      y = sprintf("Index test (%s)", object$meta$test_var %||% "test"),
+      title = "Confusion Matrix",
+      subtitle = .diag_accuracy_subtitle(object)
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      panel.grid = ggplot2::element_blank(),
+      plot.subtitle = ggplot2::element_text(size = 9, colour = "grey30")
+    )
+
+  .with_export_dim(plot, width = 5.5, height = 4.5)
+}
+
+#' Render ggplot2 point-range forest plot of accuracy metrics
+#' @keywords internal
+#' @noRd
+.diag_autoplot_metrics <- function(object, metrics) {
+  mat <- object$data$metrics
+  keep <- intersect(metrics, rownames(mat))
+  if (length(keep) == 0) {
+    simtab_abort_input(c(
+      "None of the requested metrics are available on this result.",
+      "i" = "Requested: {.val {metrics}}.",
+      "v" = "Choose from {.val {rownames(mat)}}."
+    ))
+  }
+
+  labels <- object$meta$metric_labels %||% .diag_metric_labels()
+  frame <- data.frame(
+    metric = keep,
+    label = unname(labels[keep]),
+    estimate = as.numeric(mat[keep, "estimate"]),
+    conf.low = as.numeric(mat[keep, "conf.low"]),
+    conf.high = as.numeric(mat[keep, "conf.high"])
+  )
+  frame$label <- factor(frame$label, levels = rev(frame$label))
+
+  plot <- ggplot2::ggplot(
+    frame,
+    ggplot2::aes(x = .data[["estimate"]], y = .data[["label"]])
+  ) +
+    ggplot2::geom_pointrange(
+      ggplot2::aes(xmin = .data[["conf.low"]], xmax = .data[["conf.high"]]),
+      orientation = "y",
+      linewidth = 0.5,
+      size = 0.45,
+      na.rm = TRUE
+    ) +
+    ggplot2::scale_x_continuous(limits = c(0, 1), breaks = seq(0, 1, by = 0.25)) +
+    ggplot2::labs(
+      x = sprintf("Estimate (%d%% CI)", as.integer(object$meta$conf_pct %||% 95)),
+      y = NULL,
+      title = "Diagnostic Accuracy",
+      subtitle = .diag_accuracy_subtitle(object)
+    ) +
+    ggplot2::theme_minimal(base_size = 11) +
+    ggplot2::theme(
+      panel.grid.minor = ggplot2::element_blank(),
+      plot.subtitle = ggplot2::element_text(size = 9, colour = "grey30")
+    )
+
+  .with_export_dim(plot, width = 6.5, height = 1.6 + 0.45 * nrow(frame))
+}
+
+#' Format sensitivity, specificity, and sample size for plot subtitles
+#' @keywords internal
+#' @noRd
+.diag_accuracy_subtitle <- function(object) {
+  style <- .diag_style_spec(object)
+  mat <- object$data$metrics
+  digits <- object$spec$fmt$d %||% style$digits_est
+  fmt <- function(row) sprintf(paste0("%.", digits, "f"), as.numeric(mat[row, "estimate"]))
+  sprintf(
+    "Sensitivity %s | Specificity %s | N = %d",
+    fmt("sensitivity"),
+    fmt("specificity"),
+    as.integer(object$meta$sample_size %||% sum(object$data$confusion_matrix))
+  )
+}
+
+#########
+# RENDERER REGISTRATION AND SPECIFICATION VALIDATION
+# Engine renderer bindings and specification contract checks for diagnostic evaluations.
+
+#' Dispatch list of renderer functions for diagnostic accuracy results
+#' @keywords internal
+#' @noRd
+.diag_renderers <- function() {
+  list(
+    print = .diag_print,
+    as_data_frame = .diag_as_data_frame,
+    as_flextable = .diag_as_flextable,
+    autoplot = .diag_autoplot,
+    as_methods = .methods_as_diag
+  )
+}
+
+#' Validate required role bindings in diagnostic specification before computation
+#' @keywords internal
+#' @noRd
+.validate_accuracy <- function(spec) {
+  test_var <- .resolve_single_role(spec, "test")
+  ref_var <- .resolve_single_role(spec, "ref_std")
+
+  if (is.null(test_var)) {
+    simtab_abort_engine(c(
+      "An accuracy spec requires a {.val test} role.",
+      "i" = "No index-test column was recorded before compute.",
+      "v" = "Use {.code diag_test(data, test = rapid, ref = gold)}."
+    ))
+  }
+  if (is.null(ref_var)) {
+    simtab_abort_engine(c(
+      "An accuracy spec requires a {.val ref} role.",
+      "i" = "No reference-standard column was recorded before compute.",
+      "v" = "Use {.code diag_test(data, test = rapid, ref = gold)}."
+    ))
+  }
+
+  invisible(spec)
 }

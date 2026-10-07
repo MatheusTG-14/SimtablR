@@ -1,9 +1,11 @@
-.Rproj.user
 .Rhistory
-.Rdata
-.httr-oauth
+.Rproj.user/
+.quarto/
+*.Rcheck/
+*.tar.gz
+*.log
+check-*.log
+Rplots.pdf
 .DS_Store
-.quarto
-inst/doc
+Thumbs.db
 docs
-.positai

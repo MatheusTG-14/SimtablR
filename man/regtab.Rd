@@ -2,179 +2,163 @@
 % Please edit documentation in R/regtab.R
 \name{regtab}
 \alias{regtab}
-\title{Multi-Outcome Regression Table}
+\title{Fit one regression model per outcome}
 \usage{
 regtab(
   data,
   outcomes,
   predictors,
   family = poisson(link = "log"),
+  offset = NULL,
   robust = TRUE,
+  method = "glm",
   exponentiate = NULL,
   labels = NULL,
+  predictor_labels = NULL,
   d = 2,
   conf.level = 0.95,
   include_intercept = FALSE,
-  p_values = FALSE
+  p_values = FALSE,
+  design = NULL
 )
 }
 \arguments{
-\item{data}{Data.frame containing all variables for analysis.}
+\item{data}{A data frame.}
 
-\item{outcomes}{Character vector of dependent variable names. Each outcome is
-modeled separately with the same set of predictors.}
+\item{outcomes}{Character vector of outcome column names. Each outcome gets
+its own model with the same predictors.}
 
-\item{predictors}{Formula or character string specifying predictors. Can be:
-\itemize{
-\item Formula: \code{~ x1 + x2 + x3}
-\item Character: \code{"~ x1 + x2 + x3"} or \code{"x1 + x2 + x3"}
-}}
+\item{predictors}{The right-hand side of the model, as a one-sided formula
+(\code{~ age + sex}) or a string (\code{"age * sex + smoking"}). Write
+transformations such as centring directly in the formula.}
 
-\item{family}{GLM family specification. Options:
-\itemize{
-\item \code{poisson(link = "log")} - For count outcomes (default)
-\item \code{binomial(link = "logit")} - For binary outcomes
-\item \code{gaussian(link = "identity")} - For continuous outcomes
-\item \code{quasipoisson()}, \code{quasibinomial()} - For overdispersed data
-\item Or character: "poisson", "binomial", "gaussian"
-}}
+\item{family}{A \code{\link[stats:family]{stats::family()}} object. Poisson-log needs a numeric
+outcome (counts or 0/1); \code{binomial()} also accepts two-level factors.}
 
-\item{robust}{Logical. If TRUE (default), calculates heteroskedasticity-consistent
-(HC0) robust standard errors via the sandwich package. CIs are based on robust SEs.}
+\item{offset}{Optional person-time column: a bare name or string. With a
+Poisson-log model, \code{offset(log(offset))} is added so estimates become
+incidence-rate ratios.}
 
-\item{exponentiate}{Logical. If TRUE, exponentiates coefficients and CIs:
-\itemize{
-\item Poisson: IRR (Incidence Rate Ratios)
-\item Binomial: OR (Odds Ratios)
-\item Gaussian: Not typically used (stays on linear scale)
-}
-If NULL (default), automatically detects: TRUE for Poisson/Binomial,
-FALSE for Gaussian.}
+\item{robust}{Standard errors: \code{TRUE} for HC0 robust errors, \code{FALSE} for
+model-based errors, or one of \code{"HC0"}, \code{"HC1"}, \code{"HC2"}, \code{"HC3"}. Prefer
+\code{"HC3"} in small samples (Long & Ervin, 2000).}
 
-\item{labels}{Named character vector for renaming outcome columns in output.
-Format: \code{c("raw_name" = "Pretty Label")}. Useful for publication tables.}
+\item{method}{String. \code{"glm"} fits with \code{\link[stats:glm]{stats::glm()}}; \code{"firth"} fits
+Firth penalised logistic regression with the logistf package, for
+binomial-logit models only.}
 
-\item{d}{Integer. Number of decimal places for rounding estimates and CIs. Default: 2.}
+\item{exponentiate}{Logical. Whether to report exponentiated estimates. If
+\code{NULL}, they are exponentiated for Poisson, binomial, and quasi- families
+and left on the original scale for Gaussian models.}
 
-\item{conf.level}{Numeric. Confidence level for intervals (0-1). Default: 0.95.}
+\item{labels}{Named character vector of display labels for outcomes, e.g.
+\code{c(ed_visits = "ED revisits")}.}
 
-\item{include_intercept}{Logical. If TRUE, includes intercept in output table.
-Default: FALSE (typically excluded from publication tables).}
+\item{predictor_labels}{Named character vector of display labels for model
+terms, e.g. \code{c(sexMale = "Male sex")}.}
 
-\item{p_values}{Logical. If TRUE, adds p-values as separate column. Default: FALSE.}
+\item{d}{Integer. Decimal places for estimates and intervals.}
+
+\item{conf.level}{Number between 0 and 1. Confidence level for intervals.}
+
+\item{include_intercept}{Logical. If \code{TRUE}, show the intercept row.}
+
+\item{p_values}{Logical. If \code{TRUE}, add a p-value column for each outcome.}
+
+\item{design}{String. Optional study design recorded on the result. With a
+Poisson-log model and an \code{offset}, it lets the estimate be labelled as an
+incidence-rate ratio.}
 }
 \value{
-A data.frame in wide format with:
-\itemize{
-\item \strong{Variable}: Predictor names (first column)
-\item \strong{Outcome columns}: One column per outcome with formatted estimates and CIs
-}
-
-Can be directly exported to Excel, Word, or LaTeX for publication.
+A \code{simtab_result} of class \code{simtab_regtab}. Print it to see the
+formatted table, convert it with \code{as.data.frame()}, or save it with
+\code{\link[=export_docx]{export_docx()}}, \code{\link[=export_pptx]{export_pptx()}}, or \code{\link[=export_xlsx]{export_xlsx()}}. Unrounded results
+are stored in \verb{$data}.
 }
 \description{
-Fits generalized linear models (GLMs) for multiple outcome variables and generates
-a formatted wide-format table with point estimates and confidence intervals.
-Supports robust standard errors, automatic exponentiation for count/binary outcomes,
-and custom labeling for publication-ready tables.
+\code{regtab()} fits the same set of predictors to one or more outcomes and
+returns the estimates side by side in a single publication-style table, one
+column per outcome. The default Poisson-log model with robust standard
+errors gives rate ratios for counts and prevalence or risk ratios for 0/1
+outcomes (modified Poisson); use \code{family = binomial()} for odds ratios or
+\code{gaussian()} for mean differences. For crude estimates alongside a
+descriptive table use \code{\link[=table1]{table1()}}.
 }
 \details{
-\subsection{Model Fitting}{
+\subsection{Statistical methods}{
 
-For each outcome, the function fits:
-\code{glm(outcome ~ predictors, family = family, data = data)}
+Each outcome is fitted with \code{\link[stats:glm]{stats::glm()}} and the requested family.
+Intervals are Wald intervals on the link scale, using HC0 sandwich
+standard errors by default; a Poisson-log model with robust errors on a 0/1
+outcome is the modified Poisson approach for prevalence and risk ratios
+(Zou, 2004). \code{method = "firth"} uses penalised-likelihood (profile)
+inference instead, so the HC options do not apply.
+
+For models with two or more predictor terms, generalized variance
+inflation factors (Fox & Monette, 1992) are stored on the result. Show them
+with \code{as.data.frame(fit, vif = TRUE)} or \code{generics::glance(fit, vif = TRUE)}.
 }
 
-\subsection{Robust Standard Errors}{
+\subsection{Missing data}{
 
-When \code{robust = TRUE}, the function:
-\enumerate{
-\item Fits the model with standard GLM.
-\item Computes sandwich covariance matrix (HC0 estimator).
-\item Calculates Wald-type CIs based on robust SEs.
+Rows with a missing outcome or predictor are dropped from that outcome's
+model, so the N can differ between outcomes. It is shown in the table and
+in \code{\link[=model_info]{model_info()}}.
 }
 
-This provides protection against heteroskedasticity and mild model misspecification.
+\subsection{Modifying the result}{
+
+\code{coef()}, \code{confint()}, \code{vcov()}, \code{formula()}, and \code{nobs()} work on the
+result, returning one entry per outcome or a single one with
+\code{outcome = "name"}. \code{\link[=model_info]{model_info()}} reports convergence and failed
+models, \code{generics::tidy()} returns one row per term, and
+\code{ggplot2::autoplot()} draws a forest plot.
 }
 
-\subsection{Exponentiation}{
-\itemize{
-\item \strong{Poisson regression}: exp(beta) = Incidence Rate Ratio
-\itemize{
-\item IRR = 1: No association
-\item IRR > 1: Increased rate
-\item IRR < 1: Decreased rate
-}
-\item \strong{Logistic regression}: exp(beta) = Odds Ratio
-\itemize{
-\item OR = 1: No association
-\item OR > 1: Increased odds
-\item OR < 1: Decreased odds
-}
-}
-}
+\subsection{Limitations}{
 
-\subsection{Output Format}{
-
-Returns a wide-format data.frame:
-\preformatted{
-Variable    | Outcome1          | Outcome2          | ...
-------------|-------------------|-------------------|----
-(Intercept) | 2.34 (1.89-2.91) | 1.98 (1.65-2.38) | ...
-age         | 1.05 (1.02-1.08) | 1.03 (1.01-1.06) | ...
-sex         | 0.87 (0.75-1.01) | 0.92 (0.81-1.05) | ...
-}
-Each cell contains: "Estimate (Lower CI - Upper CI)"
-}
-
-\subsection{Missing Data}{
-
-GLM uses complete cases by default. Observations with missing values in any
-variable are excluded from that specific model.
-}
-
-\subsection{Convergence Issues}{
-
-If a model fails to converge or encounters errors:
-\itemize{
-\item A warning is issued with the outcome name and error message
-\item That outcome column is skipped in the output
-\item Other outcomes continue processing
-}
+The result is a reporting table, not a fitted model: it keeps no fitted
+values or residuals and cannot predict. For conditional logistic
+regression, prediction, or model diagnostics, fit \code{\link[stats:glm]{stats::glm()}},
+\code{logistf::logistf()}, or \code{survival::clogit()} directly.
 }
 }
 \examples{
-# Create example data
-set.seed(456)
-n <- 500
-df <- data.frame(
-  age = rnorm(n, 50, 10),
-  sex = factor(sample(c("M", "F"), n, replace = TRUE)),
-  treatment = factor(sample(c("A", "B"), n, replace = TRUE)),
-  outcome1 = rpois(n, lambda = 5),
-  outcome2 = rpois(n, lambda = 8),
-  outcome3 = rpois(n, lambda = 3)
+# Rate ratios for two count outcomes (Poisson, robust SEs)
+fit <- regtab(
+  epitabl,
+  outcomes = c("ed_visits", "length_of_stay"),
+  predictors = ~ age + sex + smoking
+)
+fit
+
+# Odds ratios for a binary outcome, with p-values
+regtab(
+  epitabl, "rehospitalized", ~ age + sex + diabetes,
+  family = binomial(), p_values = TRUE
 )
 
-# Basic usage: Poisson regression for multiple outcomes
-regtab(df,
-       outcomes = c("outcome1", "outcome2", "outcome3"),
-       predictors = ~ age + sex + treatment,
-       family = poisson(link = "log"))
+# One row per term, for further processing
+generics::tidy(fit)
+}
+\references{
+Zou, G. (2004). A modified Poisson regression approach to
+prospective studies with binary data. \emph{American Journal of
+Epidemiology}, 159(7), 702--706. \doi{10.1093/aje/kwh090}.
 
-# With custom labels and no robust SEs
-regtab(df,
-       outcomes = c("outcome1", "outcome2"),
-       predictors = "age + sex",
-       labels = c(outcome1 = "Primary Endpoint", outcome2 = "Secondary Endpoint"),
-       robust = FALSE)
+Firth, D. (1993). Bias reduction of maximum likelihood estimates.
+\emph{Biometrika}, 80(1), 27--38. \doi{10.1093/biomet/80.1.27}.
 
-# Logistic regression with p-values
-df$binary_outcome <- rbinom(n, 1, 0.4)
-regtab(df,
-       outcomes = "binary_outcome",
-       predictors = ~ age + sex,
-       family = binomial(),
-       p_values = TRUE)
+Fox, J., & Monette, G. (1992). Generalized collinearity diagnostics.
+\emph{Journal of the American Statistical Association}, 87(417),
+178--183. \doi{10.1080/01621459.1992.10475190}.
 
+Long, J. S., & Ervin, L. H. (2000). Using heteroscedasticity consistent
+standard errors in the linear regression model. \emph{The American
+Statistician}, 54(3), 217--224. \doi{10.1080/00031305.2000.10474549}.
+}
+\seealso{
+\code{\link[=model_info]{model_info()}} for convergence, \code{\link[=survtab]{survtab()}} for time-to-event
+outcomes, \code{\link[=table1]{table1()}} for crude and adjusted effects in a descriptive
+table, and \link{simtablr_references} for all references cited by SimtablR.
 }

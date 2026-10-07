@@ -1,9 +1,12 @@
-pandoc: 3.6.3
+pandoc: 3.9.0.2
 pkgdown: 2.2.0
 pkgdown_sha: ~
 articles:
-  tb_tutorial: tb_tutorial.html
-last_built: 2026-02-20T17:10Z
+  diagnostic-and-roc: diagnostic-and-roc.html
+  getting-started: getting-started.html
+  grammar-reporting-export: grammar-reporting-export.html
+  regression-and-survival: regression-and-survival.html
+last_built: 2026-10-07T16:28Z
 urls:
   reference: https://MatheusTG-14.github.io/SimtablR/reference
   article: https://MatheusTG-14.github.io/SimtablR/articles

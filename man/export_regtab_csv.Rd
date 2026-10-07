@@ -2,20 +2,34 @@
 % Please edit documentation in R/regtab.R
 \name{export_regtab_csv}
 \alias{export_regtab_csv}
-\title{Export regtab Results to CSV}
+\title{Export regtab results to CSV}
 \usage{
-export_regtab_csv(x, file, ...)
+export_regtab_csv(x, file, overwrite = FALSE, ...)
 }
 \arguments{
-\item{x}{A data.frame from \code{regtab()}.}
+\item{x}{A \code{regtab} result.}
 
-\item{file}{File path.}
+\item{file}{Output file path. A missing \code{.csv} suffix is added.}
 
-\item{...}{Additional arguments passed to \code{write.csv()}.}
+\item{overwrite}{Logical. Existing files are protected by default; pass
+\code{TRUE} to replace the destination explicitly.}
+
+\item{...}{Passed to \code{\link[utils:write.csv]{utils::write.csv()}}.}
 }
 \value{
 Invisibly returns \code{x}.
 }
 \description{
-Export regtab Results to CSV
+Export regtab results to CSV
+}
+\details{
+The file is completed in the destination directory before it is
+published. Backend failures remove partial output and preserve any existing
+destination.
+}
+\examples{
+\dontrun{
+mod <- regtab(epitabl, outcomes = "rehospitalized", predictors = ~ age + sex)
+export_regtab_csv(mod, tempfile(fileext = ".csv"))
+}
 }

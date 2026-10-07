@@ -2,20 +2,29 @@
 % Please edit documentation in R/regtab.R
 \name{export_regtab_xlsx}
 \alias{export_regtab_xlsx}
-\title{Export regtab Results to Excel}
+\title{Export regtab results to Excel}
 \usage{
-export_regtab_xlsx(x, file, ...)
+export_regtab_xlsx(x, file, overwrite = FALSE, ...)
 }
 \arguments{
-\item{x}{A data.frame from \code{regtab()}.}
+\item{x}{A \code{regtab} result.}
 
-\item{file}{File path (.xlsx).}
+\item{file}{Output file path. A missing \code{.xlsx} suffix is added.}
 
-\item{...}{Additional arguments passed to \code{openxlsx::write.xlsx()}.}
+\item{overwrite}{Logical. Existing files are protected by default; pass
+\code{TRUE} to replace the destination explicitly.}
+
+\item{...}{Passed to \code{\link[=export_xlsx]{export_xlsx()}}.}
 }
 \value{
 Invisibly returns \code{x}.
 }
 \description{
-Requires the \code{openxlsx} package.
+Export regtab results to Excel
+}
+\examples{
+\dontrun{
+mod <- regtab(epitabl, outcomes = "rehospitalized", predictors = ~ age + sex)
+export_regtab_xlsx(mod, tempfile(fileext = ".xlsx"))
+}
 }

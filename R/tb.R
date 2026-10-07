@@ -1,44 +1,156 @@
-#' Frequency and Summary Tables
+# BIVARIATE AND CONTINGENCY TABLE ANALYSIS
+# Fast contingency tables, cross-tabulations, and stratum-specific association metrics.
+# Computes raw frequencies, percentages, effect ratios (PR, RR, OR), and hypothesis tests.
+
+#' Cross-tabulate one or two variables
 #'
-#' Creates comprehensive tables for categorical or continuous variables with formatting,
-#' statistical tests, prevalence ratios (PR), odds ratios (OR), and column stratification.
+#' `tb()` builds a frequency table for one variable, or a cross-tabulation of
+#' two, with optional percentages, an association test, and crude effect
+#' measures (PR, RR, or OR). Put the exposure first (rows) and the outcome
+#' second (columns); a numeric first variable is summarised as mean (SD) or
+#' median (IQR) within each outcome group. For many variables at once use
+#' [table1()]; for adjusted estimates use [regtab()].
 #'
-#' @param data A data.frame or atomic vector.
-#' @param ... Variables to be tabulated. Accepts variable names and/or flags
-#'   (`m`, `p`, `row`, `col`, `rp`, `or`) for controlling output format.
-#' @param m Logical. Include missing values (NA) in the table. Default: `FALSE`.
-#' @param d Integer. Decimal places for percentages and statistics. Default: `1`.
-#' @param format Logical. Render a formatted grid output. Default: `TRUE`.
-#' @param style Character. Format for displaying counts and percentages.
-#'   Options: `"n_pct"` (default), `"pct_n"`, or a custom template with `{n}` and
-#'   `{p}` placeholders, e.g. `"{n} [{p}%]"`.
-#' @param style.rp Character. Format string for Prevalence Ratio.
-#'   Default: `"{rp} ({lower} - {upper})"`.
-#' @param style.or Character. Format string for Odds Ratio.
-#'   Default: `"{or} ({lower} - {upper})"`.
-#' @param test Logical or Character. Performs statistical tests on 2x2+ tables.
-#'   `TRUE` for automatic selection, or one of `"chisq"`, `"fisher"`, `"mcnemar"`.
-#' @param subset Logical expression for row filtering.
-#' @param strat Variable for column stratification. Disables PR/OR calculations.
-#' @param rp Logical. Calculate Prevalence Ratios (PR). Default: `FALSE`.
-#' @param or Logical. Calculate Odds Ratios (OR). Default: `FALSE`.
-#' @param ref Character or numeric. Reference level for PR/OR calculations.
-#' @param conf.level Numeric. Confidence level for intervals (0-1). Default: `0.95`.
-#' @param var.type Named character vector specifying variable types, e.g.
-#'   `c(age = "continuous")` or a scalar string `"continuous"`.
-#' @param stat.cont Character. `"mean"` (Mean/SD) or `"median"` (Median/IQR).
-#'   Default: `"median"`.
-#' @param flags Character vector. Programmatic alternative for specifying formatting flags.
-#' @param labels Named character vector. Custom display labels for variables.
+#' @param data A data frame, or a single vector to tabulate on its own.
+#' @param ... One or two variables to tabulate: bare names, strings, or
+#'   tidyselect expressions such as `all_of(v)`. The first becomes the rows and
+#'   the second the columns. Terse flags such as `row` or `or` may follow; see
+#'   *Terse flags*.
+#' @param m Deprecated; use `miss` instead.
+#' @param miss Logical. If `TRUE`, show missing values as their own row and
+#'   column. Same as the `miss` flag.
+#' @param d Integer. Decimal places for percentages and continuous summaries.
+#'   Effect measures always use two decimals.
+#' @param big_mark String inserted between every three digits, e.g. `","`
+#'   prints `4391` as `4,391`.
+#' @param decimal_mark String used as the decimal point, e.g. `","`. Must
+#'   differ from `big_mark`.
+#' @param style String. How counts and percentages are shown: `"n_pct"`
+#'   (`12 (5.0%)`), `"pct_n"` (`5.0% (12)`), or a template using `{n}` and
+#'   `{p}`, such as `"{n} [{p}%]"`.
+#' @param style.rp String template for prevalence and risk ratios, using
+#'   `{rp}`, `{lower}`, and `{upper}`.
+#' @param style.or String template for odds ratios, using `{or}`, `{lower}`,
+#'   and `{upper}`.
+#' @param test Logical or string. `TRUE` adds a p-value from an automatically
+#'   chosen test; or force `"chisq"`, `"fisher"`, or `"mcnemar"`. See
+#'   *Statistical methods* for how the test is chosen.
+#' @param subset A logical expression evaluated in `data` to keep only some
+#'   rows, e.g. `subset = age >= 65`.
+#' @param strat A variable to stratify by: a bare name or string. The table is
+#'   repeated within each stratum and, if an effect measure is requested,
+#'   a Mantel-Haenszel pooled estimate is added.
+#' @param rp Deprecated; use the `pr` flag or `measure = "PR"` instead.
+#' @param or Logical. If `TRUE`, add odds ratios. Same as the `or` flag.
+#' @param ref Reference level of the row (exposure) variable for effect
+#'   measures, given as a level name or its position. If `NULL`, the first
+#'   level is used and a note is printed.
+#' @param conf.level Number between 0 and 1. Confidence level for effect
+#'   measure intervals.
+#' @param var.type Force variable types: `"continuous"` or `"categorical"`,
+#'   either one string for all variables or a named vector such as
+#'   `c(score = "continuous")`. If `NULL`, types are detected automatically
+#'   (see *Statistical methods*).
+#' @param summary String. Summary for numeric variables: `"auto"` chooses
+#'   between `"mean"` (mean and SD) and `"median"` (median and IQR) based on
+#'   sample size and skewness.
+#' @param flags Character vector of terse flags, e.g. `c("row", "or", "p")`.
+#'   The programmatic form of the bare flags in `...`.
+#' @param labels Named character vector of display labels, e.g.
+#'   `c(smoking = "Smoking status")`. Variable labels already stored in `data`
+#'   are used by default.
+#' @param measure String. Effect measure to add: `"PR"`, `"RR"`, or `"OR"`.
+#'   Overrides any measure implied by `design`.
+#' @param design String. Study design used to choose the effect measure when
+#'   none is requested: `"cross_sectional"` gives PR, `"cohort"` gives RR, and
+#'   `"case_control"` gives OR.
 #'
-#' @return An object of class `c("tb", "simtab")`.
+#' @eval .flag_roxygen_section("tb")
+#'
+#' @details
+#' ## Statistical methods
+#' Effect measures compare each row level with the reference level (`ref`),
+#' taking the last column level as the event. Prevalence and risk ratios use
+#' the Katz log interval (Katz et al., 1978) and odds ratios the Woolf logit
+#' interval (Woolf, 1955). With `strat`, stratum-specific tables are pooled
+#' with the Mantel-Haenszel estimator and tested with the Cochran-Mantel-Haenszel
+#' test.
+#'
+#' With `test = TRUE`, 2x2 tables use the N-1 chi-squared test (Campbell,
+#' 2007) and larger tables the Pearson chi-squared test, without continuity
+#' correction. Fisher's exact test is chosen automatically only when an
+#' expected count is below 1; request it with `test = "fisher"`. Numeric
+#' variables are compared with the t-test or ANOVA when summarised by the
+#' mean, and with the Wilcoxon or Kruskal-Wallis test when summarised by the
+#' median.
+#'
+#' Numeric variables are treated as continuous unless they look like coded
+#' categories: exactly two distinct whole numbers, or at most seven distinct
+#' whole numbers with at least 20 observations. Use `var.type` to override.
+#'
+#' ## Missing data
+#' Missing values are excluded from counts, percentages, tests, and effect
+#' measures. Use the `miss` flag to display them as a separate category.
+#'
+#' ## Modifying the result
+#' Paired tests and multiplicity adjustment are set afterwards with [test()],
+#' e.g. `tb(df, value, group, test = TRUE) |> test(paired = TRUE)`. Use
+#' [fmt()] to change decimals and [rbind()] to stack several `tb()` tables
+#' that share the same column variable.
+#'
+#' @return A `simtab_result` of class `simtab_tb`. Print it to see the
+#'   formatted table, convert it with `as.data.frame()`, or save it with
+#'   [export_docx()], [export_pptx()], or [export_xlsx()]. Unrounded results
+#'   are stored in `$data`.
+#' @seealso [table1()] for many variables at once, [regtab()] for adjusted
+#'   effect measures, [diag_test()] for diagnostic accuracy, and
+#'   [simtablr_references] for all references cited by SimtablR.
+#' @examples
+#' # Frequencies of one variable
+#' tb(epitabl, smoking)
+#'
+#' # Row percentages, a p-value, and crude prevalence ratios
+#' tb(epitabl, smoking, adjudicated_acs, flags = c("row", "pr", "p"), ref = "Never")
+#'
+#' # The same request with bare flags (shorthand)
+#' tb(epitabl, smoking, adjudicated_acs, row, pr, p, ref = "Never")
+#'
+#' # Odds ratio stratified by sex, with a Mantel-Haenszel pooled estimate
+#' tb(epitabl, renal_impairment, adjudicated_acs, strat = sex, flags = "or", ref = "No")
+#'
+#' # A numeric variable summarised by group
+#' tb(epitabl, age, adjudicated_acs, test = TRUE)
+#' @references Campbell, I. (2007). Chi-squared and Fisher-Irwin tests of
+#'   two-by-two tables with small sample recommendations. \emph{Statistics in
+#'   Medicine}, 26(19), 3661--3675. \doi{10.1002/sim.2832}.
+#'
+#'   Katz, D., Baptista, J., Azen, S. P., & Pike, M. C. (1978). Obtaining
+#'   confidence intervals for the risk ratio in cohort studies.
+#'   \emph{Biometrics}, 34(3), 469--474. \doi{10.2307/2530610}.
+#'
+#'   Woolf, B. (1955). On estimating the relation between blood group and
+#'   disease. \emph{Annals of Human Genetics}, 19(4), 251--253.
+#'   \doi{10.1111/j.1469-1809.1955.tb01348.x}.
+#'
+#'   Pearson, K. (1900). On the criterion that a given system of deviations
+#'   from the probable in the case of a correlated system of variables is such
+#'   that it can be reasonably supposed to have arisen from random sampling.
+#'   \emph{Philosophical Magazine, Series 5}, 50(302), 157--175.
+#'   \doi{10.1080/14786440009463897}.
+#'
+#'   Fisher, R. A. (1935). \emph{The Design of Experiments}. Oliver & Boyd.
 #' @export
+#########
+# BIVARIATE CONTINGENCY TABLE INTERFACE
+# Direct user-facing constructor for cross-tabulations and stratum-specific metrics.
 tb <- function(
   data,
   ...,
   m = FALSE,
+  miss = FALSE,
   d = 1,
-  format = TRUE,
+  big_mark = "",
+  decimal_mark = ".",
   style = "n_pct",
   style.rp = "{rp} ({lower} - {upper})",
   style.or = "{or} ({lower} - {upper})",
@@ -50,585 +162,116 @@ tb <- function(
   ref = NULL,
   conf.level = 0.95,
   var.type = NULL,
-  stat.cont = "median",
+  summary = "auto",
   flags = NULL,
-  labels = NULL
+  labels = NULL,
+  measure = NULL,
+  design = NULL
 ) {
-  if (missing(data)) {
-    stop(
-      "No data provided. Please supply a data.frame or vector.",
-      call. = FALSE
-    )
-  }
-  if (is.matrix(data) || (!is.data.frame(data) && !is.atomic(data))) {
-    stop("'data' must be a data.frame or atomic vector.", call. = FALSE)
-  }
-  if (!is.numeric(d) || d < 0 || d > 10) {
-    stop("'d' must be a number between 0 and 10.", call. = FALSE)
-  }
-  if (!is.numeric(conf.level) || conf.level <= 0 || conf.level >= 1) {
-    stop("'conf.level' must be between 0 and 1.", call. = FALSE)
-  }
-  if (is.character(test)) {
-    test <- tolower(test)
-    valid_tests <- c("chisq", "fisher", "mcnemar")
-    if (!test %in% valid_tests) {
-      stop(
-        "Invalid test method. Use one of: chisq, fisher, mcnemar.",
-        call. = FALSE
-      )
-    }
-  }
-
-  d <- as.integer(d)
-  call_matched <- match.call()
-
   subset_expr <- substitute(subset)
   strat_expr <- substitute(strat)
-  dots <- as.list(substitute(list(...)))[-1]
+  caller_env <- parent.frame()
 
-  if (is.data.frame(data)) {
-    env_data <- data
-    env_parent <- parent.frame()
-    arg_expr <- dots
-  } else {
-    env_data <- NULL
-    env_parent <- parent.frame()
-    data_sym <- substitute(data)
-    arg_expr <- c(list(data_sym), dots)
-  }
+  parsed <- .tb_parse_inputs(
+    data = data,
+    dot_exprs = as.list(substitute(list(...)))[-1],
+    dots_env = caller_env,
+    m = isTRUE(m) || isTRUE(miss),
+    m_deprecated = !missing(m) && isTRUE(m),
+    rp = rp,
+    or = or,
+    flags = flags,
+    measure = measure,
+    subset_expr = subset_expr,
+    strat_expr = strat_expr
+  )
 
-  flag_names <- c("m", "p", "row", "col", "rp", "or")
-  flags_list <- list(missing = m, percent = FALSE, by = "total")
-
-  if (!is.null(flags)) {
-    for (f in flags) {
-      if (f == "m") {
-        flags_list$missing <- TRUE
-      }
-      if (f == "rp") {
-        rp <- TRUE
-      }
-      if (f == "or") {
-        or <- TRUE
-      }
-      if (f == "p") {
-        flags_list$percent <- TRUE
-        flags_list$by <- "total"
-      }
-      if (f == "row") {
-        flags_list$percent <- TRUE
-        flags_list$by <- "row"
-      }
-      if (f == "col") {
-        flags_list$percent <- TRUE
-        flags_list$by <- "col"
-      }
-    }
-  }
-
-  clean_arg_expr <- list()
-  for (expr in arg_expr) {
-    if (is.symbol(expr)) {
-      sym_name <- as.character(expr)
-      if (sym_name %in% flag_names) {
-        if (is.data.frame(data) && sym_name %in% names(data)) {
-          warning(
-            sprintf(
-              "Ambiguity detected: '%s' matches a formatting flag but is also a column name in the dataset. Treating '%s' as a variable. Use the 'flags' argument to safely pass formatting options.",
-              sym_name,
-              sym_name
-            ),
-            call. = FALSE,
-            immediate. = TRUE
-          )
-          clean_arg_expr <- c(clean_arg_expr, expr)
-        } else {
-          if (sym_name == "m") {
-            flags_list$missing <- TRUE
-          }
-          if (sym_name == "rp") {
-            rp <- TRUE
-          }
-          if (sym_name == "or") {
-            or <- TRUE
-          }
-          if (sym_name == "p") {
-            flags_list$percent <- TRUE
-            flags_list$by <- "total"
-          }
-          if (sym_name == "row") {
-            flags_list$percent <- TRUE
-            flags_list$by <- "row"
-          }
-          if (sym_name == "col") {
-            flags_list$percent <- TRUE
-            flags_list$by <- "col"
-          }
-        }
-      } else {
-        clean_arg_expr <- c(clean_arg_expr, expr)
-      }
-    } else {
-      clean_arg_expr <- c(clean_arg_expr, expr)
-    }
-  }
-
-  vars <- list()
-  var_names <- character()
-  var_labels <- character()
-
-  for (i in seq_along(clean_arg_expr)) {
-    expr <- clean_arg_expr[[i]]
-    nm <- deparse(expr, width.cutoff = 500L)[1]
-    val <- tryCatch(
-      eval(expr, env_data, env_parent),
-      error = function(e) {
-        stop(sprintf("Variable '%s' not found.", nm), call. = FALSE)
-      }
-    )
-    if (!is.atomic(val) && !is.factor(val)) {
-      stop(
-        sprintf("Variable '%s' must be atomic or factor.", nm),
-        call. = FALSE
-      )
-    }
-
-    lbl <- .resolve_label(nm, data, labels)
-    vars[[i]] <- val
-    var_names[i] <- nm
-    var_labels[i] <- lbl
-  }
-
-  if (length(vars) == 0) {
-    stop("No variables specified.", call. = FALSE)
-  }
-  if (length(vars) > 2) {
-    stop("Maximum of 2 variables allowed.", call. = FALSE)
-  }
-
-  row_var_name <- var_names[1]
-  row_label <- var_labels[1]
-  col_var_name <- if (length(vars) == 2) var_names[2] else NULL
-  col_label <- if (length(vars) == 2) var_labels[2] else NULL
-
-  strat_val <- NULL
-  if (!is.null(strat_expr)) {
-    strat_val <- tryCatch(
-      eval(strat_expr, env_data, env_parent),
-      error = function(e) {
-        stop("Stratification variable not found.", call. = FALSE)
-      }
-    )
-    if (length(strat_val) != length(vars[[1]])) {
-      stop("Stratification variable length mismatch.", call. = FALSE)
-    }
-    if (rp || or) {
-      warning(
-        "PR/OR calculations are disabled when stratification is used because crude stratified ratios can be misleading due to confounding. Use regtab() to perform multivariable or stratified regression for adjusted effect measures.",
-        call. = FALSE,
-        immediate. = TRUE
-      )
-      rp <- FALSE
-      or <- FALSE
-    }
-  }
-
-  if (!is.null(subset_expr)) {
-    subset_val <- tryCatch(
-      eval(subset_expr, env_data, env_parent),
-      error = function(e) stop("Error evaluating subset.", call. = FALSE)
-    )
-    if (!is.logical(subset_val)) {
-      stop("Subset must be logical.", call. = FALSE)
-    }
-
-    keep <- subset_val & !is.na(subset_val)
-    if (sum(keep) == 0) {
-      stop("Subset removed all observations.", call. = FALSE)
-    }
-
-    vars <- lapply(vars, `[`, keep)
-    if (!is.null(strat_val)) strat_val <- strat_val[keep]
-  }
-
-  if (!is.null(strat_val)) {
-    if (length(vars) == 2) {
-      if (!flags_list$missing) {
-        ok <- !is.na(strat_val)
-        vars <- lapply(vars, `[`, ok)
-        strat_val <- strat_val[ok]
-      }
-      vars[[2]] <- interaction(
-        strat_val,
-        vars[[2]],
-        sep = " : ",
-        drop = TRUE,
-        lex.order = TRUE
-      )
-    } else {
-      vars[[2]] <- factor(strat_val)
-    }
-    col_var_name <- if (is.null(col_var_name)) {
-      "Stratum"
-    } else {
-      paste0(col_var_name, " (Stratified)")
-    }
-    col_label <- col_var_name
-  }
-
-  is_continuous <- FALSE
-  if (!is.null(var.type)) {
-    if (
-      length(var.type) == 1 &&
-        (is.null(names(var.type)) || all(names(var.type) == ""))
-    ) {
-      var.type <- setNames(var.type, row_var_name)
-    }
-    if (row_var_name %in% names(var.type)) {
-      type_spec <- tolower(var.type[[row_var_name]])
-
-      if (type_spec %in% c("continuous", "cont", "numeric", "num")) {
-        is_continuous <- TRUE
-      }
-    }
-  } else if (is.numeric(vars[[1]]) && !is.factor(vars[[1]])) {
-    is_continuous <- TRUE
-    message(sprintf(
-      "Variable '%s' automatically treated as continuous because it is numeric. Use 'var.type' to override.",
-      row_var_name
-    ))
-  }
-
-  res_data <- list()
-  res_meta <- list(
-    is_continuous = is_continuous,
-    stat.cont = stat.cont,
+  spec <- .tb_spec(
+    data = parsed$data,
+    base_spec = parsed$base_spec,
+    var_names = parsed$var_names,
+    m = parsed$flags_list$missing,
     d = d,
+    big_mark = big_mark,
+    decimal_mark = decimal_mark,
     style = style,
     style.rp = style.rp,
     style.or = style.or,
+    test = test,
+    test_explicit = !missing(test),
+    subset = subset_expr,
+    subset_env = caller_env,
+    strat = strat_expr,
+    strat_env = caller_env,
+    measure = parsed$measure,
+    ref = ref,
     conf.level = conf.level,
+    var.type = var.type,
+    stat.cont = summary,
+    flags_list = parsed$flags_list,
+    flag_tokens = parsed$flag_tokens,
+    pct_requested = parsed$pct_requested,
     labels = labels,
-    row_var_name = row_var_name,
-    row_label = row_label,
-    col_var_name = col_var_name,
-    col_label = col_label,
-    flags = flags_list,
-    stats = NULL
+    design = design,
+    call = match.call()
   )
 
-  if (is_continuous) {
-    y <- vars[[1]]
-    x <- if (length(vars) > 1) vars[[2]] else NULL
-
-    if (!is.numeric(y)) {
-      stop(
-        sprintf("Variable '%s' is not numeric.", row_var_name),
-        call. = FALSE
-      )
-    }
-
-    if (!is.null(x)) {
-      if (is.factor(x)) {
-        x <- droplevels(x)
-      }
-      if (!flags_list$missing) {
-        ok <- !is.na(x) & !is.na(y)
-        x <- x[ok]
-        y <- y[ok]
-      }
-    } else {
-      y <- y[!is.na(y)]
-    }
-
-    if (!is.null(test) && !(is.logical(test) && !test)) {
-      message(sprintf(
-        "Note: Statistical test choice for continuous variables is driven by 'stat.cont' ('%s'), not by empirical normality testing. Ensure this assumption aligns with your data's true distribution.",
-        stat.cont
-      ))
-    }
-
-    calc_raw_stats <- function(val) {
-      if (length(val) == 0) {
-        return(numeric(0))
-      }
-      if (stat.cont == "mean") {
-        return(c(mean = mean(val, na.rm = TRUE), sd = sd(val, na.rm = TRUE)))
-      } else {
-        return(as.numeric(quantile(
-          val,
-          probs = c(0.5, 0.25, 0.75),
-          na.rm = TRUE
-        )))
-      }
-    }
-
-    summary_list <- list()
-    if (is.null(x)) {
-      summary_list[["Total"]] <- calc_raw_stats(y)
-    } else {
-      levs <- if (is.factor(x)) levels(x) else sort(unique(x))
-      if (flags_list$missing && any(is.na(x))) {
-        levs <- c(levs, NA)
-      }
-
-      for (l in levs) {
-        sub_y <- if (is.na(l)) y[is.na(x)] else y[x == l & !is.na(x)]
-        lbl_l <- if (is.na(l)) "<NA>" else as.character(l)
-        summary_list[[lbl_l]] <- calc_raw_stats(sub_y)
-      }
-      summary_list[["Total"]] <- calc_raw_stats(y)
-    }
-
-    res_data$summary <- summary_list
-
-    stats_res <- NULL
-    if ((isTRUE(test) || is.character(test)) && !is.null(x)) {
-      tryCatch(
-        {
-          n_groups <- length(unique(x[!is.na(x)]))
-          if (n_groups >= 2) {
-            if (stat.cont == "mean") {
-              stats_res <- if (n_groups == 2) {
-                t.test(y ~ x)
-              } else {
-                fit <- lm(y ~ x)
-                list(p.value = anova(fit)$`Pr(>F)`[1], method = "One-way ANOVA")
-              }
-            } else {
-              stats_res <- if (n_groups == 2) {
-                wilcox.test(y ~ x, exact = FALSE)
-              } else {
-                kruskal.test(y ~ x)
-              }
-            }
-          }
-        },
-        error = function(e) NULL
-      )
-    }
-    res_meta$stats <- stats_res
-  } else {
-    if (!is.null(ref)) {
-      row_var <- if (is.factor(vars[[1]])) vars[[1]] else factor(vars[[1]])
-      ref_str <- as.character(ref)
-      if (ref_str %in% levels(row_var)) {
-        vars[[1]] <- relevel(row_var, ref = ref_str)
-      } else if (is.numeric(ref) && ref %in% seq_along(levels(row_var))) {
-        vars[[1]] <- relevel(row_var, ref = levels(row_var)[ref])
-      } else {
-        stop(
-          sprintf(
-            "Reference level '%s' not found in row variable levels.",
-            ref_str
-          ),
-          call. = FALSE
-        )
-      }
-    } else if (rp || or) {
-      levs <- if (is.factor(vars[[1]])) {
-        levels(vars[[1]])
-      } else {
-        levels(factor(vars[[1]]))
-      }
-      ref <- levs[1]
-      message(sprintf(
-        "Note: No reference level specified for PR/OR calculation. Defaulting to the first level: '%s'.",
-        ref
-      ))
-    }
-
-    vars <- lapply(vars, function(v) if (is.factor(v)) droplevels(v) else v)
-    useNA <- if (flags_list$missing) "always" else "no"
-    tab <- table(vars, useNA = useNA)
-
-    if (sum(tab) == 0) {
-      stop("Table is empty.", call. = FALSE)
-    }
-
-    pct_full <- NULL
-    if (flags_list$percent) {
-      if (length(dim(tab)) == 1) {
-        pct_full <- as.vector(tab / sum(tab) * 100)
-      } else {
-        nr <- nrow(tab)
-        nc <- ncol(tab)
-        pct_full <- matrix(NA_real_, nr, nc)
-        pct_calc <- switch(
-          flags_list$by,
-          total = tab / sum(tab),
-          row = tab / rowSums(tab),
-          col = sweep(tab, 2, colSums(tab), "/")
-        )
-        pct_full[seq_len(nr), seq_len(nc)] <- pct_calc * 100
-      }
-    }
-
-    ratios_df <- NULL
-    if ((rp || or) && length(dim(tab)) == 2 && ncol(tab) >= 2) {
-      event_col_idx <- ncol(tab)
-      total_events <- sum(tab[, event_col_idx])
-      total_n <- sum(tab)
-      prev <- total_events / total_n
-
-      if (or && prev > 0.10) {
-        message(sprintf(
-          "Note: Outcome prevalence is %.1f%%. Odds ratios overestimate the Prevalence Ratio in common outcomes (>10%%). Consider using rp = TRUE (Prevalence Ratio) for cross-sectional data, or Poisson regression via regtab() for adjusted estimates.",
-          prev * 100
-        ))
-      }
-
-      events <- tab[, event_col_idx]
-      totals <- rowSums(tab)
-      risks <- events / totals
-
-      n_rows <- nrow(tab)
-      row_levs <- rownames(tab)
-
-      ratios_df <- data.frame(
-        variable = rep(row_var_name, n_rows),
-        level = row_levs,
-        estimate = rep(NA_real_, n_rows),
-        lower_ci = rep(NA_real_, n_rows),
-        upper_ci = rep(NA_real_, n_rows),
-        p_value = rep(NA_real_, n_rows),
-        ref = rep(FALSE, n_rows),
-        type = rep(if (rp) "PR" else "OR", n_rows),
-        stringsAsFactors = FALSE
-      )
-      ratios_df$ref[1] <- TRUE
-      ratios_df$estimate[1] <- 1.0
-
-      z_crit <- qnorm(1 - (1 - conf.level) / 2)
-
-      for (i in seq_len(n_rows)[-1]) {
-        if (rp) {
-          if (events[i] > 0 && events[1] > 0 && risks[1] > 0 && risks[i] > 0) {
-            est <- risks[i] / risks[1]
-            se_log <- sqrt(
-              (1 / events[i] - 1 / totals[i]) + (1 / events[1] - 1 / totals[1])
-            )
-            if (!is.na(se_log) && se_log > 0) {
-              ratios_df$estimate[i] <- est
-              ratios_df$lower_ci[i] <- exp(log(est) - z_crit * se_log)
-              ratios_df$upper_ci[i] <- exp(log(est) + z_crit * se_log)
-              z_stat <- log(est) / se_log
-              ratios_df$p_value[i] <- 2 * (1 - pnorm(abs(z_stat)))
-            }
-          }
-        } else if (or) {
-          a_i <- events[i]
-          b_i <- totals[i] - a_i
-          a_1 <- events[1]
-          b_1 <- totals[1] - a_1
-
-          if (a_i > 0 && b_i > 0 && a_1 > 0 && b_1 > 0) {
-            est <- (a_i * b_1) / (b_i * a_1)
-            se_log <- sqrt(1 / a_i + 1 / b_i + 1 / a_1 + 1 / b_1)
-            if (!is.na(se_log) && se_log > 0) {
-              ratios_df$estimate[i] <- est
-              ratios_df$lower_ci[i] <- exp(log(est) - z_crit * se_log)
-              ratios_df$upper_ci[i] <- exp(log(est) + z_crit * se_log)
-              z_stat <- log(est) / se_log
-              ratios_df$p_value[i] <- 2 * (1 - pnorm(abs(z_stat)))
-            }
-          }
-        }
-      }
-    }
-
-    res_data$frequencies <- tab
-    res_data$percentages <- pct_full
-    res_data$ratios <- ratios_df
-
-    stats_res <- NULL
-    if ((isTRUE(test) || is.character(test)) && length(dim(tab)) == 2) {
-      type <- if (is.character(test)) test else "chisq"
-      tryCatch(
-        {
-          stats_res <- switch(
-            type,
-            chisq = {
-              cc <- chisq.test(tab)
-              if (any(cc$expected < 5)) {
-                warning(
-                  sprintf(
-                    "Chi-squared test requirement violated: expected counts < 5. Results may be unreliable. Consider setting test = 'fisher'."
-                  ),
-                  call. = FALSE,
-                  immediate. = TRUE
-                )
-              }
-              cc
-            },
-            fisher = fisher.test(tab, workspace = 2e7),
-            mcnemar = mcnemar.test(tab)
-          )
-        },
-        error = function(e) NULL
-      )
-    }
-    res_meta$stats <- stats_res
-  }
-
-  out_obj <- list(
-    data = res_data,
-    meta = res_meta,
-    call = call_matched
-  )
-  class(out_obj) <- c("tb", "simtab")
-  return(out_obj)
+  evaluate(spec)
 }
 
-#' Combine Objects by Rows
-#'
-#' @param ... Objects to be combined.
-#' @param deparse.level Integer controlling label deparsing.
-#' @return A combined object.
-#' @export
-rbind <- function(..., deparse.level = 1) {
-  dots <- list(...)
-  if (length(dots) == 0) {
-    stop("No objects provided to rbind.", call. = FALSE)
-  }
-  if (inherits(dots[[1]], "tb") || inherits(dots[[1]], "rbind_tb")) {
-    return(rbind.tb(..., deparse.level = deparse.level))
-  }
-  return(base::rbind(..., deparse.level = deparse.level))
-}
+#########
+# STACKED CONTINGENCY TABLES
+# Row-wise concatenation of bivariate tables sharing a common column stratifier.
 
 #' Combine tb Objects by Rows
 #'
-#' Vertical stacking of `tb` objects to create multi-variable tables (foundations for Table 1).
+#' Vertical stacking of `tb` objects to create multi-variable tables.
 #'
-#' @param ... Objects of class `tb` to be combined.
+#' @details
+#' This method is registered as an S3 method on `base::rbind()` (it does not
+#' mask `base::rbind`), so `rbind(tb1, tb2)` dispatches here while ordinary
+#' matrix/data.frame `rbind()` is unaffected.
+#'
+#' The resulting `rbind_tb` object combines multiple bivariate tables sharing
+#' a common stratifying column into a stacked summary table.
+#'
+#' @param ... Objects of class `simtab_tb` to be combined.
 #' @param deparse.level Integer controlling label deparsing (unused).
-#' @return A combined object of class `c("rbind_tb", "simtab")`.
-#' @method rbind tb
+#' @return A combined object of class `c("simtab_rbind_tb", "rbind_tb", "simtab")`.
+#' @seealso [tb()]
+#' @method rbind simtab_tb
+#' @examples
+#' t1 <- tb(epitabl, sex, diabetes)
+#' t2 <- tb(epitabl, hypertension, diabetes)
+#' rbind(t1, t2)
 #' @export
-rbind.tb <- function(..., deparse.level = 1) {
+rbind.simtab_tb <- function(..., deparse.level = 1) {
   dots <- list(...)
   if (length(dots) == 0) {
-    stop("No objects provided to rbind.", call. = FALSE)
+    simtab_abort_input(c(
+      "No objects were provided to {.fn rbind}.",
+      "i" = "Row-stacking needs at least one {.fn tb} result.",
+      "v" = "Pass the tables to stack, e.g. {.code rbind(t1, t2)}."
+    ))
   }
   for (i in seq_along(dots)) {
-    if (!inherits(dots[[i]], "tb")) {
-      stop(sprintf("Argument %d is not a 'tb' object.", i), call. = FALSE)
+    if (!inherits(dots[[i]], "simtab_tb")) {
+      simtab_abort_input(c(
+        "Argument {i} is not a {.fn tb} result.",
+        "i" = "Received an object of class {.cls {class(dots[[i]])[[1]]}}.",
+        "v" = "Only {.fn tb} results can be row-stacked."
+      ))
     }
   }
   ref_meta <- dots[[1]]$meta
   for (i in seq_along(dots)[-1]) {
     if (dots[[i]]$meta$col_var_name != ref_meta$col_var_name) {
-      stop(
-        sprintf(
-          "Column variable mismatch at argument %d: '%s' vs '%s'. All objects must share the same column structure.",
-          i,
-          dots[[i]]$meta$col_var_name,
-          ref_meta$col_var_name
-        ),
-        call. = FALSE
-      )
+      simtab_abort_input(c(
+        "Column variable mismatch at argument {i}.",
+        "i" = "Found {.val {dots[[i]]$meta$col_var_name}} but expected
+               {.val {ref_meta$col_var_name}}.",
+        "v" = "All stacked tables must share the same column variable."
+      ))
     }
   }
   out_obj <- list(
@@ -641,12 +284,17 @@ rbind.tb <- function(..., deparse.level = 1) {
     ),
     call = match.call()
   )
-  class(out_obj) <- c("rbind_tb", "simtab")
+  class(out_obj) <- c("simtab_rbind_tb", "rbind_tb", "simtab")
   return(out_obj)
 }
 
-#' Helper function for internal label resolution
+#########
+# DISPLAY MATRIX BUILDER
+# Formats raw frequency counts and association metrics into visual character matrices.
+
+#' Resolve display label for a variable name
 #' @keywords internal
+#' @noRd
 .resolve_label <- function(var_name, data, labels_arg) {
   if (!is.null(labels_arg) && var_name %in% names(labels_arg)) {
     return(labels_arg[[var_name]])
@@ -658,18 +306,13 @@ rbind.tb <- function(..., deparse.level = 1) {
   return(var_name)
 }
 
-#' Shared Display Matrix Builder
+#' Build formatted display character matrix from raw bivariate table evidence
 #' @keywords internal
+#' @noRd
 .build_display_matrix <- function(x) {
-  if (inherits(x, "rbind_tb")) {
-    mats <- list()
-    all_cols <- character()
-    for (i in seq_along(x$data)) {
-      tb_i <- list(data = x$data[[i]], meta = x$meta$tables[[i]], call = NULL)
-      class(tb_i) <- c("tb", "simtab")
-      mats[[i]] <- .build_display_matrix(tb_i)
-      all_cols <- unique(c(all_cols, colnames(mats[[i]])))
-    }
+  if (inherits(x, "simtab_rbind_tb")) {
+    mats <- lapply(.rbind_tb_tables(x), .build_display_matrix)
+    all_cols <- unique(unlist(lapply(mats, colnames)))
     parts <- list()
     for (i in seq_along(x$data)) {
       mat_i <- mats[[i]]
@@ -709,12 +352,7 @@ rbind.tb <- function(..., deparse.level = 1) {
         cols_intersect <- intersect(colnames(sub_mat), all_cols)
         level_mat[, cols_intersect] <- sub_mat[, cols_intersect]
         rnames <- rownames(level_mat)
-        for (r_idx in seq_along(rnames)) {
-          if (rnames[r_idx] != "Total") {
-            rnames[r_idx] <- paste0("  ", rnames[r_idx])
-          }
-        }
-        rownames(level_mat) <- rnames
+        rownames(level_mat) <- ifelse(rnames == "Total", rnames, paste0("  ", rnames))
         parts[[length(parts) + 1]] <- header_mat
         parts[[length(parts) + 1]] <- level_mat
       }
@@ -725,6 +363,8 @@ rbind.tb <- function(..., deparse.level = 1) {
   is_continuous <- x$meta$is_continuous
   d <- x$meta$d
   style <- x$meta$style
+  bm <- x$meta$big_mark %||% ""
+  dm <- x$meta$decimal_mark %||% "."
 
   if (is_continuous) {
     raw_sum <- x$data$summary
@@ -744,18 +384,21 @@ rbind.tb <- function(..., deparse.level = 1) {
         out_mat[1, nm] <- "-"
       } else if (x$meta$stat.cont == "mean") {
         out_mat[1, nm] <- sprintf(
-          paste0("%.", d, "f (%.", d, "f)"),
-          val[1],
-          val[2]
+          "%s (%s)",
+          .tb_fmt_num(val[1], d, bm, dm),
+          .tb_fmt_num(val[2], d, bm, dm)
         )
       } else {
         out_mat[1, nm] <- sprintf(
-          paste0("%.", d, "f (%.", d, "f - %.", d, "f)"),
-          val[1],
-          val[2],
-          val[3]
+          "%s (%s - %s)",
+          .tb_fmt_num(val[1], d, bm, dm),
+          .tb_fmt_num(val[2], d, bm, dm),
+          .tb_fmt_num(val[3], d, bm, dm)
         )
       }
+    }
+    if (!identical(x$meta$p.adjust %||% "none", "none") && is.data.frame(x$data$tests)) {
+      out_mat <- cbind(out_mat, "Adjusted P-value" = .fmt_tb_p(x$data$tests$p_value_adjusted[1], dm))
     }
     return(out_mat)
   } else {
@@ -787,6 +430,7 @@ rbind.tb <- function(..., deparse.level = 1) {
     for (i in seq_len(nr)) {
       for (j in seq_len(nc)) {
         val <- freq_mat[i, j]
+        n_str <- .tb_fmt_num(val, 0, bm, dm)
         has_pct <- !is.null(pct_mat) &&
           i <= nrow(pct_mat) &&
           j <= ncol(pct_mat) &&
@@ -795,16 +439,16 @@ rbind.tb <- function(..., deparse.level = 1) {
         if (flags$percent && has_pct) {
           p_str <- sprintf(paste0("%.", d, "f"), pct_mat[i, j])
           if (style == "n_pct") {
-            out_mat[i, j] <- sprintf("%d (%s%%)", val, p_str)
+            out_mat[i, j] <- sprintf("%s (%s%%)", n_str, p_str)
           } else if (style == "pct_n") {
-            out_mat[i, j] <- sprintf("%s%% (%d)", p_str, val)
+            out_mat[i, j] <- sprintf("%s%% (%s)", p_str, n_str)
           } else {
-            txt <- gsub("{n}", val, style, fixed = TRUE)
+            txt <- gsub("{n}", n_str, style, fixed = TRUE)
             txt <- gsub("{p}", p_str, txt, fixed = TRUE)
             out_mat[i, j] <- txt
           }
         } else {
-          out_mat[i, j] <- as.character(val)
+          out_mat[i, j] <- n_str
         }
       }
     }
@@ -815,47 +459,16 @@ rbind.tb <- function(..., deparse.level = 1) {
         seq_len(nrow(ratios)),
         function(idx) {
           if (ratios$ref[idx]) {
-            return("1.00 (Ref)")
+            return(paste0(.tb_fmt_num(1, 2, "", dm), " (Ref)"))
           }
           if (is.na(ratios$estimate[idx])) {
             return("-")
           }
-
-          fmt_style <- if (ratios$type[idx] == "PR") {
-            x$meta$style.rp
-          } else {
-            x$meta$style.or
-          }
-          ph <- if (ratios$type[idx] == "PR") "{rp}" else "{or}"
-
-          txt <- gsub(
-            ph,
-            sprintf("%.2f", ratios$estimate[idx]),
-            fmt_style,
-            fixed = TRUE
-          )
-          txt <- gsub(
-            "{lower}",
-            sprintf("%.2f", ratios$lower_ci[idx]),
-            txt,
-            fixed = TRUE
-          )
-          txt <- gsub(
-            "{upper}",
-            sprintf("%.2f", ratios$upper_ci[idx]),
-            txt,
-            fixed = TRUE
-          )
-
           p_val <- ratios$p_value[idx]
-          p_str <- if (is.na(p_val)) {
-            ""
-          } else if (p_val < 0.001) {
-            ", p < 0.001"
-          } else {
-            sprintf(", p = %.3f", p_val)
-          }
-          paste0(txt, p_str)
+          paste0(
+            .tb_effect_text(ratios[idx, ], x$meta, bm, dm),
+            if (is.na(p_val)) "" else paste0(", ", .fmt_tb_p(p_val, dm))
+          )
         },
         character(1)
       )
@@ -863,42 +476,157 @@ rbind.tb <- function(..., deparse.level = 1) {
       if (length(ratio_text) < nr) {
         ratio_text <- c(ratio_text, rep("", nr - length(ratio_text)))
       }
-      lbl_col <- if (ratios$type[1] == "PR") "PR (95% CI)" else "OR (95% CI)"
+      lbl_col <- paste0(ratios$type[1], " (95% CI)")
       out_mat <- cbind(out_mat, ratio_text)
       colnames(out_mat)[ncol(out_mat)] <- lbl_col
+    }
+    if (!identical(x$meta$p.adjust %||% "none", "none") && is.data.frame(x$data$tests)) {
+      adj_text <- rep("", nr)
+      target <- if ("Total" %in% rownames(out_mat)) {
+        match("Total", rownames(out_mat))
+      } else {
+        1L
+      }
+      adj_text[target] <- .fmt_tb_p(x$data$tests$p_value_adjusted[1], dm)
+      out_mat <- cbind(out_mat, adj_text)
+      colnames(out_mat)[ncol(out_mat)] <- "Adjusted P-value"
+    }
+    if (!is.null(x$data$mh)) {
+      mh <- x$data$mh
+      pooled <- mh[mh$row_type == "pooled", , drop = FALSE]
+      if (nrow(pooled) > 0) {
+        ratio_col <- grep(" \\(95% CI\\)$| MH \\(95% CI\\)$", colnames(out_mat), value = TRUE)
+        if (length(ratio_col) == 0) {
+          ratio_col <- paste0(pooled$type[1], " MH (95% CI)")
+          out_mat <- cbind(out_mat, "")
+          colnames(out_mat)[ncol(out_mat)] <- ratio_col
+        } else {
+          ratio_col <- ratio_col[1]
+        }
+
+        mh_rows <- matrix(
+          "",
+          nrow = nrow(pooled),
+          ncol = ncol(out_mat),
+          dimnames = list(paste0("Mantel-Haenszel pooled: ", pooled$level), colnames(out_mat))
+        )
+        mh_text <- vapply(seq_len(nrow(pooled)), function(idx) {
+          if (is.na(pooled$estimate[idx])) {
+            return("-")
+          }
+          txt <- .tb_effect_text(pooled[idx, ], x$meta, bm, dm)
+          cmh <- if (is.na(pooled$cmh_p[idx])) "" else paste0(", CMH ", .fmt_tb_p(pooled$cmh_p[idx], dm))
+          bd <- if (is.na(pooled$homogeneity_p[idx])) "" else paste0(", BD ", .fmt_tb_p(pooled$homogeneity_p[idx], dm))
+          paste0(txt, cmh, bd)
+        }, character(1))
+        mh_rows[, ratio_col] <- mh_text
+        out_mat <- rbind(out_mat, mh_rows)
+      }
     }
     return(out_mat)
   }
 }
 
-#' Print Method for tb Objects
-#'
-#' @param x A `tb` object.
-#' @param digits Minimum number of significant digits to be printed.
-#' @param ... Additional arguments.
-#' @return Invisibly returns `x`.
-#' @export
-print.tb <- function(x, digits = NULL, ...) {
-  out_mat <- .build_display_matrix(x)
-  .print_grid_adapted(out_mat, x$meta$row_label, x$meta$col_label, x)
-  invisible(x)
-}
+#########
+# FORMATTING AND CONSOLE PRINTING HELPERS
+# Text alignment, grid borders, and terminal display formatting for bivariate tables.
 
-#' Print Method for rbind_tb Objects
-#'
-#' @param x An `rbind_tb` object.
-#' @param digits Minimum number of significant digits to be printed.
-#' @param ... Additional arguments.
-#' @return Invisibly returns `x`.
-#' @export
-print.rbind_tb <- function(x, digits = NULL, ...) {
-  out_mat <- .build_display_matrix(x)
-  .print_grid_adapted(out_mat, x$meta$row_label, x$meta$col_label, x)
-  invisible(x)
-}
-
-#' Adapted Grid Printer
+#' Format numeric value for display with configurable locale marks
 #' @keywords internal
+#' @noRd
+.tb_fmt_num <- function(value, digits, big_mark = "", decimal_mark = ".") {
+  if (length(value) == 0) {
+    return(NA_character_)
+  }
+  if (is.na(value)) {
+    # Format NA values consistently as character NA
+    return("NA")
+  }
+  formatC(
+    value,
+    format = "f",
+    digits = digits,
+    big.mark = big_mark,
+    decimal.mark = decimal_mark
+  )
+}
+
+#' Fill effect ratio template string with estimates and confidence limits
+#' @keywords internal
+#' @noRd
+.tb_effect_text <- function(row, meta, bm, dm) {
+  is_rp <- row$type %in% c("PR", "RR")
+  txt <- if (is_rp) meta$style.rp else meta$style.or
+  txt <- gsub(if (is_rp) "{rp}" else "{or}", .tb_fmt_num(row$estimate, 2, bm, dm), txt, fixed = TRUE)
+  txt <- gsub("{lower}", .tb_fmt_num(row$lower_ci, 2, bm, dm), txt, fixed = TRUE)
+  gsub("{upper}", .tb_fmt_num(row$upper_ci, 2, bm, dm), txt, fixed = TRUE)
+}
+
+#' Format p-value with inequality threshold for small values
+#' @keywords internal
+#' @noRd
+.fmt_tb_p <- function(p, decimal_mark = ".") {
+  if (is.na(p)) {
+    return("p = NA")
+  }
+  if (p < 0.001) {
+    paste0("p < ", .tb_fmt_num(0.001, 3, "", decimal_mark))
+  } else {
+    paste0("p = ", .tb_fmt_num(p, 3, "", decimal_mark))
+  }
+}
+
+#' Extract individual component bivariate tables from a stacked container
+#' @keywords internal
+#' @noRd
+.rbind_tb_tables <- function(x) {
+  lapply(seq_along(x$data), function(i) {
+    structure(
+      list(data = x$data[[i]], meta = x$meta$tables[[i]], call = NULL),
+      class = c("simtab_tb", "tb", "simtab")
+    )
+  })
+}
+
+#' Convert display matrix into a data frame with row labels in the first column
+#' @keywords internal
+#' @noRd
+.tb_display_df <- function(x) {
+  out_mat <- .build_display_matrix(x)
+  df <- cbind(Row_Label = rownames(out_mat), as.data.frame(out_mat))
+  colnames(df)[1] <- x$meta$row_label
+  rownames(df) <- NULL
+  df
+}
+
+#' Print method implementation for bivariate table objects
+#' @keywords internal
+#' @noRd
+.tb_print <- function(x, digits = NULL, ...) {
+  out_mat <- .build_display_matrix(x)
+  .print_grid_adapted(out_mat, x$meta$row_label, x$meta$col_label, x)
+  .print_advice(x)
+  invisible(x)
+}
+
+#' Print Method for simtab_rbind_tb Objects
+#'
+#' @param x A `simtab_rbind_tb` object.
+#' @param digits Minimum number of significant digits to be printed.
+#' @param ... Additional arguments.
+#' @return Invisibly returns `x`.
+#' @examples
+#' t1 <- tb(epitabl, sex, diabetes)
+#' t2 <- tb(epitabl, hypertension, diabetes)
+#' print(rbind(t1, t2))
+#' @export
+print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
+  .tb_print(x, digits = digits, ...)
+}
+
+#' Render formatted character grid with border rules to the console
+#' @keywords internal
+#' @noRd
 .print_grid_adapted <- function(out_mat, row_var, col_var, x) {
   safe_nchar <- function(s) nchar(ifelse(is.na(s), "NA", s))
   center_text <- function(txt, width) {
@@ -916,7 +644,7 @@ print.rbind_tb <- function(x, digits = NULL, ...) {
   col_labels <- colnames(out_mat)
 
   has_row_total <- row_labels[nr] == "Total"
-  extra_cols <- if (any(grepl("PR \\(|OR \\(", col_labels))) 1L else 0L
+  extra_cols <- if (any(grepl("PR \\(|RR \\(|OR \\(", col_labels))) 1L else 0L
 
   width_row <- max(safe_nchar(c(row_var, row_labels))) + 1L
   col_widths <- vapply(
@@ -952,6 +680,27 @@ print.rbind_tb <- function(x, digits = NULL, ...) {
     start_extra <- nc - extra_cols + 1L
     header_cols <- cols_page[cols_page < start_extra]
 
+    # One row of cells: a divider before the Total column and before each
+    # effect column ("|" in text rows, "+" in dash rules), then the cell.
+    emit_cells <- function(sep, cell) {
+      idx_sum <- nc - extra_cols
+      for (j in cols_page) {
+        if (
+          isTRUE(has_row_total) &&
+            j == idx_sum &&
+            idx_sum > 1 &&
+            j != cols_page[1]
+        ) {
+          cat(sep)
+        }
+        if (j > idx_sum && j != cols_page[1]) {
+          cat(sep)
+        }
+        cat(cell(j))
+      }
+    }
+    dash_cell <- function(j) strrep("-", col_widths[j])
+
     if (!is.null(col_var) && col_var != "" && length(header_cols) > 0) {
       cat(right_text("", width_row), " | ", sep = "")
       data_w <- sum(col_widths[header_cols]) + max(0L, length(header_cols) - 1L)
@@ -959,79 +708,19 @@ print.rbind_tb <- function(x, digits = NULL, ...) {
     }
 
     cat(right_text(row_var, width_row), " |", sep = "")
-    for (j in cols_page) {
-      idx_sum <- nc - extra_cols
-      is_extra <- j > idx_sum
-      if (
-        isTRUE(has_row_total) &&
-          j == idx_sum &&
-          idx_sum > 1 &&
-          j != cols_page[1]
-      ) {
-        cat("|")
-      }
-      if (is_extra && j != cols_page[1]) {
-        cat("|")
-      }
-      cat(center_text(col_labels[j], col_widths[j]))
-    }
+    emit_cells("|", function(j) center_text(col_labels[j], col_widths[j]))
     cat("\n", strrep("-", width_row), "-+", sep = "")
-    for (j in cols_page) {
-      idx_sum <- nc - extra_cols
-      is_extra <- j > idx_sum
-      if (
-        isTRUE(has_row_total) &&
-          j == idx_sum &&
-          idx_sum > 1 &&
-          j != cols_page[1]
-      ) {
-        cat("+")
-      }
-      if (is_extra && j != cols_page[1]) {
-        cat("+")
-      }
-      cat(strrep("-", col_widths[j]))
-    }
+    emit_cells("+", dash_cell)
     cat("\n")
 
     for (i in seq_len(nr)) {
       if (i == nr && has_row_total && nr > 1) {
         cat(strrep("-", width_row), "-+", sep = "")
-        for (j in cols_page) {
-          idx_sum <- nc - extra_cols
-          is_extra <- j > idx_sum
-          if (
-            isTRUE(has_row_total) &&
-              j == idx_sum &&
-              idx_sum > 1 &&
-              j != cols_page[1]
-          ) {
-            cat("+")
-          }
-          if (is_extra && j != cols_page[1]) {
-            cat("+")
-          }
-          cat(strrep("-", col_widths[j]))
-        }
+        emit_cells("+", dash_cell)
         cat("\n")
       }
       cat(right_text(row_labels[i], width_row), " |", sep = "")
-      for (j in cols_page) {
-        idx_sum <- nc - extra_cols
-        is_extra <- j > idx_sum
-        if (
-          isTRUE(has_row_total) &&
-            j == idx_sum &&
-            idx_sum > 1 &&
-            j != cols_page[1]
-        ) {
-          cat("|")
-        }
-        if (is_extra && j != cols_page[1]) {
-          cat("|")
-        }
-        cat(center_text(out_mat[i, j], col_widths[j]))
-      }
+      emit_cells("|", function(j) center_text(out_mat[i, j], col_widths[j]))
       cat("\n")
     }
     j_start <- j_end + 1L
@@ -1040,25 +729,19 @@ print.rbind_tb <- function(x, digits = NULL, ...) {
 
   stats <- x$meta$stats
   if (!is.null(stats)) {
-    p_str <- if (stats$p.value < 0.001) {
-      "< 0.001"
-    } else {
-      sprintf("= %.3f", stats$p.value)
-    }
+    p_str <- sub("^p ", "", .fmt_tb_p(stats$p.value, x$meta$decimal_mark %||% "."))
     cat("\n  Test:", stats$method, " p-value", p_str, "\n")
   }
 }
 
-#' Convert tb to Data Frame
-#'
-#' @param x A `tb` object.
-#' @param row.names NULL or a character vector giving the row names for the data frame.
-#' @param optional Logical. If TRUE, setting row names and converting column names is optional.
-#' @param tidy Logical. If `TRUE`, returns a long-format tidy data frame with raw numeric values.
-#' @param ... Additional arguments.
-#' @return A data.frame.
-#' @export
-as.data.frame.tb <- function(
+#########
+# TIDY AND DATA FRAME COERCION
+# Export bivariate table evidence into wide presentation or long tidy formats.
+
+#' Convert bivariate table result into a data frame
+#' @keywords internal
+#' @noRd
+.tb_as_data_frame <- function(
   x,
   row.names = NULL,
   optional = FALSE,
@@ -1067,68 +750,79 @@ as.data.frame.tb <- function(
 ) {
   if (isTRUE(tidy)) {
     if (x$meta$is_continuous) {
-      df_tidy <- data.frame(
-        variable = x$meta$row_var_name,
-        group = names(x$data$summary),
-        estimate = vapply(
-          x$data$summary,
-          function(v) if (length(v) > 0) v[1] else NA_real_,
-          numeric(1)
-        ),
-        stringsAsFactors = FALSE
-      )
+      # Continuous long schema: variable, group, stat, value. Built from raw
+      # numerics only; no statistic is discarded.
+      raw <- x$data$summary
+      cnts <- x$data$counts
+      is_mean <- x$meta$stat.cont == "mean"
+      parts <- list()
+      for (g in names(raw)) {
+        v <- raw[[g]]
+        n_g <- if (!is.null(cnts) && g %in% names(cnts)) {
+          as.numeric(cnts[[g]])
+        } else {
+          NA_real_
+        }
+        stat <- if (is_mean) c("n", "mean", "sd") else c("n", "median", "q1", "q3")
+        value <- c(n_g, if (length(v) > 0) v[seq_len(length(stat) - 1)] else rep(NA_real_, length(stat) - 1))
+        parts[[length(parts) + 1]] <- data.frame(
+          variable = x$meta$row_var_name,
+          group = g,
+          stat = stat,
+          value = as.numeric(value)
+        )
+      }
+      df_tidy <- do.call(rbind, parts)
+      rownames(df_tidy) <- NULL
+      st <- x$meta$stats
+      attr(df_tidy, "test") <- if (is.null(st)) {
+        NULL
+      } else {
+        list(method = st$method, p.value = st$p.value)
+      }
       return(df_tidy)
     } else {
+      # Categorical tidy schema:
+      # variable, level, estimate, lower_ci, upper_ci, p_value, outcome.
+      # Retains raw variable names and numeric measures.
       freq <- x$data$frequencies
-      df_freq <- as.data.frame(freq, stringsAsFactors = FALSE)
-      if (length(dim(freq)) == 1) {
-        colnames(df_freq) <- c("level", "count")
-        df_freq$variable <- x$meta$row_var_name
-        df_freq$percentage <- if (!is.null(x$data$percentages)) {
-          as.vector(x$data$percentages)
-        } else {
-          NA_real_
-        }
+      df0 <- as.data.frame(freq)
+      n <- nrow(df0)
+
+      level <- as.character(df0[[1]])
+      outcome <- if (length(dim(freq)) == 1) {
+        rep(NA_character_, n)
       } else {
-        colnames(df_freq) <- c("level", "outcome_level", "count")
-        df_freq$variable <- x$meta$row_var_name
-        df_freq$outcome_variable <- x$meta$col_var_name
-        df_freq$percentage <- if (!is.null(x$data$percentages)) {
-          as.vector(x$data$percentages)
-        } else {
-          NA_real_
-        }
-        if (!is.null(x$data$ratios)) {
-          ratios <- x$data$ratios
-          df_freq$estimate <- ratios$estimate[match(
-            df_freq$level,
-            ratios$level
-          )]
-          df_freq$lower_ci <- ratios$lower_ci[match(
-            df_freq$level,
-            ratios$level
-          )]
-          df_freq$upper_ci <- ratios$upper_ci[match(
-            df_freq$level,
-            ratios$level
-          )]
-          df_freq$p_value <- ratios$p_value[match(df_freq$level, ratios$level)]
-        } else {
-          df_freq$estimate <- NA_real_
-          df_freq$lower_ci <- NA_real_
-          df_freq$upper_ci <- NA_real_
-          df_freq$p_value <- NA_real_
-        }
+        as.character(df0[[2]])
       }
-      return(df_freq)
+
+      estimate <- rep(NA_real_, n)
+      lower_ci <- rep(NA_real_, n)
+      upper_ci <- rep(NA_real_, n)
+      p_value <- rep(NA_real_, n)
+      if (!is.null(x$data$ratios)) {
+        ratios <- x$data$ratios
+        idx <- match(level, ratios$level)
+        estimate <- ratios$estimate[idx]
+        lower_ci <- ratios$lower_ci[idx]
+        upper_ci <- ratios$upper_ci[idx]
+        p_value <- ratios$p_value[idx]
+      }
+
+      df_tidy <- data.frame(
+        variable = rep(x$meta$row_var_name, n),
+        level = level,
+        estimate = as.numeric(estimate),
+        lower_ci = as.numeric(lower_ci),
+        upper_ci = as.numeric(upper_ci),
+        p_value = as.numeric(p_value),
+        outcome = outcome
+      )
+      rownames(df_tidy) <- NULL
+      return(df_tidy)
     }
   } else {
-    out_mat <- .build_display_matrix(x)
-    df <- as.data.frame(out_mat, stringsAsFactors = FALSE)
-    row_labels <- rownames(out_mat)
-    df <- cbind(Row_Label = row_labels, df, stringsAsFactors = FALSE)
-    colnames(df)[1] <- x$meta$row_label
-    rownames(df) <- NULL
+    df <- .tb_display_df(x)
     attr(df, "stats") <- x$meta$stats
     return(df)
   }
@@ -1142,8 +836,12 @@ as.data.frame.tb <- function(
 #' @param tidy Logical. If `TRUE`, returns a long-format tidy data frame.
 #' @param ... Additional arguments.
 #' @return A data.frame.
+#' @examples
+#' t1 <- tb(epitabl, sex, diabetes)
+#' t2 <- tb(epitabl, hypertension, diabetes)
+#' as.data.frame(rbind(t1, t2))
 #' @export
-as.data.frame.rbind_tb <- function(
+as.data.frame.simtab_rbind_tb <- function(
   x,
   row.names = NULL,
   optional = FALSE,
@@ -1151,12 +849,7 @@ as.data.frame.rbind_tb <- function(
   ...
 ) {
   if (isTRUE(tidy)) {
-    parts <- list()
-    for (i in seq_along(x$data)) {
-      tb_i <- list(data = x$data[[i]], meta = x$meta$tables[[i]], call = NULL)
-      class(tb_i) <- c("tb", "simtab")
-      parts[[i]] <- as.data.frame(tb_i, tidy = TRUE)
-    }
+    parts <- lapply(.rbind_tb_tables(x), .tb_as_data_frame, tidy = TRUE)
 
     all_cols <- unique(unlist(lapply(parts, colnames)))
     standardized_parts <- lapply(parts, function(df) {
@@ -1168,26 +861,19 @@ as.data.frame.rbind_tb <- function(
     })
 
     return(do.call(rbind, standardized_parts))
-  } else {
-    out_mat <- .build_display_matrix(x)
-    df <- as.data.frame(out_mat, stringsAsFactors = FALSE)
-    row_labels <- rownames(out_mat)
-    df <- cbind(Row_Label = row_labels, df, stringsAsFactors = FALSE)
-    colnames(df)[1] <- x$meta$row_label
-    rownames(df) <- NULL
-    return(df)
   }
+  .tb_display_df(x)
 }
 
-#' SimtablR House Style Theme for Flextable
-#'
-#' @param ft A flextable object.
-#' @return A flextable object.
-#' @export
+#########
+# FLEXTABLE RENDERING
+# Publication-quality flextable formatting with theme styling and statistical footers.
+
+#' Apply default booktabs typography and alignment theme to flextable
+#' @keywords internal
+#' @noRd
 simtab_theme <- function(ft) {
-  if (!requireNamespace("flextable", quietly = TRUE)) {
-    stop("Package 'flextable' needed.", call. = FALSE)
-  }
+  .require_pkg("flextable")
   ft |>
     flextable::theme_booktabs() |>
     flextable::autofit() |>
@@ -1196,43 +882,55 @@ simtab_theme <- function(ft) {
     flextable::align(j = 1, align = "left", part = "body")
 }
 
-#' Convert tb Object to Flextable
-#'
-#' @param x A `tb` object.
-#' @param ... Additional arguments passed to `flextable::flextable()`.
-#' @return A `flextable` object.
-#' @export
-as_flextable.tb <- function(x, ...) {
-  if (!requireNamespace("flextable", quietly = TRUE)) {
-    stop("Package 'flextable' needed.", call. = FALSE)
-  }
+#' Convert bivariate table result into a publication-ready flextable
+#' @keywords internal
+#' @noRd
+.tb_as_flextable <- function(x, footnotes = NULL, ...) {
+  .require_pkg("flextable")
   df <- as.data.frame(x, tidy = FALSE)
   ft <- flextable::flextable(df, ...)
   stats <- x$meta$stats
   if (!is.null(stats)) {
-    p_str <- if (stats$p.value < 0.001) {
-      "< 0.001"
-    } else {
-      sprintf("= %.3f", stats$p.value)
-    }
+    p_str <- sub("^p ", "", .fmt_tb_p(stats$p.value, x$meta$decimal_mark %||% "."))
     stat_text <- paste0(stats$method, ": p-value ", p_str)
     ft <- flextable::add_footer_lines(ft, values = stat_text)
     ft <- flextable::align(ft, part = "footer", align = "right")
   }
+  ft <- .flex_add_footnotes(ft, footnotes)
   simtab_theme(ft)
 }
 
-#' Convert rbind_tb Object to Flextable
+#' Convert simtab_rbind_tb Object to Flextable
 #'
-#' @param x An `rbind_tb` object.
+#' @param x A `simtab_rbind_tb` object.
+#' @param footnotes Optional character vector of footer lines appended to the
+#'   table.
 #' @param ... Additional arguments passed to `flextable::flextable()`.
 #' @return A `flextable` object.
+#' @examples
+#' if (requireNamespace("flextable", quietly = TRUE)) {
+#'   t1 <- tb(epitabl, sex, diabetes)
+#'   t2 <- tb(epitabl, hypertension, diabetes)
+#'   as_flextable.simtab_rbind_tb(rbind(t1, t2))
+#' }
 #' @export
-as_flextable.rbind_tb <- function(x, ...) {
-  if (!requireNamespace("flextable", quietly = TRUE)) {
-    stop("Package 'flextable' needed.", call. = FALSE)
-  }
+as_flextable.simtab_rbind_tb <- function(x, footnotes = NULL, ...) {
+  .require_pkg("flextable")
   df <- as.data.frame(x, tidy = FALSE)
   ft <- flextable::flextable(df, ...)
+  ft <- .flex_add_footnotes(ft, footnotes)
   simtab_theme(ft)
+}
+
+#' Dispatch list of renderer functions for bivariate contingency tables
+#' @keywords internal
+#' @noRd
+.tb_renderers <- function() {
+  list(
+    print = .tb_print,
+    as_data_frame = .tb_as_data_frame,
+    as_flextable = .tb_as_flextable,
+    autoplot = .forest_plot,
+    as_methods = .methods_as_tb
+  )
 }

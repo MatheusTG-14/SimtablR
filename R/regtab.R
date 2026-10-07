@@ -1,462 +1,211 @@
-#' Multi-Outcome Regression Table
+# MULTI-OUTCOME REGRESSION TABLE INTERFACE
+# Fits generalized linear and penalized models across outcomes with shared predictors.
+# Preserves unrounded numerical coefficients, robust covariance, and diagnostic evidence.
+
+#' Fit one regression model per outcome
 #'
-#' Fits generalized linear models (GLMs) for multiple outcome variables and generates
-#' a formatted wide-format table with point estimates and confidence intervals.
-#' Supports robust standard errors, automatic exponentiation for count/binary outcomes,
-#' and custom labeling for publication-ready tables.
+#' `regtab()` fits the same set of predictors to one or more outcomes and
+#' returns the estimates side by side in a single publication-style table, one
+#' column per outcome. The default Poisson-log model with robust standard
+#' errors gives rate ratios for counts and prevalence or risk ratios for 0/1
+#' outcomes (modified Poisson); use `family = binomial()` for odds ratios or
+#' `gaussian()` for mean differences. For crude estimates alongside a
+#' descriptive table use [table1()].
 #'
-#' @param data Data.frame containing all variables for analysis.
-#' @param outcomes Character vector of dependent variable names. Each outcome is
-#'   modeled separately with the same set of predictors.
-#' @param predictors Formula or character string specifying predictors. Can be:
-#'   \itemize{
-#'     \item Formula: \code{~ x1 + x2 + x3}
-#'     \item Character: \code{"~ x1 + x2 + x3"} or \code{"x1 + x2 + x3"}
-#'   }
-#' @param family GLM family specification. Options:
-#'   \itemize{
-#'     \item \code{poisson(link = "log")} - For count outcomes (default)
-#'     \item \code{binomial(link = "logit")} - For binary outcomes
-#'     \item \code{gaussian(link = "identity")} - For continuous outcomes
-#'     \item \code{quasipoisson()}, \code{quasibinomial()} - For overdispersed data
-#'     \item Or character: "poisson", "binomial", "gaussian"
-#'   }
-#' @param robust Logical. If TRUE (default), calculates heteroskedasticity-consistent
-#'   (HC0) robust standard errors via the sandwich package. CIs are based on robust SEs.
-#' @param exponentiate Logical. If TRUE, exponentiates coefficients and CIs:
-#'   \itemize{
-#'     \item Poisson: IRR (Incidence Rate Ratios)
-#'     \item Binomial: OR (Odds Ratios)
-#'     \item Gaussian: Not typically used (stays on linear scale)
-#'   }
-#'   If NULL (default), automatically detects: TRUE for Poisson/Binomial,
-#'   FALSE for Gaussian.
-#' @param labels Named character vector for renaming outcome columns in output.
-#'   Format: \code{c("raw_name" = "Pretty Label")}. Useful for publication tables.
-#' @param d Integer. Number of decimal places for rounding estimates and CIs. Default: 2.
-#' @param conf.level Numeric. Confidence level for intervals (0-1). Default: 0.95.
-#' @param include_intercept Logical. If TRUE, includes intercept in output table.
-#'   Default: FALSE (typically excluded from publication tables).
-#' @param p_values Logical. If TRUE, adds p-values as separate column. Default: FALSE.
+#' @param data A data frame.
+#' @param outcomes Character vector of outcome column names. Each outcome gets
+#'   its own model with the same predictors.
+#' @param predictors The right-hand side of the model, as a one-sided formula
+#'   (`~ age + sex`) or a string (`"age * sex + smoking"`). Write
+#'   transformations such as centring directly in the formula.
+#' @param family A [stats::family()] object. Poisson-log needs a numeric
+#'   outcome (counts or 0/1); `binomial()` also accepts two-level factors.
+#' @param offset Optional person-time column: a bare name or string. With a
+#'   Poisson-log model, `offset(log(offset))` is added so estimates become
+#'   incidence-rate ratios.
+#' @param robust Standard errors: `TRUE` for HC0 robust errors, `FALSE` for
+#'   model-based errors, or one of `"HC0"`, `"HC1"`, `"HC2"`, `"HC3"`. Prefer
+#'   `"HC3"` in small samples (Long & Ervin, 2000).
+#' @param method String. `"glm"` fits with [stats::glm()]; `"firth"` fits
+#'   Firth penalised logistic regression with the logistf package, for
+#'   binomial-logit models only.
+#' @param exponentiate Logical. Whether to report exponentiated estimates. If
+#'   `NULL`, they are exponentiated for Poisson, binomial, and quasi- families
+#'   and left on the original scale for Gaussian models.
+#' @param labels Named character vector of display labels for outcomes, e.g.
+#'   `c(ed_visits = "ED revisits")`.
+#' @param predictor_labels Named character vector of display labels for model
+#'   terms, e.g. `c(sexMale = "Male sex")`.
+#' @param d Integer. Decimal places for estimates and intervals.
+#' @param conf.level Number between 0 and 1. Confidence level for intervals.
+#' @param include_intercept Logical. If `TRUE`, show the intercept row.
+#' @param p_values Logical. If `TRUE`, add a p-value column for each outcome.
+#' @param design String. Optional study design recorded on the result. With a
+#'   Poisson-log model and an `offset`, it lets the estimate be labelled as an
+#'   incidence-rate ratio.
 #'
 #' @details
-#' ## Model Fitting
-#' For each outcome, the function fits:
-#' \code{glm(outcome ~ predictors, family = family, data = data)}
+#' ## Statistical methods
+#' Each outcome is fitted with [stats::glm()] and the requested family.
+#' Intervals are Wald intervals on the link scale, using HC0 sandwich
+#' standard errors by default; a Poisson-log model with robust errors on a 0/1
+#' outcome is the modified Poisson approach for prevalence and risk ratios
+#' (Zou, 2004). `method = "firth"` uses penalised-likelihood (profile)
+#' inference instead, so the HC options do not apply.
 #'
-#' ## Robust Standard Errors
-#' When \code{robust = TRUE}, the function:
-#' 1. Fits the model with standard GLM.
-#' 2. Computes sandwich covariance matrix (HC0 estimator).
-#' 3. Calculates Wald-type CIs based on robust SEs.
+#' For models with two or more predictor terms, generalized variance
+#' inflation factors (Fox & Monette, 1992) are stored on the result. Show them
+#' with `as.data.frame(fit, vif = TRUE)` or `generics::glance(fit, vif = TRUE)`.
 #'
-#' This provides protection against heteroskedasticity and mild model misspecification.
+#' ## Missing data
+#' Rows with a missing outcome or predictor are dropped from that outcome's
+#' model, so the N can differ between outcomes. It is shown in the table and
+#' in [model_info()].
 #'
-#' ## Exponentiation
-#' * **Poisson regression**: exp(beta) = Incidence Rate Ratio
-#'     * IRR = 1: No association
-#'     * IRR > 1: Increased rate
-#'     * IRR < 1: Decreased rate
-#' * **Logistic regression**: exp(beta) = Odds Ratio
-#'     * OR = 1: No association
-#'     * OR > 1: Increased odds
-#'     * OR < 1: Decreased odds
+#' ## Modifying the result
+#' `coef()`, `confint()`, `vcov()`, `formula()`, and `nobs()` work on the
+#' result, returning one entry per outcome or a single one with
+#' `outcome = "name"`. [model_info()] reports convergence and failed
+#' models, `generics::tidy()` returns one row per term, and
+#' `ggplot2::autoplot()` draws a forest plot.
 #'
-#' ## Output Format
-#' Returns a wide-format data.frame:
-#' \preformatted{
-#' Variable    | Outcome1          | Outcome2          | ...
-#' ------------|-------------------|-------------------|----
-#' (Intercept) | 2.34 (1.89-2.91) | 1.98 (1.65-2.38) | ...
-#' age         | 1.05 (1.02-1.08) | 1.03 (1.01-1.06) | ...
-#' sex         | 0.87 (0.75-1.01) | 0.92 (0.81-1.05) | ...
-#' }
-#' Each cell contains: "Estimate (Lower CI - Upper CI)"
+#' ## Limitations
+#' The result is a reporting table, not a fitted model: it keeps no fitted
+#' values or residuals and cannot predict. For conditional logistic
+#' regression, prediction, or model diagnostics, fit [stats::glm()],
+#' `logistf::logistf()`, or `survival::clogit()` directly.
 #'
-#' ## Missing Data
-#' GLM uses complete cases by default. Observations with missing values in any
-#' variable are excluded from that specific model.
-#'
-#' ## Convergence Issues
-#' If a model fails to converge or encounters errors:
-#' * A warning is issued with the outcome name and error message
-#' * That outcome column is skipped in the output
-#' * Other outcomes continue processing
-#'
-#' @return A data.frame in wide format with:
-#' * **Variable**: Predictor names (first column)
-#' * **Outcome columns**: One column per outcome with formatted estimates and CIs
-#'
-#' Can be directly exported to Excel, Word, or LaTeX for publication.
-#'
+#' @return A `simtab_result` of class `simtab_regtab`. Print it to see the
+#'   formatted table, convert it with `as.data.frame()`, or save it with
+#'   [export_docx()], [export_pptx()], or [export_xlsx()]. Unrounded results
+#'   are stored in `$data`.
+#' @seealso [model_info()] for convergence, [survtab()] for time-to-event
+#'   outcomes, [table1()] for crude and adjusted effects in a descriptive
+#'   table, and [simtablr_references] for all references cited by SimtablR.
 #' @examples
-#' # Create example data
-#' set.seed(456)
-#' n <- 500
-#' df <- data.frame(
-#'   age = rnorm(n, 50, 10),
-#'   sex = factor(sample(c("M", "F"), n, replace = TRUE)),
-#'   treatment = factor(sample(c("A", "B"), n, replace = TRUE)),
-#'   outcome1 = rpois(n, lambda = 5),
-#'   outcome2 = rpois(n, lambda = 8),
-#'   outcome3 = rpois(n, lambda = 3)
+#' # Rate ratios for two count outcomes (Poisson, robust SEs)
+#' fit <- regtab(
+#'   epitabl,
+#'   outcomes = c("ed_visits", "length_of_stay"),
+#'   predictors = ~ age + sex + smoking
+#' )
+#' fit
+#'
+#' # Odds ratios for a binary outcome, with p-values
+#' regtab(
+#'   epitabl, "rehospitalized", ~ age + sex + diabetes,
+#'   family = binomial(), p_values = TRUE
 #' )
 #'
-#' # Basic usage: Poisson regression for multiple outcomes
-#' regtab(df,
-#'        outcomes = c("outcome1", "outcome2", "outcome3"),
-#'        predictors = ~ age + sex + treatment,
-#'        family = poisson(link = "log"))
+#' # One row per term, for further processing
+#' generics::tidy(fit)
+#' @references Zou, G. (2004). A modified Poisson regression approach to
+#'   prospective studies with binary data. \emph{American Journal of
+#'   Epidemiology}, 159(7), 702--706. \doi{10.1093/aje/kwh090}.
 #'
-#' # With custom labels and no robust SEs
-#' regtab(df,
-#'        outcomes = c("outcome1", "outcome2"),
-#'        predictors = "age + sex",
-#'        labels = c(outcome1 = "Primary Endpoint", outcome2 = "Secondary Endpoint"),
-#'        robust = FALSE)
+#'   Firth, D. (1993). Bias reduction of maximum likelihood estimates.
+#'   \emph{Biometrika}, 80(1), 27--38. \doi{10.1093/biomet/80.1.27}.
 #'
-#' # Logistic regression with p-values
-#' df$binary_outcome <- rbinom(n, 1, 0.4)
-#' regtab(df,
-#'        outcomes = "binary_outcome",
-#'        predictors = ~ age + sex,
-#'        family = binomial(),
-#'        p_values = TRUE)
+#'   Fox, J., & Monette, G. (1992). Generalized collinearity diagnostics.
+#'   \emph{Journal of the American Statistical Association}, 87(417),
+#'   178--183. \doi{10.1080/01621459.1992.10475190}.
 #'
+#'   Long, J. S., & Ervin, L. H. (2000). Using heteroscedasticity consistent
+#'   standard errors in the linear regression model. \emph{The American
+#'   Statistician}, 54(3), 217--224. \doi{10.1080/00031305.2000.10474549}.
 #' @export
-
-#FUNCIONA EM 3 PARTES:
-#A funcao vai iterar sobre cada variavel de "outcomes",
-#assumindo o primeiro valor como referencia sempre,
-#e depois extrair os coeficientes e z para calcular RR e IC 95.
-#Por fim, formata os valores e organiza a tabela para exportar.
+#########
+# REGRESSION TABLE CONSTRUCTOR
+# Public entry point for generalized linear models and Firth penalized regression.
 regtab <- function(
-    data,
-    outcomes,
-    predictors,
-    family            = poisson(link = "log"),
-    robust            = TRUE,
-    exponentiate      = NULL,
-    labels            = NULL,
-    d                 = 2,
-    conf.level        = 0.95,
-    include_intercept = FALSE,
-    p_values          = FALSE
+  data,
+  outcomes,
+  predictors,
+  family = poisson(link = "log"),
+  offset = NULL,
+  robust = TRUE,
+  method = "glm",
+  exponentiate = NULL,
+  labels = NULL,
+  predictor_labels = NULL,
+  d = 2,
+  conf.level = 0.95,
+  include_intercept = FALSE,
+  p_values = FALSE,
+  design = NULL
 ) {
-  #  Pacotes necessarios
-  if (!requireNamespace("dplyr", quietly = TRUE)) {
-    stop("Package 'dplyr' is required. Install with: install.packages('dplyr')",
-         call. = FALSE)
+  spec <- .regtab_spec(
+    data = data,
+    outcomes = outcomes,
+    predictors = predictors,
+    family = family,
+    offset_quo = rlang::enquo(offset),
+    robust = robust,
+    method = method,
+    exponentiate = exponentiate,
+    labels = labels,
+    predictor_labels = predictor_labels,
+    d = d,
+    conf.level = conf.level,
+    include_intercept = include_intercept,
+    p_values = p_values,
+    call = match.call()
+  )
+  if (!is.null(design)) {
+    spec <- set_design(spec, design)
   }
-  if (!requireNamespace("tidyr", quietly = TRUE)) {
-    stop("Package 'tidyr' is required. Install with: install.packages('tidyr')",
-         call. = FALSE)
-  }
-  if (robust) {
-    if (!requireNamespace("sandwich", quietly = TRUE)) {
-      stop("Package 'sandwich' is required for robust SEs.", call. = FALSE)
-    }
-    if (!requireNamespace("lmtest", quietly = TRUE)) {
-      stop("Package 'lmtest' is required for robust SEs.", call. = FALSE)
-    }
-  }
+  evaluate(spec)
+}
 
-  #  Inputs corretos
-  if (!is.data.frame(data)) {
-    stop("'data' must be a data.frame, not ", class(data)[1], ".", call. = FALSE)
-  }
-  if (nrow(data) == 0) {
-    stop("'data' is empty (0 rows).", call. = FALSE)
-  }
-  if (!is.character(outcomes) || length(outcomes) == 0) {
-    stop("'outcomes' must be a non-empty character vector.", call. = FALSE)
-  }
+#########
+# TABULAR FILE EXPORTERS
+# File output helpers for saving regression tables to delimited CSV or Excel workbooks.
 
-  missing_outcomes <- setdiff(outcomes, names(data))
-  if (length(missing_outcomes) > 0) {
-    stop(
-      "Outcome(s) not found in data: ",
-      paste(missing_outcomes, collapse = ", "),
-      call. = FALSE
+#' Export regtab results to CSV
+#'
+#' @param x A `regtab` result.
+#' @param file Output file path. A missing `.csv` suffix is added.
+#' @param overwrite Logical. Existing files are protected by default; pass
+#'   `TRUE` to replace the destination explicitly.
+#' @param ... Passed to [utils::write.csv()].
+#' @return Invisibly returns `x`.
+#' @details The file is completed in the destination directory before it is
+#'   published. Backend failures remove partial output and preserve any existing
+#'   destination.
+#' @examples
+#' \dontrun{
+#' mod <- regtab(epitabl, outcomes = "rehospitalized", predictors = ~ age + sex)
+#' export_regtab_csv(mod, tempfile(fileext = ".csv"))
+#' }
+#' @export
+export_regtab_csv <- function(x, file, overwrite = FALSE, ...) {
+  target <- .prepare_export_path(file, "csv", overwrite = overwrite)
+  .write_export_transaction(target, function(temporary) {
+    utils::write.csv(
+      as.data.frame(x, tidy = FALSE),
+      temporary,
+      row.names = FALSE,
+      ...
     )
-  }
-  if (!is.numeric(d) || d < 0 || d > 10) {
-    stop("'d' must be a number between 0 and 10.", call. = FALSE)
-  }
-  if (!is.numeric(conf.level) || conf.level <= 0 || conf.level >= 1) {
-    stop("'conf.level' must be between 0 and 1 (e.g., 0.95).", call. = FALSE)
-  }
-
-  d <- as.integer(d)
-
-  #  Exponeciacao necessaria? (poisson/binomial)
-  if (is.null(exponentiate)) {
-    fam_name     <- if (is.character(family)) family else family$family
-    exponentiate <- fam_name %in%
-      c("poisson", "binomial", "quasipoisson", "quasibinomial")
-    if (exponentiate) {
-      message(sprintf(
-        "Auto-detected family '%s': Coefficients will be exponentiated.",
-        fam_name
-      ))
-    }
-  }
-
-  #  Formula
-  form_rhs <- if (is.character(predictors)) {
-    if (!grepl("~", predictors, fixed = TRUE)) {
-      predictors <- paste("~", predictors)
-    }
-    as.formula(predictors)
-  } else if (inherits(predictors, "formula")) {
-    predictors
-  } else {
-    stop("'predictors' must be a formula or character string.", call. = FALSE)
-  }
-
-  #  Formatacao
-  fmt <- function(x) format(round(x, d), nsmall = d, trim = TRUE)
-
-  #  1 model por outcome
-  results_list <- list()
-  n_success    <- 0L
-  n_failed     <- 0L
-
-  for (outcome in outcomes) {
-    full_formula <- update(form_rhs, paste(outcome, "~ ."))
-
-    res_df <- tryCatch({
-      model <- glm(full_formula, family = family, data = data)
-
-      if (!model$converged) {
-        warning(
-          sprintf("Model for '%s' did not converge. Results may be unreliable.", outcome),
-          call. = FALSE, immediate. = TRUE
-        )
-      }
-
-      coefs    <- coef(model)
-      vcov_mat <- NULL
-
-      if (robust) {
-        vcov_mat <- sandwich::vcovHC(model, type = "HC0")
-        cis      <- lmtest::coefci(model, vcov. = vcov_mat, level = conf.level)
-      } else {
-        cis <- suppressMessages(confint(model, level = conf.level))
-      }
-
-      if (exponentiate) {
-        ests <- exp(coefs)
-        cis  <- exp(cis)
-      } else {
-        ests <- coefs
-      }
-
-      p_vals <- NULL
-      if (p_values) {
-        if (robust && !is.null(vcov_mat)) {
-          se_robust <- sqrt(diag(vcov_mat))
-          z_stats   <- coefs / se_robust
-          p_vals    <- 2 * pnorm(-abs(z_stats))
-        } else {
-
-          coef_table <- summary(model)$coefficients
-          p_col      <- intersect(
-            c("Pr(>|z|)", "Pr(>|t|)"),
-            colnames(coef_table)
-          )[1]
-          p_vals <- coef_table[, p_col]
-        }
-      }
-
-      combined <- paste0(
-        fmt(ests), " (",
-        fmt(cis[, 1L]), " - ",
-        fmt(cis[, 2L]), ")"
-      )
-
-      result_df <- data.frame(
-        Variable = names(ests),
-        Result   = combined,
-        Outcome  = outcome,
-        stringsAsFactors = FALSE
-      )
-
-      if (!is.null(p_vals)) {
-        result_df$P_Value <- ifelse(
-          p_vals < 0.001, "<0.001",
-          sprintf(paste0("%.", max(3L, d), "f"), p_vals)
-        )
-      }
-
-      n_success <<- n_success + 1L
-      result_df
-
-    }, error = function(e) {
-
-      warning(
-        sprintf("Model fitting failed for outcome '%s': %s", outcome, e$message),
-        call. = FALSE, immediate. = TRUE
-      )
-      n_failed <<- n_failed + 1L
-      NULL
-    })
-
-    if (!is.null(res_df)) {
-      results_list[[outcome]] <- res_df
-    }
-  }
-
-  if (length(results_list) == 0) {
-    stop("All models failed to fit. Check your data and model specification.",
-         call. = FALSE)
-  }
-  if (n_failed > 0) {
-    message(sprintf(
-      "Successfully fit %d/%d models. %d failed.",
-      n_success, length(outcomes), n_failed
-    ))
-  }
-
-  #  Pivot para forma longa
-
-  final_long <- dplyr::bind_rows(results_list)
-
-  if (p_values) {
-    est_wide <- final_long |>
-      dplyr::select("Variable", "Result", "Outcome") |>
-      tidyr::pivot_wider(
-        names_from  = "Outcome",
-        values_from = "Result"
-      )
-
-    p_wide <- final_long |>
-      dplyr::select("Variable", "P_Value", "Outcome") |>
-      tidyr::pivot_wider(
-        names_from   = "Outcome",
-        values_from  = "P_Value",
-        names_prefix = "P_"
-      )
-
-    final_wide <- dplyr::left_join(est_wide, p_wide, by = "Variable")
-
-  } else {
-
-        final_wide <- final_long |>
-      dplyr::select("Variable", "Result", "Outcome") |>
-      tidyr::pivot_wider(
-        names_from  = "Outcome",
-        values_from = "Result"
-      )
-  }
-
-  #  Formatar nome colunas
-  if (!is.null(labels)) {
-    if (!is.character(labels) || is.null(names(labels))) {
-      warning("'labels' must be a named character vector. Ignoring.", call. = FALSE)
-    } else {
-      cols_to_rename <- intersect(names(final_wide), names(labels))
-      if (length(cols_to_rename) > 0) {
-        final_wide <- dplyr::rename_with(
-          final_wide,
-          .fn   = function(x) labels[x],
-          .cols = dplyr::all_of(cols_to_rename)
-        )
-      }
-      if (p_values) {
-        p_labels       <- stats::setNames(
-          paste0("P_", labels[names(labels)]),
-          paste0("P_", names(labels))
-        )
-        p_cols_present <- intersect(names(final_wide), names(p_labels))
-        if (length(p_cols_present) > 0) {
-          final_wide <- dplyr::rename_with(
-            final_wide,
-            .fn   = function(x) p_labels[x],
-            .cols = dplyr::all_of(p_cols_present)
-          )
-        }
-      }
-    }
-  }
-
-  #Remove o intercept
-  if (!include_intercept) {
-    final_wide <- dplyr::filter(final_wide, Variable != "(Intercept)")
-  }
-
-
-  final_wide <- as.data.frame(final_wide, stringsAsFactors = FALSE)
-
-  attr(final_wide, "family")        <- if (is.character(family)) family else family$family
-  attr(final_wide, "exponentiated") <- exponentiate
-  attr(final_wide, "robust")        <- robust
-  attr(final_wide, "conf.level")    <- conf.level
-
-  final_wide
-}
-
-
-#  Print method
-
-#' Print Method for regtab Results
-#'
-#' @param x A data.frame returned by `regtab()`.
-#' @param ... Additional arguments passed to `print()`.
-#' @return Invisibly returns `x`.
-#' @export
-print.regtab <- function(x, ...) {
-  family <- attr(x, "family")
-  exp    <- attr(x, "exponentiated")
-  robust <- attr(x, "robust")
-  conf   <- attr(x, "conf.level")
-
-  if (!is.null(family)) {
-    cat("\nMulti-Outcome Regression Table\n")
-    cat(strrep("=", 60), "\n")
-    cat("Family:         ", family, "\n")
-    if (!is.null(exp))    cat("Exponentiated:  ", if (exp) "Yes (IRR/OR)" else "No (log scale)", "\n")
-    if (!is.null(robust)) cat("Standard Errors:", if (robust) "Robust (HC0)" else "Model-based", "\n")
-    if (!is.null(conf))   cat("Confidence:     ", sprintf("%.0f%%", conf * 100), "\n")
-    cat(strrep("=", 60), "\n\n")
-  }
-
-  print(as.data.frame(x), row.names = FALSE)
-  cat("\n")
+  })
+  message(sprintf("Table exported to: %s", target$path))
   invisible(x)
 }
 
-
-#  Exportar
-
-#' Export regtab Results to CSV
+#' Export regtab results to Excel
 #'
-#' @param x A data.frame from `regtab()`.
-#' @param file File path.
-#' @param ... Additional arguments passed to `write.csv()`.
+#' @param x A `regtab` result.
+#' @param file Output file path. A missing `.xlsx` suffix is added.
+#' @inheritParams export_regtab_csv
+#' @param ... Passed to [export_xlsx()].
 #' @return Invisibly returns `x`.
+#' @examples
+#' \dontrun{
+#' mod <- regtab(epitabl, outcomes = "rehospitalized", predictors = ~ age + sex)
+#' export_regtab_xlsx(mod, tempfile(fileext = ".xlsx"))
+#' }
 #' @export
-export_regtab_csv <- function(x, file, ...) {
-  write.csv(x, file, row.names = FALSE, ...)
-  message(sprintf("Table exported to: %s", file))
-  invisible(x)
-}
-
-#' Export regtab Results to Excel
-#'
-#' Requires the `openxlsx` package.
-#'
-#' @param x A data.frame from `regtab()`.
-#' @param file File path (.xlsx).
-#' @param ... Additional arguments passed to `openxlsx::write.xlsx()`.
-#' @return Invisibly returns `x`.
-#' @export
-export_regtab_xlsx <- function(x, file, ...) {
-  if (!requireNamespace("openxlsx", quietly = TRUE)) {
-    stop("Package 'openxlsx' required. Install with: install.packages('openxlsx')",
-         call. = FALSE)
-  }
-  openxlsx::write.xlsx(x, file, ...)
-  message(sprintf("Table exported to: %s", file))
+export_regtab_xlsx <- function(x, file, overwrite = FALSE, ...) {
+  export_xlsx(x, path = file, overwrite = overwrite, ...)
   invisible(x)
 }
