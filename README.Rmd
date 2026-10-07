@@ -17,7 +17,8 @@ knitr::opts_chunk$set(
 <img src="man/figures/Simtable.png" align="right" height="230" alt="SimtablR logo" />
 
 <!-- badges: start -->
-[![R-CMD-check](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml)<!-- badges: end -->
+[![R-CMD-check](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 ## Publication-Ready Epidemiology, Fast and Reproducible
 

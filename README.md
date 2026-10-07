@@ -7,7 +7,8 @@ SimtablR: Fast, Design-Aware Epidemiological Analysis in R
 
 <!-- badges: start -->
 
-[![R-CMD-check](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml)<!-- badges: end -->
+[![R-CMD-check](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml/badge.svg)](https://github.com/MatheusTG-14/SimtablR/actions/workflows/R-CMD-check.yaml)
+<!-- badges: end -->
 
 ## Publication-Ready Epidemiology, Fast and Reproducible
 
