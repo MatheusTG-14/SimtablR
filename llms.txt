@@ -1,0 +1,219 @@
+Streamlines the creation of descriptive frequency tables ('Table 1'),
+diagnostic test accuracy evaluations (sensitivity, specificity,
+predictive values), and multi-outcome regression summaries. Features a
+grammar for publication-ready epidemiological tables built on
+design-aware effect measures, prevalence and odds ratio calculations,
+and seamless integration with 'flextable' for exporting results to
+'Microsoft Word' and 'PowerPoint'.
+
+# Package index
+
+## Prepare
+
+Build a specification, shape the data, and set the design before
+computation.
+
+- [`simtab()`](https://MatheusTG-14.github.io/SimtablR/reference/simtab.md)
+  : Start a SimtablR analysis specification
+- [`simtablr()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr.md)
+  : Build a manuscript-ready SimtablR report in one call
+- [`simtab_completions()`](https://MatheusTG-14.github.io/SimtablR/reference/simtab_completions.md)
+  : Opt-in RStudio autocomplete for SimtablR calls
+- [`describe()`](https://MatheusTG-14.github.io/SimtablR/reference/describe.md)
+  : Capture variables to describe
+- [`stratify()`](https://MatheusTG-14.github.io/SimtablR/reference/stratify.md)
+  : Capture a stratifying variable
+- [`adjust()`](https://MatheusTG-14.github.io/SimtablR/reference/adjust.md)
+  : Capture adjustment covariates
+- [`measure()`](https://MatheusTG-14.github.io/SimtablR/reference/measure.md)
+  : Set an effect measure
+- [`engine()`](https://MatheusTG-14.github.io/SimtablR/reference/engine.md)
+  : Select a registered computation engine
+- [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md)
+  : Set a comparison test
+- [`set_summary()`](https://MatheusTG-14.github.io/SimtablR/reference/set_summary.md)
+  : Set the default summary statistic
+- [`overall()`](https://MatheusTG-14.github.io/SimtablR/reference/overall.md)
+  : Toggle the overall column
+- [`missingness()`](https://MatheusTG-14.github.io/SimtablR/reference/missingness.md)
+  : Set missing-data policy
+- [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md)
+  : Set display labels
+- [`fmt()`](https://MatheusTG-14.github.io/SimtablR/reference/fmt.md) :
+  Set render formatting options
+- [`add_effect()`](https://MatheusTG-14.github.io/SimtablR/reference/add_effect.md)
+  : Add or replace the effect-measure column(s) of a table1
+- [`set_design()`](https://MatheusTG-14.github.io/SimtablR/reference/set_design.md)
+  : Set study design metadata
+- [`design()`](https://MatheusTG-14.github.io/SimtablR/reference/design.md)
+  : Read a recorded study design
+
+## Describe
+
+Descriptive, baseline, and focused bivariate tables.
+
+- [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md) :
+  Cross-tabulate one or two variables
+- [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md)
+  : Describe a cohort across many variables (Table 1)
+- [`rbind(`*`<simtab_tb>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/rbind.simtab_tb.md)
+  : Combine tb Objects by Rows
+
+## Compare and estimate
+
+Effect estimation, regression, survival, and recorded revisions.
+
+- [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  : Fit one regression model per outcome
+- [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  : Fit a Cox proportional hazards model
+- [`coef(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/model-accessors.md)
+  [`vcov(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/model-accessors.md)
+  [`formula(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/model-accessors.md)
+  [`nobs(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/model-accessors.md)
+  [`confint(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/model-accessors.md)
+  : Access retained model evidence
+- [`model_info()`](https://MatheusTG-14.github.io/SimtablR/reference/model_info.md)
+  : Inspect retained model convergence information
+- [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md)
+  [`as_flextable(`*`<simtab_sensitivity>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md)
+  : Recompute reviewer-loop sensitivity variations
+- [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  : Compute E-values for SimtablR ratio estimates
+
+## Diagnose and validate
+
+Diagnostic accuracy, ROC curves, and structural validation.
+
+- [`diag_test()`](https://MatheusTG-14.github.io/SimtablR/reference/diag_test.md)
+  : Assess the accuracy of a binary diagnostic test
+- [`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md) :
+  Evaluate continuous markers with ROC curves
+- [`validate()`](https://MatheusTG-14.github.io/SimtablR/reference/validate.md)
+  : Validate a SimtablR specification before compute
+- [`plot(`*`<simtab_diag>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/plot.simtab_diag.md)
+  : Plot diagnostic test results
+
+## Render and export
+
+Journal styling and output for HTML, Office, Excel, and data reuse.
+
+- [`style()`](https://MatheusTG-14.github.io/SimtablR/reference/style.md)
+  : Set or update a SimtablR style
+- [`journal_style()`](https://MatheusTG-14.github.io/SimtablR/reference/journal_style.md)
+  : Create a SimtablR style / journal preset
+- [`as_gt()`](https://MatheusTG-14.github.io/SimtablR/reference/as_gt.md)
+  : Convert a SimtablR object to a gt table
+- [`as_flextable.simtab_result()`](https://MatheusTG-14.github.io/SimtablR/reference/as_flextable.simtab_result.md)
+  [`as_flextable.simtab_spec()`](https://MatheusTG-14.github.io/SimtablR/reference/as_flextable.simtab_result.md)
+  [`as_flextable.simtab_report()`](https://MatheusTG-14.github.io/SimtablR/reference/as_flextable.simtab_result.md)
+  : Convert a SimtablR result or spec to a flextable
+- [`as_flextable.simtab_rbind_tb()`](https://MatheusTG-14.github.io/SimtablR/reference/as_flextable.simtab_rbind_tb.md)
+  : Convert simtab_rbind_tb Object to Flextable
+- [`as_flextable(`*`<simtab_codebook>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/as_flextable.simtab_codebook.md)
+  : Convert a SimtablR codebook to a flextable
+- [`as.data.frame(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/as.data.frame.simtab_result.md)
+  [`as.data.frame(`*`<simtab_spec>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/as.data.frame.simtab_result.md)
+  : Convert a SimtablR result or spec to a data frame
+- [`as.data.frame(`*`<simtab_report>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/as.data.frame.simtab_report.md)
+  : Coerce a SimtablR report to a data.frame
+- [`as.data.frame(`*`<simtab_audit>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/as.data.frame.simtab_audit.md)
+  : Coerce a SimtablR audit to a data.frame
+- [`as.data.frame(`*`<simtab_rbind_tb>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/as.data.frame.simtab_rbind_tb.md)
+  : Convert rbind_tb to Data Frame
+- [`print(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/print.simtab_result.md)
+  : Print a computed SimtablR result
+- [`print(`*`<simtab_rbind_tb>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/print.simtab_rbind_tb.md)
+  : Print Method for simtab_rbind_tb Objects
+- [`autoplot(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/autoplot.simtab_result.md)
+  : Autoplot a computed SimtablR result
+- [`autoplot(`*`<simtab_spec>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/autoplot.simtab_spec.md)
+  : Plot a computed SimtablR spec
+- [`tidy(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/tidy.simtab_result.md)
+  [`tidy(`*`<simtab_spec>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/tidy.simtab_result.md)
+  : Tidy a SimtablR result
+- [`glance(`*`<simtab_result>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/glance.simtab_result.md)
+  [`glance(`*`<simtab_spec>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/glance.simtab_result.md)
+  : Glance a SimtablR result
+- [`export_docx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_docx.md)
+  : Export a SimtablR table to a Word (.docx) file
+- [`export_pptx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_pptx.md)
+  : Export a SimtablR table to a PowerPoint (.pptx) file
+- [`export_xlsx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_xlsx.md)
+  : Export a SimtablR table to an Excel (.xlsx) file
+- [`export_plot()`](https://MatheusTG-14.github.io/SimtablR/reference/export_plot.md)
+  : Export a SimtablR plot to an image file
+- [`export_regtab_csv()`](https://MatheusTG-14.github.io/SimtablR/reference/export_regtab_csv.md)
+  : Export regtab results to CSV
+- [`export_regtab_xlsx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_regtab_xlsx.md)
+  : Export regtab results to Excel
+
+## Explain and reproduce
+
+Methods prose, methodological guidance, reporting checklists, flow, and
+reproducibility artifacts.
+
+- [`advise()`](https://MatheusTG-14.github.io/SimtablR/reference/advise.md)
+  : Run educator advice rules
+- [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md) :
+  Report why SimtablR made each recorded decision
+- [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  : Generate a manuscript methods sentence
+- [`strobe()`](https://MatheusTG-14.github.io/SimtablR/reference/strobe.md)
+  [`as_flextable(`*`<simtab_checklist>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/strobe.md)
+  : Build a STROBE reporting checklist
+- [`stard()`](https://MatheusTG-14.github.io/SimtablR/reference/stard.md)
+  : Build a STARD reporting checklist
+- [`codebook()`](https://MatheusTG-14.github.io/SimtablR/reference/codebook.md)
+  : Build a SimtablR codebook
+- [`flow()`](https://MatheusTG-14.github.io/SimtablR/reference/flow.md)
+  [`as_flextable(`*`<simtab_flow>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/flow.md)
+  [`autoplot(`*`<simtab_flow>`*`)`](https://MatheusTG-14.github.io/SimtablR/reference/flow.md)
+  : Build a participant flow table from recorded facts
+- [`simtablr_guidance()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr_guidance.md)
+  : Set or query SimtablR educator guidance
+- [`simtablr_references`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr_references.md)
+  : References cited by SimtablR
+- [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md)
+  : Build a reproducibility manifest
+- [`is_simtab()`](https://MatheusTG-14.github.io/SimtablR/reference/is_simtab.md)
+  : Test whether an object is a SimtablR result, optionally of a given
+  preset
+- [`evaluate()`](https://MatheusTG-14.github.io/SimtablR/reference/evaluate.md)
+  : Evaluate a SimtablR analysis specification
+- [`simtab_errors`](https://MatheusTG-14.github.io/SimtablR/reference/simtab_errors.md)
+  : SimtablR condition classes
+
+## Extend
+
+Register and discover engines and journal styles.
+
+- [`register_engine()`](https://MatheusTG-14.github.io/SimtablR/reference/register_engine.md)
+  : Register a SimtablR computation engine
+- [`register_journal()`](https://MatheusTG-14.github.io/SimtablR/reference/register_journal.md)
+  : Register a named journal style preset
+- [`list_engines()`](https://MatheusTG-14.github.io/SimtablR/reference/list_engines.md)
+  : List registered SimtablR engines
+- [`list_journals()`](https://MatheusTG-14.github.io/SimtablR/reference/list_journals.md)
+  : List available journal style presets
+
+## Data
+
+- [`epitabl`](https://MatheusTG-14.github.io/SimtablR/reference/epitabl.md)
+  : ESTROBE-ACS Teaching Cohort
+
+# Articles
+
+### Guides
+
+Workflow guides following the clinical progression of an epidemiological
+cohort.
+
+- [table1() & tb(): Cohort Baseline Characteristics and 2x2
+  Tables](https://MatheusTG-14.github.io/SimtablR/articles/getting-started.md):
+- [diag_test() & roc(): Diagnostic Accuracy and Biomarker
+  Discrimination](https://MatheusTG-14.github.io/SimtablR/articles/diagnostic-and-roc.md):
+- [regtab() & survtab(): Multivariable Modeling and Longitudinal
+  Outcomes](https://MatheusTG-14.github.io/SimtablR/articles/regression-and-survival.md):
+- [simtab Grammar, Reviewer Analyses, and Export: From Protocol to
+  Manuscript](https://MatheusTG-14.github.io/SimtablR/articles/grammar-reporting-export.md):
