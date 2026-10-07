@@ -2,14 +2,16 @@
 % Please edit documentation in R/tb.R
 \name{tb}
 \alias{tb}
-\title{Frequency and Summary Tables}
+\title{Cross-tabulate one or two variables}
 \usage{
 tb(
   data,
   ...,
   m = FALSE,
+  miss = FALSE,
   d = 1,
-  format = TRUE,
+  big_mark = "",
+  decimal_mark = ".",
   style = "n_pct",
   style.rp = "{rp} ({lower} - {upper})",
   style.or = "{or} ({lower} - {upper})",
@@ -21,62 +23,194 @@ tb(
   ref = NULL,
   conf.level = 0.95,
   var.type = NULL,
-  stat.cont = "median",
+  summary = "auto",
   flags = NULL,
-  labels = NULL
+  labels = NULL,
+  measure = NULL,
+  design = NULL
 )
 }
 \arguments{
-\item{data}{A data.frame or atomic vector.}
+\item{data}{A data frame, or a single vector to tabulate on its own.}
 
-\item{...}{Variables to be tabulated. Accepts variable names and/or flags
-(\code{m}, \code{p}, \code{row}, \code{col}, \code{rp}, \code{or}) for controlling output format.}
+\item{...}{One or two variables to tabulate: bare names, strings, or
+tidyselect expressions such as \code{all_of(v)}. The first becomes the rows and
+the second the columns. Terse flags such as \code{row} or \code{or} may follow; see
+\emph{Terse flags}.}
 
-\item{m}{Logical. Include missing values (NA) in the table. Default: \code{FALSE}.}
+\item{m}{Deprecated; use \code{miss} instead.}
 
-\item{d}{Integer. Decimal places for percentages and statistics. Default: \code{1}.}
+\item{miss}{Logical. If \code{TRUE}, show missing values as their own row and
+column. Same as the \code{miss} flag.}
 
-\item{format}{Logical. Render a formatted grid output. Default: \code{TRUE}.}
+\item{d}{Integer. Decimal places for percentages and continuous summaries.
+Effect measures always use two decimals.}
 
-\item{style}{Character. Format for displaying counts and percentages.
-Options: \code{"n_pct"} (default), \code{"pct_n"}, or a custom template with \code{{n}} and
-\code{{p}} placeholders, e.g. \code{"{n} [{p}\%]"}.}
+\item{big_mark}{String inserted between every three digits, e.g. \code{","}
+prints \code{4391} as \verb{4,391}.}
 
-\item{style.rp}{Character. Format string for Prevalence Ratio.
-Default: \code{"{rp} ({lower} - {upper})"}.}
+\item{decimal_mark}{String used as the decimal point, e.g. \code{","}. Must
+differ from \code{big_mark}.}
 
-\item{style.or}{Character. Format string for Odds Ratio.
-Default: \code{"{or} ({lower} - {upper})"}.}
+\item{style}{String. How counts and percentages are shown: \code{"n_pct"}
+(\verb{12 (5.0\%)}), \code{"pct_n"} (\verb{5.0\% (12)}), or a template using \code{{n}} and
+\code{{p}}, such as \code{"{n} [{p}\%]"}.}
 
-\item{test}{Logical or Character. Performs statistical test on 2x2+ tables.
-\code{TRUE} for automatic selection, or one of \code{"chisq"}, \code{"fisher"}, \code{"mcnemar"}.}
+\item{style.rp}{String template for prevalence and risk ratios, using
+\code{{rp}}, \code{{lower}}, and \code{{upper}}.}
 
-\item{subset}{Logical expression for row filtering.}
+\item{style.or}{String template for odds ratios, using \code{{or}}, \code{{lower}},
+and \code{{upper}}.}
 
-\item{strat}{Variable for column stratification. Disables PR/OR calculations.}
+\item{test}{Logical or string. \code{TRUE} adds a p-value from an automatically
+chosen test; or force \code{"chisq"}, \code{"fisher"}, or \code{"mcnemar"}. See
+\emph{Statistical methods} for how the test is chosen.}
 
-\item{rp}{Logical. Calculate Prevalence Ratios (PR). Default: \code{FALSE}.}
+\item{subset}{A logical expression evaluated in \code{data} to keep only some
+rows, e.g. \code{subset = age >= 65}.}
 
-\item{or}{Logical. Calculate Odds Ratios (OR). Default: \code{FALSE}.}
+\item{strat}{A variable to stratify by: a bare name or string. The table is
+repeated within each stratum and, if an effect measure is requested,
+a Mantel-Haenszel pooled estimate is added.}
 
-\item{ref}{Character or numeric. Reference level for PR/OR calculations.}
+\item{rp}{Deprecated; use the \code{pr} flag or \code{measure = "PR"} instead.}
 
-\item{conf.level}{Numeric. Confidence level for intervals (0-1). Default: \code{0.95}.}
+\item{or}{Logical. If \code{TRUE}, add odds ratios. Same as the \code{or} flag.}
 
-\item{var.type}{Named character vector specifying variable types, e.g.
-\code{c(age = "continuous")} or a scalar string \code{"continuous"}.}
+\item{ref}{Reference level of the row (exposure) variable for effect
+measures, given as a level name or its position. If \code{NULL}, the first
+level is used and a note is printed.}
 
-\item{stat.cont}{Character. \code{"mean"} (Mean/SD) or \code{"median"} (Median/IQR).
-Default: \code{"median"}.}
+\item{conf.level}{Number between 0 and 1. Confidence level for effect
+measure intervals.}
 
-\item{flags}{Character vector. Programmatic alternative for specifying formatting flags.}
+\item{var.type}{Force variable types: \code{"continuous"} or \code{"categorical"},
+either one string for all variables or a named vector such as
+\code{c(score = "continuous")}. If \code{NULL}, types are detected automatically
+(see \emph{Statistical methods}).}
 
-\item{labels}{Named character vector. Custom display labels for variables.}
+\item{summary}{String. Summary for numeric variables: \code{"auto"} chooses
+between \code{"mean"} (mean and SD) and \code{"median"} (median and IQR) based on
+sample size and skewness.}
+
+\item{flags}{Character vector of terse flags, e.g. \code{c("row", "or", "p")}.
+The programmatic form of the bare flags in \code{...}.}
+
+\item{labels}{Named character vector of display labels, e.g.
+\code{c(smoking = "Smoking status")}. Variable labels already stored in \code{data}
+are used by default.}
+
+\item{measure}{String. Effect measure to add: \code{"PR"}, \code{"RR"}, or \code{"OR"}.
+Overrides any measure implied by \code{design}.}
+
+\item{design}{String. Study design used to choose the effect measure when
+none is requested: \code{"cross_sectional"} gives PR, \code{"cohort"} gives RR, and
+\code{"case_control"} gives OR.}
 }
 \value{
-An object of class \code{c("tb", "simtab")}.
+A \code{simtab_result} of class \code{simtab_tb}. Print it to see the
+formatted table, convert it with \code{as.data.frame()}, or save it with
+\code{\link[=export_docx]{export_docx()}}, \code{\link[=export_pptx]{export_pptx()}}, or \code{\link[=export_xlsx]{export_xlsx()}}. Unrounded results
+are stored in \verb{$data}.
 }
 \description{
-Creates comprehensive tables for categorical or continuous variables with formatting,
-statistical tests, prevalence ratios (PR), odds ratios (OR), and column stratification.
+\code{tb()} builds a frequency table for one variable, or a cross-tabulation of
+two, with optional percentages, an association test, and crude effect
+measures (PR, RR, or OR). Put the exposure first (rows) and the outcome
+second (columns); a numeric first variable is summarised as mean (SD) or
+median (IQR) within each outcome group. For many variables at once use
+\code{\link[=table1]{table1()}}; for adjusted estimates use \code{\link[=regtab]{regtab()}}.
+}
+\details{
+\subsection{Statistical methods}{
+
+Effect measures compare each row level with the reference level (\code{ref}),
+taking the last column level as the event. Prevalence and risk ratios use
+the Katz log interval (Katz et al., 1978) and odds ratios the Woolf logit
+interval (Woolf, 1955). With \code{strat}, stratum-specific tables are pooled
+with the Mantel-Haenszel estimator and tested with the Cochran-Mantel-Haenszel
+test.
+
+With \code{test = TRUE}, 2x2 tables use the N-1 chi-squared test (Campbell,
+2007) and larger tables the Pearson chi-squared test, without continuity
+correction. Fisher's exact test is chosen automatically only when an
+expected count is below 1; request it with \code{test = "fisher"}. Numeric
+variables are compared with the t-test or ANOVA when summarised by the
+mean, and with the Wilcoxon or Kruskal-Wallis test when summarised by the
+median.
+
+Numeric variables are treated as continuous unless they look like coded
+categories: exactly two distinct whole numbers, or at most seven distinct
+whole numbers with at least 20 observations. Use \code{var.type} to override.
+}
+
+\subsection{Missing data}{
+
+Missing values are excluded from counts, percentages, tests, and effect
+measures. Use the \code{miss} flag to display them as a separate category.
+}
+
+\subsection{Modifying the result}{
+
+Paired tests and multiplicity adjustment are set afterwards with \code{\link[=test]{test()}},
+e.g. \code{tb(df, value, group, test = TRUE) |> test(paired = TRUE)}. Use
+\code{\link[=fmt]{fmt()}} to change decimals and \code{\link[=rbind]{rbind()}} to stack several \code{tb()} tables
+that share the same column variable.
+}
+}
+\section{Terse flags}{
+
+Flags may be supplied as bare words in \code{...} alongside the selected variables, or programmatically with \verb{flags =}.
+\describe{
+\item{\code{row}}{Row percentages.}
+\item{\code{col}}{Column percentages.}
+\item{\code{cell}, \code{perc}}{Percentages of the table total. \code{perc} reads better in one-variable tables.}
+\item{\code{pr}, \code{rr}, \code{or}}{Add the corresponding crude effect measure.}
+\item{\code{p}}{Add a p-value from an automatically chosen test, like \code{test = TRUE}.}
+\item{\code{miss}}{Show missing values.}
+}
+The old flags \code{rp} and \code{m} still work as aliases for \code{pr} and \code{miss} but are deprecated.
+}
+
+\examples{
+# Frequencies of one variable
+tb(epitabl, smoking)
+
+# Row percentages, a p-value, and crude prevalence ratios
+tb(epitabl, smoking, adjudicated_acs, flags = c("row", "pr", "p"), ref = "Never")
+
+# The same request with bare flags (shorthand)
+tb(epitabl, smoking, adjudicated_acs, row, pr, p, ref = "Never")
+
+# Odds ratio stratified by sex, with a Mantel-Haenszel pooled estimate
+tb(epitabl, renal_impairment, adjudicated_acs, strat = sex, flags = "or", ref = "No")
+
+# A numeric variable summarised by group
+tb(epitabl, age, adjudicated_acs, test = TRUE)
+}
+\references{
+Campbell, I. (2007). Chi-squared and Fisher-Irwin tests of
+two-by-two tables with small sample recommendations. \emph{Statistics in
+Medicine}, 26(19), 3661--3675. \doi{10.1002/sim.2832}.
+
+Katz, D., Baptista, J., Azen, S. P., & Pike, M. C. (1978). Obtaining
+confidence intervals for the risk ratio in cohort studies.
+\emph{Biometrics}, 34(3), 469--474. \doi{10.2307/2530610}.
+
+Woolf, B. (1955). On estimating the relation between blood group and
+disease. \emph{Annals of Human Genetics}, 19(4), 251--253.
+\doi{10.1111/j.1469-1809.1955.tb01348.x}.
+
+Pearson, K. (1900). On the criterion that a given system of deviations
+from the probable in the case of a correlated system of variables is such
+that it can be reasonably supposed to have arisen from random sampling.
+\emph{Philosophical Magazine, Series 5}, 50(302), 157--175.
+\doi{10.1080/14786440009463897}.
+
+Fisher, R. A. (1935). \emph{The Design of Experiments}. Oliver & Boyd.
+}
+\seealso{
+\code{\link[=table1]{table1()}} for many variables at once, \code{\link[=regtab]{regtab()}} for adjusted
+effect measures, \code{\link[=diag_test]{diag_test()}} for diagnostic accuracy, and
+\link{simtablr_references} for all references cited by SimtablR.
 }

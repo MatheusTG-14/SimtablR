@@ -6,7 +6,7 @@
 \alias{SimtablR-package}
 \title{SimtablR: Easy Publication-Ready Tables and Regression Analysis}
 \description{
-Streamlines the creation of descriptive frequency tables ('Table 1'), diagnostic test accuracy evaluations (sensitivity, specificity, predictive values), and multi-outcome regression summaries. Features automatic tables, prevalence and odds ratio calculations, and seamless integration with 'flextable' for exporting results to 'Microsoft Word' and 'PowerPoint'.
+Streamlines the creation of descriptive frequency tables ('Table 1'), diagnostic test accuracy evaluations (sensitivity, specificity, predictive values), and multi-outcome regression summaries. Features a grammar for publication-ready epidemiological tables built on design-aware effect measures, prevalence and odds ratio calculations, and seamless integration with 'flextable' for exporting results to 'Microsoft Word' and 'PowerPoint'.
 }
 \seealso{
 Useful links:

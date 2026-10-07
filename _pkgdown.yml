@@ -1,5 +1,11 @@
 url: https://MatheusTG-14.github.io/SimtablR/
 
+home:
+  title: "SimtablR: Design-Aware Epidemiological Tables"
+  description: >
+    Publication-ready descriptive, sampling-weighted, standardized, regression,
+    diagnostic, survival, and reporting workflows with inspectable decisions.
+
 template:
   bootstrap: 5
   bootswatch: flatly
@@ -10,62 +16,162 @@ template:
       google: "Hanken Grotesk"
     code_font:
       google: "Fira Code"
-    primary: "#2c3e50"
-    secondary: "#18bc9c"
+    primary: "#405a73"
+    secondary: "#6a9f99"
+    body-color: "#263946"
+    body-bg: "#f7f9f8"
+    link-color: "#2d6f78"
+    border-color: "#d6dfdf"
 
-#Barra de Navegação
 navbar:
   title: "SimtablR"
   left:
     - text: "Home"
       href: index.html
+    - text: "Guides"
+      menu:
+        - text: "Descriptive & Bivariate Tables"
+          href: articles/getting-started.html
+        - text: "Diagnostic Accuracy & ROC"
+          href: articles/diagnostic-and-roc.html
+        - text: "Regression & Survival"
+          href: articles/regression-and-survival.html
+        - text: "Grammar, Review & Export"
+          href: articles/grammar-reporting-export.html
     - text: "Reference"
       href: reference/index.html
-    - text: "Articles"
-      menu:
-        - text: "Introduction to SimtablR"
-          href: articles/tb_tutorial.html
+    - text: "Bibliography"
+      href: reference/simtablr_references.html
     - text: "News"
       href: news/index.html
   right:
     - icon: fa-github
       href: https://github.com/MatheusTG-14/SimtablR
+      aria-label: "GitHub repository"
+
+articles:
+  - title: "Guides"
+    desc: "Workflow guides following the clinical progression of an epidemiological cohort."
+    contents:
+      - getting-started
+      - diagnostic-and-roc
+      - regression-and-survival
+      - grammar-reporting-export
 
 development:
   mode: auto
   version_label: default
+
 authors:
   Matheus Trabuco:
     href: https://linktr.ee/matheustrabucogonzalez/
+
 opengraph:
   image:
     src: man/figures/Simtable.png
-    alt: "SimtablR: Publication-Ready Tables"
+    alt: "SimtablR: publication-ready epidemiological tables"
 
 reference:
-  - title: "Descriptive Statistics"
-    desc: "Functions for summary tables and descriptive analysis."
+  - title: "Prepare"
+    desc: >
+      Build a specification, shape the data, and set the design before
+      computation.
+    contents:
+      - simtab
+      - simtablr
+      - simtab_completions
+      - describe
+      - stratify
+      - adjust
+      - measure
+      - engine
+      - test
+      - set_summary
+      - overall
+      - missingness
+      - label
+      - fmt
+      - add_effect
+      - set_design
+      - design
+
+  - title: "Describe"
+    desc: "Descriptive, baseline, and focused bivariate tables."
     contents:
       - tb
-      - as.data.frame.tb
-      - print.tb
-      - as_flextable.tb
+      - table1
+      - rbind.simtab_tb
 
-  - title: "Diagnostic Accuracy"
-    desc: "Tools for evaluating diagnostic tests."
-    contents:
-      - diag_test
-      - plot.diag_test
-      - as.data.frame.diag_test
-      - print.diag_test
-
-  - title: "Regression Analysis"
-    desc: "Multi-outcome regression tools."
+  - title: "Compare and estimate"
+    desc: "Effect estimation, regression, survival, and recorded revisions."
     contents:
       - regtab
+      - survtab
+      - model-accessors
+      - model_info
+      - sensitivity
+      - e_value
+
+  - title: "Diagnose and validate"
+    desc: "Diagnostic accuracy, ROC curves, and structural validation."
+    contents:
+      - diag_test
+      - roc
+      - validate
+      - plot.simtab_diag
+
+  - title: "Render and export"
+    desc: "Journal styling and output for HTML, Office, Excel, and data reuse."
+    contents:
+      - style
+      - journal_style
+      - as_gt
+      - as_flextable.simtab_result
+      - as_flextable.simtab_rbind_tb
+      - as_flextable.simtab_codebook
+      - as.data.frame.simtab_result
+      - as.data.frame.simtab_report
+      - as.data.frame.simtab_audit
+      - as.data.frame.simtab_rbind_tb
+      - print.simtab_result
+      - print.simtab_rbind_tb
+      - autoplot.simtab_result
+      - autoplot.simtab_spec
+      - tidy.simtab_result
+      - glance.simtab_result
+      - export_docx
+      - export_pptx
+      - export_xlsx
+      - export_plot
       - export_regtab_csv
       - export_regtab_xlsx
-      - print.regtab
+
+  - title: "Explain and reproduce"
+    desc: >
+      Methods prose, methodological guidance, reporting checklists, flow, and
+      reproducibility artifacts.
+    contents:
+      - advise
+      - why
+      - as_methods
+      - strobe
+      - stard
+      - codebook
+      - flow
+      - simtablr_guidance
+      - simtablr_references
+      - repro_manifest
+      - is_simtab
+      - evaluate
+      - simtab_errors
+
+  - title: "Extend"
+    desc: "Register and discover engines and journal styles."
+    contents:
+      - register_engine
+      - register_journal
+      - list_engines
+      - list_journals
 
   - title: "Data"
     contents:
