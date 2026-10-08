@@ -67,7 +67,7 @@
       <h1>simtab Grammar, Reviewer Analyses, and Export: From Protocol to Manuscript</h1>
             
       
-      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/v3.1.0/vignettes/grammar-reporting-export.Rmd" class="external-link"><code>vignettes/grammar-reporting-export.Rmd</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/master/vignettes/grammar-reporting-export.Rmd" class="external-link"><code>vignettes/grammar-reporting-export.Rmd</code></a></small>
       <div class="d-none name"><code>grammar-reporting-export.Rmd</code></div>
     </div>
 
@@ -328,11 +328,9 @@ explain away the observed estimate:</p>
 <span><span class="va">ev</span></span>
 <span><span class="co">#&gt; E-values</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;     source outcome             term measure estimate conf.low conf.high</span></span>
-<span><span class="co">#&gt;  bivariate    &lt;NA&gt; renal_impairment      RR 1.000000       NA        NA</span></span>
-<span><span class="co">#&gt;  bivariate    &lt;NA&gt; renal_impairment      RR 1.091065 0.937381  1.269945</span></span>
+<span><span class="co">#&gt;     source outcome                  term measure estimate conf.low conf.high</span></span>
+<span><span class="co">#&gt;  bivariate    &lt;NA&gt; renal_impairment: Yes      RR 1.091065 0.937381  1.269945</span></span>
 <span><span class="co">#&gt;   e_value e_value_ci approximation  rare</span></span>
-<span><span class="co">#&gt;  1.000000         NA         FALSE FALSE</span></span>
 <span><span class="co">#&gt;  1.406276          1         FALSE FALSE</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
 <span><span class="co">#&gt;   E-values summarise the minimum unmeasured-confounding strength needed to</span></span>
@@ -461,18 +459,26 @@ guidelines and exported natively to Office formats.</p>
 <span><span class="va">jama_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span><span class="va">primary</span>, <span class="st">"jama"</span><span class="op">)</span></span>
 <span><span class="va">jama_table</span></span>
 <span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |  No   Yes  | Total </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+------------+-------</span></span>
-<span><span class="co">#&gt;                                               No | jama  jama | 1184  </span></span>
-<span><span class="co">#&gt;                                              Yes | jama  jama |  316  </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+------------+-------</span></span>
-<span><span class="co">#&gt;                                            Total | 928   572  | 1500  </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
+<span><span class="co">#&gt;                                               No | 741 (62.6%)  443 (37.4%) </span></span>
+<span><span class="co">#&gt;                                              Yes | 187 (59.2%)  129 (40.8%) </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
+<span><span class="co">#&gt;                                            Total |     928          572     </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
-<span><span class="co">#&gt;                                               No |          1.00 (Ref)           </span></span>
-<span><span class="co">#&gt;                                              Yes | 1.09 (0.94 - 1.27), p = 0.261 </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
+<span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
+<span><span class="co">#&gt;                                               No | 1184  </span></span>
+<span><span class="co">#&gt;                                              Yes |  316  </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
+<span><span class="co">#&gt;                                            Total | 1500  </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |        RR (95% CI)         </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+----------------------------</span></span>
+<span><span class="co">#&gt;                                               No |         1.00 (Ref)         </span></span>
+<span><span class="co">#&gt;                                              Yes | 1.09 (0.94, 1.27), p = .26 </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+----------------------------</span></span>
 <span><span class="co">#&gt;                                            Total |</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -1044,9 +1050,9 @@ guidelines and exported natively to Office formats.</p>
 <span><span class="va">tmp_xlsx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".xlsx"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/export_docx.html">export_docx</a></span><span class="op">(</span><span class="va">report</span>, path <span class="op">=</span> <span class="va">tmp_docx</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Report exported to: /tmp/RtmpSGlqFk/file211f5a8e9064.docx</span></span>
+<span><span class="co">#&gt; Report exported to: /tmp/RtmpOYzAOy/file1e8b3e6bb5f7.docx</span></span>
 <span><span class="fu"><a href="../reference/export_xlsx.html">export_xlsx</a></span><span class="op">(</span><span class="va">report</span>, path <span class="op">=</span> <span class="va">tmp_xlsx</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Report exported to: /tmp/RtmpSGlqFk/file211f6ca7f274.xlsx</span></span>
+<span><span class="co">#&gt; Report exported to: /tmp/RtmpOYzAOy/file1e8b47fb682f.xlsx</span></span>
 <span></span>
 <span><span class="co"># Verify exported files exist</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">tmp_docx</span><span class="op">)</span></span>
@@ -1064,7 +1070,7 @@ guidelines and exported natively to Office formats.</p>
 section describing the analytical steps taken:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_methods.html">as_methods</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. RR was estimated by log-binomial regression with 95% confidence intervals. The RR was chosen from the recorded study design (cohort).</span></span></code></pre></div>
+<span><span class="co">#&gt; Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. Crude RR was estimated using the Katz log risk-ratio estimator with 95% confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% confidence intervals. The RR was chosen from the recorded study design (cohort).</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

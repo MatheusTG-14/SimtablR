@@ -67,6 +67,10 @@ arisen from random sampling. *Philosophical Magazine, Series 5*,
 [doi:10.1080/14786440009463897](https://doi.org/10.1080/14786440009463897)
 .
 
+**Rothman, Greenland & Lash 2008.** Rothman, K. J., Greenland, S., &
+Lash, T. L. (2008). *Modern Epidemiology* (3rd ed.). Lippincott Williams
+& Wilkins.
+
 **Woolf 1955.** Woolf, B. (1955). On estimating the relation between
 blood group and disease. *Annals of Human Genetics*, 19(4), 251–253.
 [doi:10.1111/j.1469-1809.1955.tb01348.x](https://doi.org/10.1111/j.1469-1809.1955.tb01348.x)

@@ -32,9 +32,9 @@ A long data.frame. For `table1`, this matches
 ``` r
 res <- tb(epitabl, sex, diabetes)
 generics::tidy(res)
-#>   variable  level estimate lower_ci upper_ci p_value outcome
-#> 1      sex Female       NA       NA       NA      NA      No
-#> 2      sex   Male       NA       NA       NA      NA      No
-#> 3      sex Female       NA       NA       NA      NA     Yes
-#> 4      sex   Male       NA       NA       NA      NA     Yes
+#>   variable  level estimate lower_ci upper_ci p_value outcome   n
+#> 1      sex Female       NA       NA       NA      NA      No 517
+#> 2      sex   Male       NA       NA       NA      NA      No 610
+#> 3      sex Female       NA       NA       NA      NA     Yes 169
+#> 4      sex   Male       NA       NA       NA      NA     Yes 204
 ```

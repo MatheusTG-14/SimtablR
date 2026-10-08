@@ -273,11 +273,9 @@ ev <- e_value(primary)
 ev
 #> E-values
 #> 
-#>     source outcome             term measure estimate conf.low conf.high
-#>  bivariate    <NA> renal_impairment      RR 1.000000       NA        NA
-#>  bivariate    <NA> renal_impairment      RR 1.091065 0.937381  1.269945
+#>     source outcome                  term measure estimate conf.low conf.high
+#>  bivariate    <NA> renal_impairment: Yes      RR 1.091065 0.937381  1.269945
 #>   e_value e_value_ci approximation  rare
-#>  1.000000         NA         FALSE FALSE
 #>  1.406276          1         FALSE FALSE
 #> ℹ Methodological guidance
 #>   E-values summarise the minimum unmeasured-confounding strength needed to
@@ -428,18 +426,26 @@ list_journals()
 jama_table <- style(primary, "jama")
 jama_table
 #>                                                  | Adjudicated acute coronary syndrome 
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |  No   Yes  | Total 
-#> -------------------------------------------------+------------+-------
-#>                                               No | jama  jama | 1184  
-#>                                              Yes | jama  jama |  316  
-#> -------------------------------------------------+------------+-------
-#>                                            Total | 928   572  | 1500  
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     
+#> -------------------------------------------------+--------------------------
+#>                                               No | 741 (62.6%)  443 (37.4%) 
+#>                                              Yes | 187 (59.2%)  129 (40.8%) 
+#> -------------------------------------------------+--------------------------
+#>                                            Total |     928          572     
 #> 
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          
-#> -------------------------------------------------+-------------------------------
-#>                                               No |          1.00 (Ref)           
-#>                                              Yes | 1.09 (0.94 - 1.27), p = 0.261 
-#> -------------------------------------------------+-------------------------------
+#>                                                  | Adjudicated acute coronary syndrome 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total 
+#> -------------------------------------------------+-------
+#>                                               No | 1184  
+#>                                              Yes |  316  
+#> -------------------------------------------------+-------
+#>                                            Total | 1500  
+#> 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |        RR (95% CI)         
+#> -------------------------------------------------+----------------------------
+#>                                               No |         1.00 (Ref)         
+#>                                              Yes | 1.09 (0.94, 1.27), p = .26 
+#> -------------------------------------------------+----------------------------
 #>                                            Total |
 ```
 
@@ -479,9 +485,9 @@ tmp_docx <- tempfile(fileext = ".docx")
 tmp_xlsx <- tempfile(fileext = ".xlsx")
 
 export_docx(report, path = tmp_docx)
-#> Report exported to: /tmp/RtmpSGlqFk/file211f5a8e9064.docx
+#> Report exported to: /tmp/RtmpOYzAOy/file1e8b3e6bb5f7.docx
 export_xlsx(report, path = tmp_xlsx)
-#> Report exported to: /tmp/RtmpSGlqFk/file211f6ca7f274.xlsx
+#> Report exported to: /tmp/RtmpOYzAOy/file1e8b47fb682f.xlsx
 
 # Verify exported files exist
 file.exists(tmp_docx)
@@ -501,5 +507,5 @@ describing the analytical steps taken:
 ``` r
 
 cat(as_methods(report))
-#> Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. RR was estimated by log-binomial regression with 95% confidence intervals. The RR was chosen from the recorded study design (cohort).
+#> Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. Crude RR was estimated using the Katz log risk-ratio estimator with 95% confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% confidence intervals. The RR was chosen from the recorded study design (cohort).
 ```

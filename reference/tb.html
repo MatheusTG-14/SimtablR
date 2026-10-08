@@ -46,7 +46,7 @@ table1(); for adjusted estimates use regtab()."></head><body>
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Cross-tabulate one or two variables</h1>
-      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/v3.1.0/R/tb.R" class="external-link"><code>R/tb.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/master/R/tb.R" class="external-link"><code>R/tb.R</code></a></small>
       <div class="d-none name"><code>tb.Rd</code></div>
     </div>
 
@@ -375,35 +375,36 @@ effect measures, <code><a href="diag_test.html">diag_test()</a></code> for diagn
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Odds ratio stratified by sex, with a Mantel-Haenszel pooled estimate</span></span></span>
 <span class="r-in"><span><span class="fu">tb</span><span class="op">(</span><span class="va">epitabl</span>, <span class="va">renal_impairment</span>, <span class="va">adjudicated_acs</span>, strat <span class="op">=</span> <span class="va">sex</span>, flags <span class="op">=</span> <span class="st">"or"</span>, ref <span class="op">=</span> <span class="st">"No"</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | adjudicated_acs (Stratified) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | Adjudicated acute coronary syndrome (Stratified) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Female : No  Female : Yes </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+---------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                               No |     362          188      </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                              Yes |     84            52      </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+---------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            Total |     446          240      </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      Mantel-Haenszel pooled: Yes |                           </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | adjudicated_acs (Stratified) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | Adjudicated acute coronary syndrome (Stratified) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Male : No  Male : Yes </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-----------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                               No |    379        255     </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                              Yes |    103         77     </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-----------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            Total |    482        332     </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      Mantel-Haenszel pooled: Yes |                       </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | adjudicated_acs (Stratified) </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | Adjudicated acute coronary syndrome (Stratified) </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                               No | 1184  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                              Yes |  316  </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            Total | 1500  </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                      Mantel-Haenszel pooled: Yes |       </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  |           adjudicated_acs (Stratified)            </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                                  | Adjudicated acute coronary syndrome (Stratified)  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                 OR MH (95% CI)                  </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-------------------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                               No |                                                 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                              Yes |                                                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-------------------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            Total |                                                 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                      Mantel-Haenszel pooled: Yes | 1.14 (0.89 - 1.48), CMH p = 0.327, BD p = 0.788 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> <span style="font-weight: bold;">Methodological warning</span></span>

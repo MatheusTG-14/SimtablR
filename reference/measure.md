@@ -20,7 +20,9 @@ measure(spec, m, ref = NULL, conf.level = 0.95, adjust = NULL)
 
 - ref:
 
-  Optional reference level.
+  Optional reference level: one level shared by every variable, or a
+  named list with one level per variable, e.g.
+  `list(sex = "Female", smoking = "Never")`.
 
 - conf.level:
 

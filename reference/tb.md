@@ -338,35 +338,36 @@ tb(epitabl, smoking, adjudicated_acs, row, pr, p, ref = "Never")
 
 # Odds ratio stratified by sex, with a Mantel-Haenszel pooled estimate
 tb(epitabl, renal_impairment, adjudicated_acs, strat = sex, flags = "or", ref = "No")
-#>                                                  | adjudicated_acs (Stratified) 
+#>                                                  | Adjudicated acute coronary syndrome (Stratified) 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Female : No  Female : Yes 
 #> -------------------------------------------------+---------------------------
 #>                                               No |     362          188      
 #>                                              Yes |     84            52      
+#> -------------------------------------------------+---------------------------
 #>                                            Total |     446          240      
-#>                      Mantel-Haenszel pooled: Yes |                           
 #> 
-#>                                                  | adjudicated_acs (Stratified) 
+#>                                                  | Adjudicated acute coronary syndrome (Stratified) 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Male : No  Male : Yes 
 #> -------------------------------------------------+-----------------------
 #>                                               No |    379        255     
 #>                                              Yes |    103         77     
+#> -------------------------------------------------+-----------------------
 #>                                            Total |    482        332     
-#>                      Mantel-Haenszel pooled: Yes |                       
 #> 
-#>                                                  | adjudicated_acs (Stratified) 
+#>                                                  | Adjudicated acute coronary syndrome (Stratified) 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total 
 #> -------------------------------------------------+-------
 #>                                               No | 1184  
 #>                                              Yes |  316  
+#> -------------------------------------------------+-------
 #>                                            Total | 1500  
-#>                      Mantel-Haenszel pooled: Yes |       
 #> 
-#>                                                  |           adjudicated_acs (Stratified)            
+#>                                                  | Adjudicated acute coronary syndrome (Stratified)  
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                 OR MH (95% CI)                  
 #> -------------------------------------------------+-------------------------------------------------
 #>                                               No |                                                 
 #>                                              Yes |                                                 
+#> -------------------------------------------------+-------------------------------------------------
 #>                                            Total |                                                 
 #>                      Mantel-Haenszel pooled: Yes | 1.14 (0.89 - 1.48), CMH p = 0.327, BD p = 0.788 
 #> ! Methodological warning

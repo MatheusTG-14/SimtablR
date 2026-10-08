@@ -50,9 +50,9 @@ as.data.frame(res)
 #> 2                                 Male  610 204   814
 #> 3                                Total 1127 373  1500
 as.data.frame(res, tidy = TRUE)
-#>   variable  level estimate lower_ci upper_ci p_value outcome
-#> 1      sex Female       NA       NA       NA      NA      No
-#> 2      sex   Male       NA       NA       NA      NA      No
-#> 3      sex Female       NA       NA       NA      NA     Yes
-#> 4      sex   Male       NA       NA       NA      NA     Yes
+#>   variable  level estimate lower_ci upper_ci p_value outcome   n
+#> 1      sex Female       NA       NA       NA      NA      No 517
+#> 2      sex   Male       NA       NA       NA      NA      No 610
+#> 3      sex Female       NA       NA       NA      NA     Yes 169
+#> 4      sex   Male       NA       NA       NA      NA     Yes 204
 ```

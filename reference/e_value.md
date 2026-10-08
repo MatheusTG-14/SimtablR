@@ -62,11 +62,9 @@ ratio_result <- tb(epitabl, diabetes, adjudicated_acs, or, ref = "No")
 e_value(ratio_result)
 #> E-values
 #> 
-#>     source outcome     term measure estimate conf.low conf.high  e_value
-#>  bivariate    <NA> diabetes      OR 1.000000       NA        NA 1.000000
-#>  bivariate    <NA> diabetes      OR 1.748705 1.379415  2.216859 1.975317
+#>     source outcome          term measure estimate conf.low conf.high  e_value
+#>  bivariate    <NA> diabetes: Yes      OR 1.748705 1.379415  2.216859 1.975317
 #>  e_value_ci approximation  rare
-#>          NA          TRUE FALSE
 #>    1.627177          TRUE FALSE
 #> ℹ Methodological guidance
 #>   E-values summarise the minimum unmeasured-confounding strength needed to

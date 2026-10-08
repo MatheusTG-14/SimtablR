@@ -36,7 +36,7 @@
   <main id="main" class="col-md-9"><div class="page-header">
 
       <h1>Convert a SimtablR result or spec to a data frame</h1>
-      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/v3.1.0/R/render.R" class="external-link"><code>R/render.R</code></a></small>
+      <small class="dont-index">Source: <a href="https://github.com/MatheusTG-14/SimtablR/blob/master/R/render.R" class="external-link"><code>R/render.R</code></a></small>
       <div class="d-none name"><code>as.data.frame.simtab_result.Rd</code></div>
     </div>
 
@@ -93,11 +93,11 @@ maximum VIF-equivalent columns by outcome.</p></dd>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 2                                 Male  610 204   814</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> 3                                Total 1127 373  1500</span>
 <span class="r-in"><span><span class="fu"><a href="https://rdrr.io/r/base/as.data.frame.html" class="external-link">as.data.frame</a></span><span class="op">(</span><span class="va">res</span>, tidy <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span>   variable  level estimate lower_ci upper_ci p_value outcome</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 1      sex Female       NA       NA       NA      NA      No</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 2      sex   Male       NA       NA       NA      NA      No</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 3      sex Female       NA       NA       NA      NA     Yes</span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> 4      sex   Male       NA       NA       NA      NA     Yes</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>   variable  level estimate lower_ci upper_ci p_value outcome   n</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 1      sex Female       NA       NA       NA      NA      No 517</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 2      sex   Male       NA       NA       NA      NA      No 610</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 3      sex Female       NA       NA       NA      NA     Yes 169</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> 4      sex   Male       NA       NA       NA      NA     Yes 204</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

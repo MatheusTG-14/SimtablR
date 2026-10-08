@@ -7,7 +7,7 @@
 ## Citation
 
 Source:
-[`DESCRIPTION`](https://github.com/MatheusTG-14/SimtablR/blob/v3.1.0/DESCRIPTION)
+[`DESCRIPTION`](https://github.com/MatheusTG-14/SimtablR/blob/master/DESCRIPTION)
 
 Trabuco Gonzalez M (2026). *SimtablR: Easy Publication-Ready Tables and
 Regression Analysis*. R package version 3.1.0,
