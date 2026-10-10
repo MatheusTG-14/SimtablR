@@ -17,7 +17,7 @@ evaluate()'s shared simtab_result methods with no further S3 ceremony."></head><
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -68,7 +68,9 @@ as_flextable/as_gt/tidy/glance/autoplot/as_methods dispatch through
 <span>  legacy_tag <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  validate <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  renderers <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/list.html" class="external-link">list</a></span><span class="op">(</span><span class="op">)</span>,</span>
-<span>  engine_opts <span class="op">=</span> <span class="cn">NULL</span></span>
+<span>  engine_opts <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  verbs <span class="op">=</span> <span class="cn">NULL</span>,</span>
+<span>  overwrite <span class="op">=</span> <span class="cn">FALSE</span></span>
 <span><span class="op">)</span></span></code></pre></div>
     </div>
 
@@ -109,6 +111,22 @@ hard, engine-specific errors only.</p></dd>
 <dt id="arg-engine-opts">engine_opts<a class="anchor" aria-label="anchor" href="#arg-engine-opts"></a></dt>
 <dd><p>Optional function <code>function(opts) -&gt; invisible(opts)</code>
 validating the engine's spec-level options.</p></dd>
+
+
+<dt id="arg-verbs">verbs<a class="anchor" aria-label="anchor" href="#arg-verbs"></a></dt>
+<dd><p>Optional character vector of the evidence-changing verbs the
+engine uses: any of <code>"stratify"</code>, <code>"adjust"</code>, <code>"measure"</code>, <code>"test"</code>,
+<code>"set_summary"</code>, and <code>"missingness"</code>. Applying another of these verbs to
+a result from this engine warns and returns the result unchanged. <code>NULL</code>
+(the default) accepts every verb. <code><a href="label.html">label()</a></code>, <code><a href="fmt.html">fmt()</a></code>, and <code><a href="style.html">style()</a></code>
+always apply.</p></dd>
+
+
+<dt id="arg-overwrite">overwrite<a class="anchor" aria-label="anchor" href="#arg-overwrite"></a></dt>
+<dd><p>Logical. Replacing a built-in engine (<code>descriptive</code>,
+<code>bivariate</code>, <code>glm</code>, <code>accuracy</code>, <code>roc</code>, <code>cox</code>, <code>e_value</code>) is an error unless
+<code>overwrite = TRUE</code>, because it changes what <code><a href="table1.html">table1()</a></code>, <code><a href="tb.html">tb()</a></code>, and the
+other presets compute. Re-registering your own engine needs no flag.</p></dd>
 
 </dl></div>
     <div class="section level2">

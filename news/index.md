@@ -36,9 +36,78 @@
   results add Cohen’s kappa for index-test / reference-standard
   agreement, with a Fleiss, Cohen & Everitt (1969) large-sample
   confidence interval.
-- 
 
-#### \### Earlier 3.1 changes
+### Breaking changes
+
+#### Downscale (September 2026)
+
+SimtablR 3.1 narrows its surface to the core table, regression,
+diagnostic, and reporting workflow. None of these functions shipped in a
+CRAN release.
+
+- Removed `km()` and the Kaplan-Meier engine. Use
+  [`survival::survfit()`](https://rdrr.io/pkg/survival/man/survfit.html)
+  directly;
+  [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  still covers Cox models.
+- Removed `stdtab()`/`standardize()` (marginal standardization),
+  `additive_interaction()`, and `subgroups()`.
+- Removed `sampling_weights()` and the `weights` argument of
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md)
+  and [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md).
+  Use the `survey` package directly for weighted analyses.
+- Removed `regtab(method = "clogit")` and its `strata` argument. Fit
+  matched case-control models with
+  [`survival::clogit()`](https://rdrr.io/pkg/survival/man/clogit.html).
+- Removed the recode helpers `bin()`, `lump_levels()`,
+  `make_missing_explicit()`, and `set_reference()`. Use base R or
+  `forcats` before analysis; reference levels can also be set with
+  `ref =`.
+- Removed `patch()`, `add_pvalue()`, `plot_export_dim()`, and
+  `simtab_report_skeleton()`; `simtab_theme()` is now internal. Use
+  [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md)
+  on a result instead of `add_pvalue()`.
+- `check()` and `audit()` are replaced by
+  `advise(result, audit = TRUE)`.
+- [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  renames `stat.cont` to `summary` (matching
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md))
+  and drops `fast`, `format`, `paired`, and `p.adjust`.
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md)
+  drops `p.adjust`, `paired`, and `smd`. Set those options on the result
+  with
+  [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md),
+  e.g. `table1(...) |> test(p.adjust = "holm", smd = TRUE)`. When
+  [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md)
+  is given only these options, it keeps the existing test choice.
+- [`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md)
+  drops the `ci` argument (DeLong intervals only) and the
+  `"closest.topleft"` cutpoint.
+- [`export_xlsx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_xlsx.md)
+  drops `sheet`, `machine_sheet`, and `dict_sheet`; sheets are always
+  named `machine-readable`, `display`, and `data-dictionary`.
+- Study designs accept only their canonical names (`cross_sectional`,
+  `cohort`, `case_control`, `cohort_person_time`,
+  `cohort_time_to_event`), with spaces or hyphens in place of
+  underscores. Synonyms such as `"prevalence"`, `"risk"`, `"rate"`, and
+  `"survival"` are rejected.
+- `register_measure()`, `register_rule()`, `list_measures()`, and
+  `list_rules()` are now internal. The public extension API is
+  [`register_engine()`](https://MatheusTG-14.github.io/SimtablR/reference/register_engine.md),
+  [`register_journal()`](https://MatheusTG-14.github.io/SimtablR/reference/register_journal.md),
+  [`list_engines()`](https://MatheusTG-14.github.io/SimtablR/reference/list_engines.md),
+  and
+  [`list_journals()`](https://MatheusTG-14.github.io/SimtablR/reference/list_journals.md).
+- The advice rule set shrinks from 46 to 37 rules. Rules for removed
+  features are gone, `fisher_low_expected` is folded into
+  `small_expected_cells`, and `normality_heuristic_large_n` into
+  `continuous_test_stat_choice`. The ruleset version is now
+  `downscale-2026-09-23`.
+- Removed the `migration-3-0` and `simtablr-for-spss-stata-users`
+  vignettes; a short SPSS/Stata orientation now lives in the
+  getting-started guide.
+
+#### Earlier 3.1 changes
 
 - Removed `register_test()` and `list_tests()`. The comparison-test
   registry only stored functions; no engine ever dispatched to a

@@ -19,7 +19,9 @@ register_engine(
   legacy_tag = NULL,
   validate = NULL,
   renderers = list(),
-  engine_opts = NULL
+  engine_opts = NULL,
+  verbs = NULL,
+  overwrite = FALSE
 )
 ```
 
@@ -59,6 +61,29 @@ register_engine(
 
   Optional function `function(opts) -> invisible(opts)` validating the
   engine's spec-level options.
+
+- verbs:
+
+  Optional character vector of the evidence-changing verbs the engine
+  uses: any of `"stratify"`, `"adjust"`, `"measure"`, `"test"`,
+  `"set_summary"`, and `"missingness"`. Applying another of these verbs
+  to a result from this engine warns and returns the result unchanged.
+  `NULL` (the default) accepts every verb.
+  [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md),
+  [`fmt()`](https://MatheusTG-14.github.io/SimtablR/reference/fmt.md),
+  and
+  [`style()`](https://MatheusTG-14.github.io/SimtablR/reference/style.md)
+  always apply.
+
+- overwrite:
+
+  Logical. Replacing a built-in engine (`descriptive`, `bivariate`,
+  `glm`, `accuracy`, `roc`, `cox`, `e_value`) is an error unless
+  `overwrite = TRUE`, because it changes what
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md),
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md), and
+  the other presets compute. Re-registering your own engine needs no
+  flag.
 
 ## Value
 

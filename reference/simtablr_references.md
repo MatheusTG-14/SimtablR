@@ -71,6 +71,10 @@ arisen from random sampling. *Philosophical Magazine, Series 5*,
 Lash, T. L. (2008). *Modern Epidemiology* (3rd ed.). Lippincott Williams
 & Wilkins.
 
+**van Elteren 1960.** van Elteren, P. H. (1960). On the combination of
+independent two-sample tests of Wilcoxon. *Bulletin of the International
+Statistical Institute*, 37, 351–361.
+
 **Woolf 1955.** Woolf, B. (1955). On estimating the relation between
 blood group and disease. *Annals of Human Genetics*, 19(4), 251–253.
 [doi:10.1111/j.1469-1809.1955.tb01348.x](https://doi.org/10.1111/j.1469-1809.1955.tb01348.x)

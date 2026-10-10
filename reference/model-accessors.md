@@ -116,7 +116,7 @@ confint(fit)
 #> sexMale     -0.22679836 0.200193998
 formula(fit)
 #> rehospitalized ~ age + sex
-#> <environment: 0x564c484d5b58>
+#> <environment: 0x55af11a38468>
 nobs(fit)
 #> [1] 1500
 vcov(fit)

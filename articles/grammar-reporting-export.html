@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -180,7 +180,7 @@ specification and recomputes without mutating the original object:</p>
 <span><span class="co">#&gt; Sex recorded for clinical assessment, n (%)                                                         0.12    0.021 </span></span>
 <span><span class="co">#&gt;   Female                                                     686 (45.7%)  446 (48.1%)  240 (42.0%)                </span></span>
 <span><span class="co">#&gt;   Male                                                       814 (54.3%)  482 (51.9%)  332 (58.0%)                </span></span>
-<span><span class="co">#&gt; Body mass index (kg/m²) [Mean (SD)]                           27.8 (4.9)   27.7 (4.8)   27.9 (5.1)  0.05    0.413 </span></span>
+<span><span class="co">#&gt; Body mass index (kg/m²) [Mean (SD)]                           27.8 (4.9)   27.7 (4.8)   27.9 (5.1)  0.04    0.413 </span></span>
 <span><span class="co">#&gt;   Missing                                                             63           38           25                </span></span>
 <span><span class="co">#&gt; Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)                                              0.06    0.268 </span></span>
 <span><span class="co">#&gt;   No                                                        1184 (78.9%)  741 (79.8%)  443 (77.4%)                </span></span>
@@ -1050,9 +1050,9 @@ guidelines and exported natively to Office formats.</p>
 <span><span class="va">tmp_xlsx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".xlsx"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/export_docx.html">export_docx</a></span><span class="op">(</span><span class="va">report</span>, path <span class="op">=</span> <span class="va">tmp_docx</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Report exported to: /tmp/RtmpOYzAOy/file1e8b3e6bb5f7.docx</span></span>
+<span><span class="co">#&gt; Report exported to: /tmp/RtmpMgYz7u/file1ea02390afd3.docx</span></span>
 <span><span class="fu"><a href="../reference/export_xlsx.html">export_xlsx</a></span><span class="op">(</span><span class="va">report</span>, path <span class="op">=</span> <span class="va">tmp_xlsx</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Report exported to: /tmp/RtmpOYzAOy/file1e8b47fb682f.xlsx</span></span>
+<span><span class="co">#&gt; Report exported to: /tmp/RtmpMgYz7u/file1ea0a209664.xlsx</span></span>
 <span></span>
 <span><span class="co"># Verify exported files exist</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">tmp_docx</span><span class="op">)</span></span>

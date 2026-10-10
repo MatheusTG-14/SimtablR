@@ -15,7 +15,7 @@ cross-tabulation use tb(); for full regression output use regtab().'></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -76,7 +76,7 @@ cross-tabulation use <code><a href="tb.html">tb()</a></code>; for full regressio
 <span>  var.type <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  labels <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  style <span class="op">=</span> <span class="st">"default"</span>,</span>
-<span>  d <span class="op">=</span> <span class="fl">1</span>,</span>
+<span>  d <span class="op">=</span> <span class="cn">NULL</span>,</span>
 <span>  conf.level <span class="op">=</span> <span class="fl">0.95</span>,</span>
 <span>  design <span class="op">=</span> <span class="cn">NULL</span></span>
 <span><span class="op">)</span></span></code></pre></div>
@@ -183,7 +183,10 @@ a <code><a href="journal_style.html">journal_style()</a></code> object, <code>"n
 
 
 <dt id="arg-d">d<a class="anchor" aria-label="anchor" href="#arg-d"></a></dt>
-<dd><p>Integer. Decimal places for percentages and continuous summaries.</p></dd>
+<dd><p>Integer. Decimal places for percentages and continuous summaries.
+If <code>NULL</code> (the default), percentages use one decimal and continuous
+summaries use the style's <code>digits_cont</code> (one decimal for the built-in
+journals).</p></dd>
 
 
 <dt id="arg-conf-level">conf.level<a class="anchor" aria-label="anchor" href="#arg-conf-level"></a></dt>
@@ -250,6 +253,10 @@ the whole table to complete cases, so the displayed numbers can change.
 <p>Multiplicity adjustment, paired tests, and standardized mean differences
 (Austin, 2009) are set afterwards with <code><a href="test.html">test()</a></code>, e.g.
 <code>table1(df, vars, by = group, test = TRUE) |&gt; test(p.adjust = "holm", smd = TRUE)</code>.
+SMDs are reported as absolute values and need a two-level <code>by</code>; numeric
+variables use the difference in means over the square root of the
+unweighted average of the two group variances, and categorical variables
+the multinomial generalisation of Yang &amp; Dalton (2012).
 With <code>paired = TRUE</code>, two equal-sized groups are treated as matched pairs in
 row order. Use <code><a href="add_effect.html">add_effect()</a></code> to add or replace the effect-measure columns
 and <code><a href="fmt.html">fmt()</a></code> to change decimals.</p>

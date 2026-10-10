@@ -15,7 +15,7 @@ register_journal() so it can be referred to as style = "myjournal".'></head><bod
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -101,7 +101,11 @@ the cell convention, e.g. <code>"n (%)"</code> or <code>"No. (%)"</code>.</p></d
 
 <dt id="arg-ci-sep">ci_sep<a class="anchor" aria-label="anchor" href="#arg-ci-sep"></a></dt>
 <dd><p>Character separating confidence-interval bounds (and IQR bounds),
-e.g. <code>" - "</code>, <code>"\u2013"</code>, <code>" to "</code>. Default <code>" - "</code>.</p></dd>
+e.g. <code>" - "</code>, <code>"\u2013"</code>, <code>" to "</code>. Default <code>" - "</code>. Where the separator
+would be ambiguous it is replaced for that interval only: a comma
+separator becomes <code>"; "</code> when a bound contains a comma (a decimal comma
+or grouping mark), and a dash separator becomes <code>" to "</code> when a bound is
+negative.</p></dd>
 
 
 <dt id="arg-ci-parens">ci_parens<a class="anchor" aria-label="anchor" href="#arg-ci-parens"></a></dt>

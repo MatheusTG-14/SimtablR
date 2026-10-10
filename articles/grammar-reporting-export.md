@@ -117,7 +117,7 @@ baseline_smd
 #> Sex recorded for clinical assessment, n (%)                                                         0.12    0.021 
 #>   Female                                                     686 (45.7%)  446 (48.1%)  240 (42.0%)                
 #>   Male                                                       814 (54.3%)  482 (51.9%)  332 (58.0%)                
-#> Body mass index (kg/m²) [Mean (SD)]                           27.8 (4.9)   27.7 (4.8)   27.9 (5.1)  0.05    0.413 
+#> Body mass index (kg/m²) [Mean (SD)]                           27.8 (4.9)   27.7 (4.8)   27.9 (5.1)  0.04    0.413 
 #>   Missing                                                             63           38           25                
 #> Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)                                              0.06    0.268 
 #>   No                                                        1184 (78.9%)  741 (79.8%)  443 (77.4%)                
@@ -485,9 +485,9 @@ tmp_docx <- tempfile(fileext = ".docx")
 tmp_xlsx <- tempfile(fileext = ".xlsx")
 
 export_docx(report, path = tmp_docx)
-#> Report exported to: /tmp/RtmpOYzAOy/file1e8b3e6bb5f7.docx
+#> Report exported to: /tmp/RtmpMgYz7u/file1ea02390afd3.docx
 export_xlsx(report, path = tmp_xlsx)
-#> Report exported to: /tmp/RtmpOYzAOy/file1e8b47fb682f.xlsx
+#> Report exported to: /tmp/RtmpMgYz7u/file1ea0a209664.xlsx
 
 # Verify exported files exist
 file.exists(tmp_docx)

@@ -30,7 +30,7 @@ table1(
   var.type = NULL,
   labels = NULL,
   style = "default",
-  d = 1,
+  d = NULL,
   conf.level = 0.95,
   design = NULL
 )
@@ -138,7 +138,10 @@ table1(
 
 - d:
 
-  Integer. Decimal places for percentages and continuous summaries.
+  Integer. Decimal places for percentages and continuous summaries. If
+  `NULL` (the default), percentages use one decimal and continuous
+  summaries use the style's `digits_cont` (one decimal for the built-in
+  journals).
 
 - conf.level:
 
@@ -205,8 +208,12 @@ Multiplicity adjustment, paired tests, and standardized mean differences
 [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md),
 e.g.
 `table1(df, vars, by = group, test = TRUE) |> test(p.adjust = "holm", smd = TRUE)`.
-With `paired = TRUE`, two equal-sized groups are treated as matched
-pairs in row order. Use
+SMDs are reported as absolute values and need a two-level `by`; numeric
+variables use the difference in means over the square root of the
+unweighted average of the two group variances, and categorical variables
+the multinomial generalisation of Yang & Dalton (2012). With
+`paired = TRUE`, two equal-sized groups are treated as matched pairs in
+row order. Use
 [`add_effect()`](https://MatheusTG-14.github.io/SimtablR/reference/add_effect.md)
 to add or replace the effect-measure columns and
 [`fmt()`](https://MatheusTG-14.github.io/SimtablR/reference/fmt.md) to

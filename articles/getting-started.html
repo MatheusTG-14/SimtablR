@@ -26,7 +26,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -201,29 +201,29 @@ without re-specifying the analysis:</p>
 <code class="sourceCode R"><span><span class="co"># Append SMDs to the computed baseline table without repeating parameters</span></span>
 <span><span class="va">baseline_smd</span> <span class="op">&lt;-</span> <span class="va">baseline</span> <span class="op">|&gt;</span> <span class="fu"><a href="../reference/test.html">test</a></span><span class="op">(</span>smd <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span> <span class="co"># We may also specify smd = "all" to compute SMDs for all covariates, including categorical variables.</span></span>
 <span><span class="va">baseline_smd</span></span>
-<span><span class="co">#&gt; Characteristic                                        Overall (N=1500)       No (N=928)      Yes (N=572)    SMD  P-value </span></span>
-<span><span class="co">#&gt; ------------------------------------------------------------------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; Age (years) [Mean (SD)]                                    62.0 (13.2)      60.5 (12.8)      64.4 (13.4)   0.30   &lt;0.001 </span></span>
-<span><span class="co">#&gt; Sex recorded for clinical assessment, n (%)                                                                0.12    0.021 </span></span>
-<span><span class="co">#&gt;   Female                                                   686 (45.7%)      446 (48.1%)      240 (42.0%)                 </span></span>
-<span><span class="co">#&gt;   Male                                                     814 (54.3%)      482 (51.9%)      332 (58.0%)                 </span></span>
-<span><span class="co">#&gt; Body mass index (kg/m²) [Mean (SD)]                         27.8 (4.9)       27.7 (4.8)       27.9 (5.1)   0.05    0.413 </span></span>
-<span><span class="co">#&gt;   Missing                                                           63               38               25                 </span></span>
-<span><span class="co">#&gt; Smoking status, n (%)                                                                                      0.19    0.001 </span></span>
-<span><span class="co">#&gt;   Never                                                    742 (49.5%)      474 (51.1%)      268 (46.9%)                 </span></span>
-<span><span class="co">#&gt;   Former                                                   469 (31.3%)      302 (32.5%)      167 (29.2%)                 </span></span>
-<span><span class="co">#&gt;   Current                                                  289 (19.3%)      152 (16.4%)      137 (24.0%)                 </span></span>
-<span><span class="co">#&gt; Hypertension, n (%)                                                                                        0.06    0.281 </span></span>
-<span><span class="co">#&gt;   No                                                       732 (48.8%)      463 (49.9%)      269 (47.0%)                 </span></span>
-<span><span class="co">#&gt;   Yes                                                      768 (51.2%)      465 (50.1%)      303 (53.0%)                 </span></span>
-<span><span class="co">#&gt; Diabetes mellitus, n (%)                                                                                   0.24   &lt;0.001 </span></span>
-<span><span class="co">#&gt;   No                                                      1127 (75.1%)      735 (79.2%)      392 (68.5%)                 </span></span>
-<span><span class="co">#&gt;   Yes                                                      373 (24.9%)      193 (20.8%)      180 (31.5%)                 </span></span>
-<span><span class="co">#&gt; Renal impairment (eGFR &lt; 60), n (%)                                                                        0.06    0.268 </span></span>
-<span><span class="co">#&gt;   No                                                      1184 (78.9%)      741 (79.8%)      443 (77.4%)                 </span></span>
-<span><span class="co">#&gt;   Yes                                                      316 (21.1%)      187 (20.2%)      129 (22.6%)                 </span></span>
-<span><span class="co">#&gt; Time from symptom onset to ED (hours) [Median (IQR)]   5.7 (3.3 - 8.8)  5.7 (3.2 - 8.9)  5.6 (3.5 - 8.6)  -0.01    0.650 </span></span>
-<span><span class="co">#&gt;   Missing                                                           86               51               35                 </span></span>
+<span><span class="co">#&gt; Characteristic                                        Overall (N=1500)       No (N=928)      Yes (N=572)   SMD  P-value </span></span>
+<span><span class="co">#&gt; -----------------------------------------------------------------------------------------------------------------------</span></span>
+<span><span class="co">#&gt; Age (years) [Mean (SD)]                                    62.0 (13.2)      60.5 (12.8)      64.4 (13.4)  0.30   &lt;0.001 </span></span>
+<span><span class="co">#&gt; Sex recorded for clinical assessment, n (%)                                                               0.12    0.021 </span></span>
+<span><span class="co">#&gt;   Female                                                   686 (45.7%)      446 (48.1%)      240 (42.0%)                </span></span>
+<span><span class="co">#&gt;   Male                                                     814 (54.3%)      482 (51.9%)      332 (58.0%)                </span></span>
+<span><span class="co">#&gt; Body mass index (kg/m²) [Mean (SD)]                         27.8 (4.9)       27.7 (4.8)       27.9 (5.1)  0.04    0.413 </span></span>
+<span><span class="co">#&gt;   Missing                                                           63               38               25                </span></span>
+<span><span class="co">#&gt; Smoking status, n (%)                                                                                     0.19    0.001 </span></span>
+<span><span class="co">#&gt;   Never                                                    742 (49.5%)      474 (51.1%)      268 (46.9%)                </span></span>
+<span><span class="co">#&gt;   Former                                                   469 (31.3%)      302 (32.5%)      167 (29.2%)                </span></span>
+<span><span class="co">#&gt;   Current                                                  289 (19.3%)      152 (16.4%)      137 (24.0%)                </span></span>
+<span><span class="co">#&gt; Hypertension, n (%)                                                                                       0.06    0.281 </span></span>
+<span><span class="co">#&gt;   No                                                       732 (48.8%)      463 (49.9%)      269 (47.0%)                </span></span>
+<span><span class="co">#&gt;   Yes                                                      768 (51.2%)      465 (50.1%)      303 (53.0%)                </span></span>
+<span><span class="co">#&gt; Diabetes mellitus, n (%)                                                                                  0.24   &lt;0.001 </span></span>
+<span><span class="co">#&gt;   No                                                      1127 (75.1%)      735 (79.2%)      392 (68.5%)                </span></span>
+<span><span class="co">#&gt;   Yes                                                      373 (24.9%)      193 (20.8%)      180 (31.5%)                </span></span>
+<span><span class="co">#&gt; Renal impairment (eGFR &lt; 60), n (%)                                                                       0.06    0.268 </span></span>
+<span><span class="co">#&gt;   No                                                      1184 (78.9%)      741 (79.8%)      443 (77.4%)                </span></span>
+<span><span class="co">#&gt;   Yes                                                      316 (21.1%)      187 (20.2%)      129 (22.6%)                </span></span>
+<span><span class="co">#&gt; Time from symptom onset to ED (hours) [Median (IQR)]   5.7 (3.3 - 8.8)  5.7 (3.2 - 8.9)  5.6 (3.5 - 8.6)  0.01    0.650 </span></span>
+<span><span class="co">#&gt;   Missing                                                           86               51               35                </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test; Wilcoxon rank-sum</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
@@ -411,14 +411,14 @@ Mantel-Haenszel pooled estimate and a test of homogeneity:</p>
 <span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
 <span><span class="co">#&gt;                                            Total | 1500  </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome (Stratified)  </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                 RR MH (95% CI)                  </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+-------------------------------------------------</span></span>
-<span><span class="co">#&gt;                                               No |                                                 </span></span>
-<span><span class="co">#&gt;                                              Yes |                                                 </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+-------------------------------------------------</span></span>
-<span><span class="co">#&gt;                                            Total |                                                 </span></span>
-<span><span class="co">#&gt;                      Mantel-Haenszel pooled: Yes | 1.09 (0.93 - 1.26), CMH p = 0.327, BD p = 0.788</span></span></code></pre></div>
+<span><span class="co">#&gt;                                                  |      Adjudicated acute coronary syndrome (Stratified)      </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                      RR MH (95% CI)                      </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+----------------------------------------------------------</span></span>
+<span><span class="co">#&gt;                                               No |                                                          </span></span>
+<span><span class="co">#&gt;                                              Yes |                                                          </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+----------------------------------------------------------</span></span>
+<span><span class="co">#&gt;                                            Total |                                                          </span></span>
+<span><span class="co">#&gt;                      Mantel-Haenszel pooled: Yes | 1.09 (0.93 - 1.26), CMH p = 0.327, homogeneity p = 0.751</span></span></code></pre></div>
 <p>The stratum-specific Risk Ratios for males and females remain
 consistent, and the test of homogeneity confirms no significant effect
 measure modification by sex.</p>

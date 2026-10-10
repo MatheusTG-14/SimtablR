@@ -127,29 +127,29 @@ analysis:
 # Append SMDs to the computed baseline table without repeating parameters
 baseline_smd <- baseline |> test(smd = TRUE) # We may also specify smd = "all" to compute SMDs for all covariates, including categorical variables.
 baseline_smd
-#> Characteristic                                        Overall (N=1500)       No (N=928)      Yes (N=572)    SMD  P-value 
-#> ------------------------------------------------------------------------------------------------------------------------
-#> Age (years) [Mean (SD)]                                    62.0 (13.2)      60.5 (12.8)      64.4 (13.4)   0.30   <0.001 
-#> Sex recorded for clinical assessment, n (%)                                                                0.12    0.021 
-#>   Female                                                   686 (45.7%)      446 (48.1%)      240 (42.0%)                 
-#>   Male                                                     814 (54.3%)      482 (51.9%)      332 (58.0%)                 
-#> Body mass index (kg/m²) [Mean (SD)]                         27.8 (4.9)       27.7 (4.8)       27.9 (5.1)   0.05    0.413 
-#>   Missing                                                           63               38               25                 
-#> Smoking status, n (%)                                                                                      0.19    0.001 
-#>   Never                                                    742 (49.5%)      474 (51.1%)      268 (46.9%)                 
-#>   Former                                                   469 (31.3%)      302 (32.5%)      167 (29.2%)                 
-#>   Current                                                  289 (19.3%)      152 (16.4%)      137 (24.0%)                 
-#> Hypertension, n (%)                                                                                        0.06    0.281 
-#>   No                                                       732 (48.8%)      463 (49.9%)      269 (47.0%)                 
-#>   Yes                                                      768 (51.2%)      465 (50.1%)      303 (53.0%)                 
-#> Diabetes mellitus, n (%)                                                                                   0.24   <0.001 
-#>   No                                                      1127 (75.1%)      735 (79.2%)      392 (68.5%)                 
-#>   Yes                                                      373 (24.9%)      193 (20.8%)      180 (31.5%)                 
-#> Renal impairment (eGFR < 60), n (%)                                                                        0.06    0.268 
-#>   No                                                      1184 (78.9%)      741 (79.8%)      443 (77.4%)                 
-#>   Yes                                                      316 (21.1%)      187 (20.2%)      129 (22.6%)                 
-#> Time from symptom onset to ED (hours) [Median (IQR)]   5.7 (3.3 - 8.8)  5.7 (3.2 - 8.9)  5.6 (3.5 - 8.6)  -0.01    0.650 
-#>   Missing                                                           86               51               35                 
+#> Characteristic                                        Overall (N=1500)       No (N=928)      Yes (N=572)   SMD  P-value 
+#> -----------------------------------------------------------------------------------------------------------------------
+#> Age (years) [Mean (SD)]                                    62.0 (13.2)      60.5 (12.8)      64.4 (13.4)  0.30   <0.001 
+#> Sex recorded for clinical assessment, n (%)                                                               0.12    0.021 
+#>   Female                                                   686 (45.7%)      446 (48.1%)      240 (42.0%)                
+#>   Male                                                     814 (54.3%)      482 (51.9%)      332 (58.0%)                
+#> Body mass index (kg/m²) [Mean (SD)]                         27.8 (4.9)       27.7 (4.8)       27.9 (5.1)  0.04    0.413 
+#>   Missing                                                           63               38               25                
+#> Smoking status, n (%)                                                                                     0.19    0.001 
+#>   Never                                                    742 (49.5%)      474 (51.1%)      268 (46.9%)                
+#>   Former                                                   469 (31.3%)      302 (32.5%)      167 (29.2%)                
+#>   Current                                                  289 (19.3%)      152 (16.4%)      137 (24.0%)                
+#> Hypertension, n (%)                                                                                       0.06    0.281 
+#>   No                                                       732 (48.8%)      463 (49.9%)      269 (47.0%)                
+#>   Yes                                                      768 (51.2%)      465 (50.1%)      303 (53.0%)                
+#> Diabetes mellitus, n (%)                                                                                  0.24   <0.001 
+#>   No                                                      1127 (75.1%)      735 (79.2%)      392 (68.5%)                
+#>   Yes                                                      373 (24.9%)      193 (20.8%)      180 (31.5%)                
+#> Renal impairment (eGFR < 60), n (%)                                                                       0.06    0.268 
+#>   No                                                      1184 (78.9%)      741 (79.8%)      443 (77.4%)                
+#>   Yes                                                      316 (21.1%)      187 (20.2%)      129 (22.6%)                
+#> Time from symptom onset to ED (hours) [Median (IQR)]   5.7 (3.3 - 8.8)  5.7 (3.2 - 8.9)  5.6 (3.5 - 8.6)  0.01    0.650 
+#>   Missing                                                           86               51               35                
 #> 
 #> Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test; Wilcoxon rank-sum
 #> ℹ Methodological guidance
@@ -315,14 +315,14 @@ tab_strat
 #> -------------------------------------------------+-------
 #>                                            Total | 1500  
 #> 
-#>                                                  | Adjudicated acute coronary syndrome (Stratified)  
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                 RR MH (95% CI)                  
-#> -------------------------------------------------+-------------------------------------------------
-#>                                               No |                                                 
-#>                                              Yes |                                                 
-#> -------------------------------------------------+-------------------------------------------------
-#>                                            Total |                                                 
-#>                      Mantel-Haenszel pooled: Yes | 1.09 (0.93 - 1.26), CMH p = 0.327, BD p = 0.788
+#>                                                  |      Adjudicated acute coronary syndrome (Stratified)      
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                      RR MH (95% CI)                      
+#> -------------------------------------------------+----------------------------------------------------------
+#>                                               No |                                                          
+#>                                              Yes |                                                          
+#> -------------------------------------------------+----------------------------------------------------------
+#>                                            Total |                                                          
+#>                      Mantel-Haenszel pooled: Yes | 1.09 (0.93 - 1.26), CMH p = 0.327, homogeneity p = 0.751
 ```
 
 The stratum-specific Risk Ratios for males and females remain

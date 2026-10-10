@@ -7,7 +7,7 @@
 
     <a class="navbar-brand me-2" href="../index.html">SimtablR</a>
 
-    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.0</small>
+    <small class="nav-text text-default me-auto" data-bs-toggle="tooltip" data-bs-placement="bottom" title="Released version">3.1.1</small>
 
 
     <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbar" aria-controls="navbar" aria-expanded="false" aria-label="Toggle navigation">
@@ -50,9 +50,34 @@
 <li>Likelihood ratios from <code><a href="../reference/diag_test.html">diag_test()</a></code> now carry asymptotic log-method confidence intervals (Simel et al. 1991; Altman 2000), computed from the Katz ratio-of-proportions standard error. The interval is <code>NA</code> when any confusion-matrix cell is zero; the point estimate is unchanged.</li>
 <li>
 <code><a href="../reference/diag_test.html">diag_test()</a></code> results add Cohen’s kappa for index-test / reference-standard agreement, with a Fleiss, Cohen &amp; Everitt (1969) large-sample confidence interval.</li>
+</ul></div>
+<div class="section level3">
+<h3 id="breaking-changes-3-1-0">Breaking changes<a class="anchor" aria-label="anchor" href="#breaking-changes-3-1-0"></a></h3>
+<div class="section level4">
+<h4 id="downscale-september-3-1-0">Downscale (September 2026)<a class="anchor" aria-label="anchor" href="#downscale-september-3-1-0"></a></h4>
+<p>SimtablR 3.1 narrows its surface to the core table, regression, diagnostic, and reporting workflow. None of these functions shipped in a CRAN release.</p>
+<ul><li>Removed <code>km()</code> and the Kaplan-Meier engine. Use <code><a href="https://rdrr.io/pkg/survival/man/survfit.html" class="external-link">survival::survfit()</a></code> directly; <code><a href="../reference/survtab.html">survtab()</a></code> still covers Cox models.</li>
+<li>Removed <code>stdtab()</code>/<code>standardize()</code> (marginal standardization), <code>additive_interaction()</code>, and <code>subgroups()</code>.</li>
+<li>Removed <code>sampling_weights()</code> and the <code>weights</code> argument of <code><a href="../reference/table1.html">table1()</a></code> and <code><a href="../reference/tb.html">tb()</a></code>. Use the <code>survey</code> package directly for weighted analyses.</li>
+<li>Removed <code>regtab(method = "clogit")</code> and its <code>strata</code> argument. Fit matched case-control models with <code><a href="https://rdrr.io/pkg/survival/man/clogit.html" class="external-link">survival::clogit()</a></code>.</li>
+<li>Removed the recode helpers <code>bin()</code>, <code>lump_levels()</code>, <code>make_missing_explicit()</code>, and <code>set_reference()</code>. Use base R or <code>forcats</code> before analysis; reference levels can also be set with <code>ref =</code>.</li>
+<li>Removed <code>patch()</code>, <code>add_pvalue()</code>, <code>plot_export_dim()</code>, and <code>simtab_report_skeleton()</code>; <code>simtab_theme()</code> is now internal. Use <code><a href="../reference/test.html">test()</a></code> on a result instead of <code>add_pvalue()</code>.</li>
 <li>
-</li></ul><div class="section level4">
-<h4 id="id_-earlier-changes-3-1-0">### Earlier 3.1 changes<a class="anchor" aria-label="anchor" href="#id_-earlier-changes-3-1-0"></a></h4>
+<code>check()</code> and <code>audit()</code> are replaced by <code>advise(result, audit = TRUE)</code>.</li>
+<li>
+<code><a href="../reference/tb.html">tb()</a></code> renames <code>stat.cont</code> to <code>summary</code> (matching <code><a href="../reference/table1.html">table1()</a></code>) and drops <code>fast</code>, <code>format</code>, <code>paired</code>, and <code>p.adjust</code>. <code><a href="../reference/table1.html">table1()</a></code> drops <code>p.adjust</code>, <code>paired</code>, and <code>smd</code>. Set those options on the result with <code><a href="../reference/test.html">test()</a></code>, e.g. <code>table1(...) |&gt; test(p.adjust = "holm", smd = TRUE)</code>. When <code><a href="../reference/test.html">test()</a></code> is given only these options, it keeps the existing test choice.</li>
+<li>
+<code><a href="../reference/roc.html">roc()</a></code> drops the <code>ci</code> argument (DeLong intervals only) and the <code>"closest.topleft"</code> cutpoint.</li>
+<li>
+<code><a href="../reference/export_xlsx.html">export_xlsx()</a></code> drops <code>sheet</code>, <code>machine_sheet</code>, and <code>dict_sheet</code>; sheets are always named <code>machine-readable</code>, <code>display</code>, and <code>data-dictionary</code>.</li>
+<li>Study designs accept only their canonical names (<code>cross_sectional</code>, <code>cohort</code>, <code>case_control</code>, <code>cohort_person_time</code>, <code>cohort_time_to_event</code>), with spaces or hyphens in place of underscores. Synonyms such as <code>"prevalence"</code>, <code>"risk"</code>, <code>"rate"</code>, and <code>"survival"</code> are rejected.</li>
+<li>
+<code>register_measure()</code>, <code>register_rule()</code>, <code>list_measures()</code>, and <code>list_rules()</code> are now internal. The public extension API is <code><a href="../reference/register_engine.html">register_engine()</a></code>, <code><a href="../reference/register_journal.html">register_journal()</a></code>, <code><a href="../reference/list_engines.html">list_engines()</a></code>, and <code><a href="../reference/list_journals.html">list_journals()</a></code>.</li>
+<li>The advice rule set shrinks from 46 to 37 rules. Rules for removed features are gone, <code>fisher_low_expected</code> is folded into <code>small_expected_cells</code>, and <code>normality_heuristic_large_n</code> into <code>continuous_test_stat_choice</code>. The ruleset version is now <code>downscale-2026-09-23</code>.</li>
+<li>Removed the <code>migration-3-0</code> and <code>simtablr-for-spss-stata-users</code> vignettes; a short SPSS/Stata orientation now lives in the getting-started guide.</li>
+</ul></div>
+<div class="section level4">
+<h4 id="earlier-changes-3-1-0">Earlier 3.1 changes<a class="anchor" aria-label="anchor" href="#earlier-changes-3-1-0"></a></h4>
 <ul><li><p>Removed <code>register_test()</code> and <code>list_tests()</code>. The comparison-test registry only stored functions; no engine ever dispatched to a registered test. Built-in tests are selected with <code><a href="../reference/test.html">test()</a></code> / <code>test =</code> as before.</p></li>
 <li><p>Stratified <code><a href="../reference/tb.html">tb()</a></code> PR/OR no longer prints the one-off “additive change” message about Mantel-Haenszel pooling.</p></li>
 <li><p>Renamed two exported verbs that masked <strong>dplyr</strong> generics when both packages were attached. <code>compute()</code> is now <code><a href="../reference/evaluate.html">evaluate()</a></code> and <code>explain()</code> is now <code><a href="../reference/why.html">why()</a></code>; the S3 methods move with them (<code>why.simtab_spec()</code>, <code>why.simtab_result()</code>, <code>why.simtab_report()</code>). Behaviour is unchanged. No compatibility aliases are provided, so attaching SimtablR no longer masks any dplyr export. The engine contract keeps its <code>compute</code> field: <code>register_engine(compute = ...)</code> is unaffected.</p></li>

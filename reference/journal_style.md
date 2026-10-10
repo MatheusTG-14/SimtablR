@@ -54,7 +54,11 @@ journal_style(
 - ci_sep:
 
   Character separating confidence-interval bounds (and IQR bounds), e.g.
-  `" - "`, `"\u2013"`, `" to "`. Default `" - "`.
+  `" - "`, `"\u2013"`, `" to "`. Default `" - "`. Where the separator
+  would be ambiguous it is replaced for that interval only: a comma
+  separator becomes `"; "` when a bound contains a comma (a decimal
+  comma or grouping mark), and a dash separator becomes `" to "` when a
+  bound is negative.
 
 - ci_parens:
 
