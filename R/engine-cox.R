@@ -48,7 +48,10 @@
   list(
     time = .resolve_single_role(spec, "time"),
     event = .resolve_single_role(spec, "event"),
-    predictors = opts$predictors %||% NULL,
+    predictors = .formula_with_adjust(opts$predictors %||% NULL, spec),
+    # stratify() on a Cox spec or result fits a stratified model: separate
+    # baseline hazards per stratum, common hazard ratios.
+    strata = .resolve_single_role(spec, "by"),
     conf.level = opts$conf.level %||% 0.95,
     d = opts$d %||% 2L,
     ties = opts$ties %||% "efron"
@@ -58,8 +61,22 @@
 #' Construct survival formula with Surv() response and predictor terms
 #' @keywords internal
 #' @noRd
-.cox_formula <- function(time, event, predictors) {
-  rhs <- paste(deparse(predictors[[length(predictors)]]), collapse = " ")
+.cox_formula <- function(time, event, predictors, strata = NULL) {
+  rhs_expr <- predictors[[length(predictors)]]
+  if (!is.null(strata)) {
+    # A stratification variable gets its own baseline hazard, so it cannot
+    # also be a covariate; drop it from the linear predictor.
+    rhs_terms <- setdiff(labels(stats::terms(predictors)), strata)
+    if (length(rhs_terms) == 0) {
+      simtab_abort_spec(c(
+        "Stratifying by {.val {strata}} leaves no predictor in the Cox model.",
+        "i" = "A stratification variable has its own baseline hazard and no hazard ratio.",
+        "v" = "Stratify by a different variable, or add another predictor."
+      ))
+    }
+    rhs_expr <- str2lang(paste(c(rhs_terms, sprintf("survival::strata(%s)", strata)), collapse = " + "))
+  }
+  rhs <- paste(deparse(rhs_expr), collapse = " ")
   stats::as.formula(
     sprintf("survival::Surv(%s, %s) ~ %s", time, event, rhs),
     env = environment(predictors)
@@ -92,7 +109,7 @@
     ))
   }
 
-  formula <- .cox_formula(args$time, args$event, args$predictors)
+  formula <- .cox_formula(args$time, args$event, args$predictors, args$strata)
   fit <- survival::coxph(formula, data = fit_data, ties = args$ties, x = TRUE)
   fit_summary <- summary(fit, conf.int = args$conf.level)
   coef <- as.data.frame(fit_summary$coefficients)
@@ -152,6 +169,7 @@
       conf_pct = round(args$conf.level * 100),
       d = as.integer(args$d),
       ties = args$ties,
+      strata = args$strata,
       model_evidence = stats::setNames(list(model_evidence), args$event),
       model_info = model_information,
       style = spec$style

@@ -52,6 +52,21 @@
   }
   d <- x$meta$d %||% 2L
   labels <- x$spec$fmt$labels %||% NULL
+  # "default" keeps the established survtab text (", " separator, `d` digits).
+  journal <- .result_journal(x$meta$style %||% x$spec$style, legacy = "default")
+  hr_text <- if (is.null(journal)) {
+    paste0(
+      .surv_fmt_num(x$data$terms$estimate, d), " (",
+      .surv_fmt_num(x$data$terms$lower, d), ", ",
+      .surv_fmt_num(x$data$terms$upper, d), ")"
+    )
+  } else {
+    vapply(
+      seq_len(nrow(x$data$terms)),
+      function(i) .fmt_est(x$data$terms$estimate[i], x$data$terms$lower[i], x$data$terms$upper[i], journal),
+      character(1)
+    )
+  }
   data.frame(
     Term = vapply(
       x$data$terms$term,
@@ -60,11 +75,7 @@
       data = x$spec$data_src$ref$data,
       labels = labels
     ),
-    `HR (95% CI)` = paste0(
-      .surv_fmt_num(x$data$terms$estimate, d), " (",
-      .surv_fmt_num(x$data$terms$lower, d), ", ",
-      .surv_fmt_num(x$data$terms$upper, d), ")"
-    ),
+    `HR (95% CI)` = hr_text,
     `p-value` = vapply(
       x$data$terms$p,
       function(p) .fmt_p(p, .resolve_table_style(x$meta$style %||% "default")),
@@ -85,7 +96,11 @@
   x <- .cox_validate_result(x)
   cat("\nCox Proportional Hazards Model\n")
   cat("==============================\n")
-  cat(sprintf("Time: %s | Event: %s | Events: %d/%d\n\n", x$meta$time, x$meta$event, x$meta$n_events, x$meta$n))
+  cat(sprintf("Time: %s | Event: %s | Events: %d/%d\n", x$meta$time, x$meta$event, x$meta$n_events, x$meta$n))
+  if (!is.null(x$meta$strata)) {
+    cat(sprintf("Stratified by: %s (separate baseline hazards)\n", x$meta$strata))
+  }
+  cat("\n")
   print(noquote(as.data.frame(x)), row.names = FALSE)
   .print_advice(x)
   invisible(x)
@@ -124,7 +139,8 @@
 .cox_as_methods <- function(x, ...) {
   x <- .cox_validate_result(x)
   sprintf(
-    "Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972); hazard ratios with %d%% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994).",
+    "Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972)%s; hazard ratios with %d%% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994).",
+    if (is.null(x$meta$strata)) "" else sprintf(", stratified by %s", x$meta$strata),
     x$meta$conf_pct %||% 95
   )
 }

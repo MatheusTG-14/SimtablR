@@ -45,6 +45,30 @@
       "v" = "Build one with {.fn .engine_opts_validator}, or omit it."
     ))
   }
+  if (!is.list(x$renderers) || (length(x$renderers) > 0 && is.null(names(x$renderers)))) {
+    simtab_abort_input(c(
+      "{.arg renderers} must be a named list of functions.",
+      "i" = "Received an object of class {.cls {class(x$renderers)[[1]]}}.",
+      "v" = "Use {.code renderers = list(print = function(x, ...) ...)}."
+    ))
+  }
+  if (!is.null(x$verbs) &&
+      (!is.character(x$verbs) || anyNA(x$verbs) || !all(x$verbs %in% .evidence_verbs()))) {
+    allowed <- .evidence_verbs()
+    simtab_abort_input(c(
+      "{.arg verbs} must be NULL or a character vector of evidence verbs.",
+      "i" = "Allowed: {.val {allowed}}.",
+      "v" = "Use e.g. {.code verbs = c(\"stratify\", \"adjust\")}."
+    ))
+  }
+  not_functions <- names(x$renderers)[!vapply(x$renderers, is.function, logical(1))]
+  if (length(not_functions) > 0) {
+    simtab_abort_input(c(
+      "Every renderer must be a function.",
+      "x" = "Not a function: {.val {not_functions}}.",
+      "v" = "Pass {.code function(x, ...)} for each renderer verb."
+    ))
+  }
   if (length(x$renderers) > 0) {
     # Bound to a local first: cli reads a `{}` expression starting with a dot as
     # a style name, so `{.renderer_verbs()}` would not survive interpolation.

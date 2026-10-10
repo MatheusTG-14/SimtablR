@@ -67,25 +67,33 @@
 #' @keywords internal
 #' @noRd
 .effect_forest_frame_tb <- function(x) {
-  tidy <- generics::tidy(x)
-  if (!all(c("estimate", "lower_ci", "upper_ci") %in% names(tidy))) {
+  # Read the stored ratio evidence directly: one row per exposure level (or per
+  # stratum and the pooled estimate). The tidy frame repeats each ratio under
+  # every outcome level, which would draw the same estimate in a panel for the
+  # non-event outcome.
+  ratios <- x$data$mh %||% x$data$ratios
+  if (!is.data.frame(ratios) || nrow(ratios) == 0 ||
+      !all(c("estimate", "lower_ci", "upper_ci") %in% names(ratios))) {
     return(.empty_effect_forest_frame())
   }
-  rows <- !is.na(tidy$estimate)
-  tidy <- tidy[rows, , drop = FALSE]
-  if (nrow(tidy) == 0) {
+  ratios <- ratios[!is.na(ratios$estimate), , drop = FALSE]
+  if (nrow(ratios) == 0) {
     return(.empty_effect_forest_frame())
   }
-  lower <- tidy$lower_ci
-  upper <- tidy$upper_ci
+  label_base <- x$meta$row_label %||% ratios$variable
+  label <- paste(label_base, ratios$level)
+  if (!is.null(ratios$stratum)) {
+    label <- paste0(label, " (", ratios$stratum, ")")
+  }
+  ref <- ratios$ref %in% TRUE
   .new_effect_forest_frame(
-    panel = tidy$outcome %||% rep("Effect", nrow(tidy)),
-    label = paste(tidy$variable, tidy$level),
-    estimate = tidy$estimate,
-    conf.low = lower,
-    conf.high = upper,
-    p.value = tidy$p_value %||% rep(NA_real_, nrow(tidy)),
-    is_reference = !is.na(tidy$estimate) & tidy$estimate == 1 & is.na(lower) & is.na(upper)
+    panel = rep(x$meta$col_label %||% "Effect", nrow(ratios)),
+    label = label,
+    estimate = ratios$estimate,
+    conf.low = ratios$lower_ci,
+    conf.high = ratios$upper_ci,
+    p.value = ratios$p_value %||% rep(NA_real_, nrow(ratios)),
+    is_reference = ref | (ratios$estimate == 1 & is.na(ratios$lower_ci) & is.na(ratios$upper_ci))
   )
 }
 

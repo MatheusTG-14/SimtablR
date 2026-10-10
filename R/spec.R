@@ -117,6 +117,69 @@ engine.simtab_result <- function(spec, name) {
   spec
 }
 
+#' Check an effect reference: one scalar level, or a named per-variable map
+#' @keywords internal
+#' @noRd
+.is_valid_effect_ref <- function(ref) {
+  scalar_ok <- function(v) length(v) == 1 && !is.list(v) && !anyNA(v)
+  nms <- names(ref)
+  if (!is.null(nms) && length(ref) >= 1 && all(!is.na(nms) & nzchar(nms))) {
+    return(!anyDuplicated(nms) && all(vapply(ref, scalar_ok, logical(1))))
+  }
+  !is.list(ref) && scalar_ok(ref)
+}
+
+#' Format an effect reference for console display
+#' @keywords internal
+#' @noRd
+.format_effect_ref <- function(ref) {
+  if (is.null(ref)) {
+    return("<unset>")
+  }
+  if (!is.null(names(ref))) {
+    return(paste(sprintf("%s = %s", names(ref), vapply(ref, as.character, character(1))), collapse = ", "))
+  }
+  as.character(ref)
+}
+
+#' Evidence-changing verbs whose support each engine declares
+#' @keywords internal
+#' @noRd
+.evidence_verbs <- function() {
+  c("stratify", "adjust", "measure", "test", "set_summary", "missingness")
+}
+
+#' Warn and report FALSE when a result's engine does not use a verb
+#'
+#' Presentation verbs (`label()`, `fmt()`, `style()`) apply everywhere. An
+#' evidence verb the engine does not use would only edit the stored
+#' specification and recompute the same evidence, so it is refused with a
+#' warning instead of being silently accepted.
+#' @keywords internal
+#' @noRd
+.result_supports_verb <- function(result, verb) {
+  engine <- result$meta$engine %||% result$spec$engine
+  entry <- if (is.null(engine)) NULL else tryCatch(.get_engine(engine), error = function(e) NULL)
+  if (is.null(entry) || is.null(entry$verbs) || verb %in% entry$verbs) {
+    return(TRUE)
+  }
+  supported <- intersect(entry$verbs, .evidence_verbs())
+  warning(
+    sprintf(
+      "`%s()` has no effect on a result from the '%s' engine and was ignored. %s",
+      verb,
+      engine,
+      if (length(supported) > 0) {
+        sprintf("Verbs this engine uses: %s.", paste0(supported, "()", collapse = ", "))
+      } else {
+        "This engine uses no evidence-changing verbs; label(), fmt(), and style() still apply."
+      }
+    ),
+    call. = FALSE
+  )
+  FALSE
+}
+
 #' Sets default reference category and confidence level for effect measures
 #' @keywords internal
 #' @noRd
@@ -191,6 +254,9 @@ stratify.simtab_spec <- function(spec, by) {
 
 #' @export
 stratify.simtab_result <- function(spec, by) {
+  if (!.result_supports_verb(spec, "stratify")) {
+    return(spec)
+  }
   by_quo <- rlang::enquo(by)
   .reapply_to_result(
     spec,
@@ -234,6 +300,9 @@ adjust.simtab_spec <- function(spec, ...) {
 
 #' @export
 adjust.simtab_result <- function(spec, ...) {
+  if (!.result_supports_verb(spec, "adjust")) {
+    return(spec)
+  }
   quos <- rlang::enquos(..., .ignore_empty = "all")
   .reapply_to_result(
     spec,
@@ -287,6 +356,9 @@ set_summary.simtab_spec <- function(spec, stat = c("auto", "median", "mean"), .b
 
 #' @export
 set_summary.simtab_result <- function(spec, stat = c("auto", "median", "mean"), .by_var = NULL) {
+  if (!.result_supports_verb(spec, "set_summary")) {
+    return(spec)
+  }
   stat <- match.arg(stat)
   by_var <- if (is.null(.by_var)) {
     NULL
@@ -312,7 +384,9 @@ set_summary.simtab_result <- function(spec, stat = c("auto", "median", "mean"), 
 #'
 #' @param spec A `simtab_spec`.
 #' @param m A single effect-measure name.
-#' @param ref Optional reference level.
+#' @param ref Optional reference level: one level shared by every variable, or
+#'   a named list with one level per variable, e.g.
+#'   `list(sex = "Female", smoking = "Never")`.
 #' @param conf.level Confidence level between 0 and 1.
 #' @param adjust Optional tidyselect adjustment covariates, captured as a
 #'   convenience for the builder register.
@@ -353,11 +427,11 @@ measure.simtab_spec <- function(spec, m, ref = NULL, conf.level = 0.95, adjust =
     ))
   )
   .check_conf_level(conf.level)
-  if (!is.null(ref) && (length(ref) != 1 || anyNA(ref))) {
+  if (!is.null(ref) && !.is_valid_effect_ref(ref)) {
     simtab_abort_spec(c(
-      "{.arg ref} must be one non-missing reference value when supplied.",
-      "i" = "An effect measure can use only one reference level at a time.",
-      "v" = "Supply a scalar reference such as {.code ref = \"No\"}, or use {.code NULL}."
+      "{.arg ref} must be one non-missing reference value, or a named list with one per variable.",
+      "i" = "Each variable's effect measure uses a single reference level.",
+      "v" = "Supply {.code ref = \"No\"}, {.code ref = list(sex = \"Female\", smoking = \"Never\")}, or {.code NULL}."
     ))
   }
 
@@ -412,11 +486,22 @@ measure.simtab_spec <- function(spec, m, ref = NULL, conf.level = 0.95, adjust =
 
 #' @export
 measure.simtab_result <- function(spec, m, ref = NULL, conf.level = 0.95, adjust = NULL) {
+  if (!.result_supports_verb(spec, "measure")) {
+    return(spec)
+  }
   adjust_quo <- rlang::enquo(adjust)
   has_adjust <- !missing(adjust) && !identical(rlang::quo_get_expr(adjust_quo), NULL)
+  # Changing only the measure of a computed result keeps its recorded
+  # reference level and confidence level instead of silently resetting them.
+  keep_ref <- missing(ref)
+  keep_conf <- missing(conf.level)
   .reapply_to_result(
     spec,
-    function(spec) .measure_update_spec(spec, m, ref, conf.level, adjust_quo, has_adjust),
+    function(spec) {
+      if (keep_ref) ref <- spec$effect$ref
+      if (keep_conf) conf.level <- spec$effect$conf.level %||% 0.95
+      .measure_update_spec(spec, m, ref, conf.level, adjust_quo, has_adjust)
+    },
     call = match.call()
   )
 }
@@ -490,6 +575,9 @@ test.simtab_spec <- function(spec, method = "auto", p.adjust = NULL, paired = NU
 
 #' @export
 test.simtab_result <- function(spec, method = "auto", p.adjust = NULL, paired = NULL, smd = NULL) {
+  if (!.result_supports_verb(spec, "test")) {
+    return(spec)
+  }
   keep_method <- missing(method)
   .reapply_to_result(
     spec,
@@ -582,6 +670,9 @@ missingness.simtab_spec <- function(spec, display = NULL, denominator = NULL, mo
 
 #' @export
 missingness.simtab_result <- function(spec, display = NULL, denominator = NULL, model = NULL) {
+  if (!.result_supports_verb(spec, "missingness")) {
+    return(spec)
+  }
   .reapply_to_result(
     spec,
     function(spec) {
@@ -762,8 +853,16 @@ label.simtab_result <- function(spec, ..., labels = NULL) {
     result$meta$row_label <- unname(labels[[row_var]])
   }
   col_var <- result$meta$col_var_name %||% NULL
+  # A stratified bivariate table records its column as "<var> (Stratified)";
+  # match the label on the underlying variable and keep the suffix.
+  suffix <- " (Stratified)"
+  stratified <- isTRUE(result$meta$is_stratified) && !is.null(col_var) &&
+    endsWith(col_var, suffix)
+  if (stratified) {
+    col_var <- substr(col_var, 1L, nchar(col_var) - nchar(suffix))
+  }
   if (!is.null(col_var) && col_var %in% names(labels)) {
-    result$meta$col_label <- unname(labels[[col_var]])
+    result$meta$col_label <- paste0(unname(labels[[col_var]]), if (stratified) suffix)
   }
   result
 }
@@ -843,6 +942,9 @@ fmt.simtab_spec <- function(spec, d = NULL, conf_pct = NULL, labels = NULL, perc
       ))
     }
     spec$fmt$d <- as.integer(d)
+    # Recorded so renderers can tell a requested `d` from the constructor
+    # default; table1() then applies it to continuous summaries as well.
+    spec$fmt$d_explicit <- TRUE
   }
   if (!is.null(conf_pct)) {
     if (!is.numeric(conf_pct) || length(conf_pct) != 1 || is.na(conf_pct) || !is.finite(conf_pct)) {
@@ -955,7 +1057,7 @@ print.simtab_spec <- function(x, ...) {
     "  measure: ",
     if (is.null(x$effect$measure)) "<unset>" else x$effect$measure,
     " (ref: ",
-    if (is.null(x$effect$ref)) "<unset>" else x$effect$ref,
+    .format_effect_ref(x$effect$ref),
     ", conf.level: ",
     x$effect$conf.level,
     ")\n",
@@ -1080,6 +1182,27 @@ print.simtab_spec <- function(x, ...) {
     ))
   }
   selected
+}
+
+#' Append `adjust()` covariates to a model right-hand-side formula
+#'
+#' Model engines (GLM, Cox) carry their predictors as a formula; covariates
+#' bound later through the `adjust()` verb live in `roles$adjust`. This adds
+#' each selected column not already used on the right-hand side so the verb
+#' reaches the fitted model rather than only the recorded specification.
+#' @keywords internal
+#' @noRd
+.formula_with_adjust <- function(predictors, spec) {
+  if (is.null(predictors) || is.null(spec$roles$adjust)) {
+    return(predictors)
+  }
+  rhs <- predictors[[length(predictors)]]
+  extra <- setdiff(.resolve_tidyselect_role(spec, "adjust"), all.vars(rhs))
+  for (col in extra) {
+    rhs <- call("+", rhs, as.name(col))
+  }
+  predictors[[length(predictors)]] <- rhs
+  predictors
 }
 
 #' Resolves a single column name for a scalar data-masked role slot

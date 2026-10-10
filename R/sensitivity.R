@@ -81,6 +81,19 @@ sensitivity <- function(result, ...) {
           ))
         }
         spec <- validate_simtab_spec(spec)
+        if (is.null(spec$roles$adjust)) {
+          # Without this the variation silently equals the primary analysis
+          # and the methods prose reports the result as "materially unchanged".
+          warning(
+            paste0(
+              "Sensitivity variation `adjust = NULL` left the analysis unchanged: ",
+              "the result records no adjustment covariates to drop. ",
+              "Model-formula predictors (e.g. in regtab()) are not removed by this shorthand; ",
+              "pass a function that edits the specification instead."
+            ),
+            call. = FALSE
+          )
+        }
         spec$roles$adjust <- NULL
         spec
       }
@@ -152,6 +165,15 @@ sensitivity <- function(result, ...) {
 #' @noRd
 .sensitivity_headline <- function(result) {
   frame <- .effect_forest_frame(result)
+  mh <- result$data$mh
+  if (inherits(result, "simtab_tb") && is.data.frame(mh)) {
+    # A stratified table's headline is the pooled estimate, not the first stratum.
+    # The forest frame keeps the mh rows with an estimate, in order.
+    row_type <- mh$row_type[!is.na(mh$estimate)]
+    if (length(row_type) == nrow(frame)) {
+      frame <- frame[row_type == "pooled", , drop = FALSE]
+    }
+  }
   # `is_reference` is a per-row logical column; use a vectorised test.
   # `isTRUE()` would collapse the whole column to a single FALSE, leaving the
   # reference row (estimate 1, NA CIs) in the frame and hijacking the headline.

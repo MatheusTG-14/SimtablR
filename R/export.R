@@ -19,6 +19,20 @@
   invisible(TRUE)
 }
 
+#' Reject export inputs that are neither SimtablR objects nor data frames
+#' @keywords internal
+#' @noRd
+.check_exportable <- function(x) {
+  if (inherits(x, "simtab") || is.data.frame(x)) {
+    return(invisible(x))
+  }
+  simtab_abort_input(c(
+    "{.arg x} must be a SimtablR result, specification, report, or data frame.",
+    "i" = "Received an object of class {.cls {class(x)[[1]]}}.",
+    "v" = "Export the result of {.fn table1}, {.fn tb}, {.fn regtab}, or another SimtablR function."
+  ))
+}
+
 #' Validate and normalize a user-selected export path
 #'
 #' @keywords internal
@@ -201,6 +215,7 @@ export_docx <- function(x, path, footnotes = NULL, methods = FALSE, overwrite = 
 
 #' @export
 export_docx.default <- function(x, path, footnotes = NULL, methods = FALSE, overwrite = FALSE, ...) {
+  .check_exportable(x)
   target <- .prepare_export_path(path, "docx", overwrite = overwrite)
   .require_export_pkg("flextable")
   .require_export_pkg("officer")
@@ -272,6 +287,7 @@ export_pptx <- function(x, path, font_size = 14, overwrite = FALSE, ...) {
 
 #' @export
 export_pptx.default <- function(x, path, font_size = 14, overwrite = FALSE, ...) {
+  .check_exportable(x)
   target <- .prepare_export_path(path, "pptx", overwrite = overwrite)
   .require_export_pkg("flextable")
   .require_export_pkg("officer")
@@ -351,6 +367,7 @@ export_xlsx.default <- function(
   overwrite = FALSE,
   ...
 ) {
+  .check_exportable(x)
   target <- .prepare_export_path(path, "xlsx", overwrite = overwrite)
   .require_export_pkg("openxlsx")
   machine_sheet <- "machine-readable"

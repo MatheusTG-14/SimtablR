@@ -88,6 +88,47 @@
     }
   )
 
+  # Rule: Risk or prevalence ratio reported from a case-control design
+  # Case-control sampling fixes the outcome margin, so only the odds ratio is
+  # estimable; an explicitly requested RR/PR still wins but is flagged.
+
+  register_rule(
+    "ratio_in_case_control",
+    applies = function(result) {
+      .is_table_result(result) &&
+        identical(.result_design(result), "case_control") &&
+        .result_uses_measure(result, c("RR", "PR"))
+    },
+    check = function(result) {
+      measure <- toupper(result$spec$effect$measure %||% result$meta$effect %||% "RR")
+      list(
+        message = sprintf(
+          "A %s is reported for a case-control design; only the odds ratio is estimable.",
+          measure
+        ),
+        why = "Case-control sampling fixes the numbers of cases and controls, so outcome risks and prevalences, and their ratios, are not identified from the table."
+      )
+    },
+    severity = 4,
+    citation = "Rothman, Greenland & Lash 2008",
+    fix = "Use measure = 'OR' (the case-control default), or record the actual study design.",
+    version = version,
+    example_fires = function() {
+      dat <- data.frame(
+        exposure = factor(rep(c("ref", "exp"), each = 50)),
+        outcome = factor(c(rep("No", 25), rep("Yes", 25), rep("No", 10), rep("Yes", 40)))
+      )
+      table1(dat, "exposure", by = "outcome", measure = "RR", design = "case_control")
+    },
+    example_silent = function() {
+      dat <- data.frame(
+        exposure = factor(rep(c("ref", "exp"), each = 50)),
+        outcome = factor(c(rep("No", 25), rep("Yes", 25), rep("No", 10), rep("Yes", 40)))
+      )
+      table1(dat, "exposure", by = "outcome", design = "case_control")
+    }
+  )
+
   # Rule: Multiple unadjusted hypothesis tests in a single descriptive table
   # Flags inflated family-wise Type I error rates when multiple p-values are presented without adjustment.
 

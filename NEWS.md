@@ -1,3 +1,156 @@
+# SimtablR
+
+3.1.1 patch release
+
+## Bug fixes
+
+* Journal styles now reach the bivariate (`tb()`) and GLM (`regtab()`)
+  renderers. Previously `style(result, "lancet")` or a `journal_style()`
+  object left estimate/CI text unchanged (for example `1.94 (1.51 - 2.49)`
+  instead of `1.94 (1.51, 2.49)`). 
+* `survtab()` results now honour journal styles for the hazard-ratio interval
+  (separator, brackets, digits); the unstyled output is unchanged.
+* `style()` now works on a `simtablr()` report and restyles every table in it;
+  it previously failed with "no applicable method".
+* `stratify()` on a `tb()` result now stratifies the table (Mantel-Haenszel
+  pooling included), matching `tb(..., strat = )`. Previously the verb
+  recorded the stratifier but recomputed an unstratified table.
+* `adjust()` on a `regtab()` or `survtab()` result now refits the models with
+  the added covariates. Previously the covariates were recorded but silently
+  left out of the model, so the "adjusted" estimates were unchanged. This also
+  makes `sensitivity(x, adjust = NULL)` meaningful for covariates added this
+  way.
+* `label()` on a `regtab()` result now relabels predictor rows; previously
+  only outcome labels changed.
+* `measure()` on a computed result keeps the recorded reference level and
+  confidence level unless new ones are supplied. Previously it reset them to
+  the first factor level and 95%, which could silently invert the comparison.
+* `e_value()` on a `tb()` result no longer reports an E-value for the
+  reference row, and labels each row with its level
+  (e.g. `smoking: Former`) so multi-level variables can be told apart.
+* Stratified `tb()` tables use the column variable's label (not its raw
+  column name) in the "(Stratified)" header.
+* A stratified `tb()` now tests the exposure-outcome association with the
+  Cochran-Mantel-Haenszel test, as documented. Without an effect measure it
+  previously ran a Pearson chi-squared test on the stratum-by-outcome columns,
+  testing the exposure against stratum and outcome jointly; with a
+  multi-level exposure the table-level test was the first level's 2x2 CMH
+  test instead of the generalized CMH test. 2x2 results are unchanged.
+* `register_engine()` no longer silently replaces a built-in engine
+  (`descriptive`, `bivariate`, `glm`, `accuracy`, `roc`, `cox`, `e_value`);
+  doing so is a classed error unless `overwrite = TRUE`. Replacing
+  `"descriptive"` previously broke `table1()` for the rest of the session.
+  Re-registering your own engines is unchanged.
+* `table1(na_model = "explicit")` now shows the adjusted estimate for the
+  "(Missing)" category in the Missing row; it was computed but never
+  displayed. A table note states that missing values were modelled as their
+  own category.
+* `table1()` now notes when the Overall column includes participants whose
+  `by` value is missing (e.g. "Overall includes 50 participants with missing
+  sex"), so Overall no longer silently exceeds the sum of the groups. The note
+  appears in print, `as.data.frame()` (attribute `"notes"`), `as_gt()`, and
+  `as_flextable()`; the numbers are unchanged.
+* Evidence verbs that an engine does not use now warn and return the result
+  unchanged instead of being silently accepted: for example `measure()` or
+  `test()` on a `diag_test()`, `roc()`, or `regtab()` result, or `adjust()` on
+  a `tb()` result. `label()`, `fmt()`, and `style()` still apply everywhere.
+  `register_engine()` gains `verbs` to declare which of `stratify()`,
+  `adjust()`, `measure()`, `test()`, `set_summary()`, and `missingness()` an
+  engine uses (`NULL`, the default, accepts all).
+* `stratify()` on a `survtab()` result now fits a stratified Cox model
+  (`survival::strata()`, separate baseline hazards); it previously recorded the
+  stratifier and refitted the same unstratified model. A stratifier that is
+  also a predictor is removed from the linear predictor.
+* Continuous standardized mean differences now use the unweighted average of
+  the group variances (Austin, 2009), the same convention as categorical SMDs,
+  and are reported as absolute values. They previously used the
+  sample-size-weighted pooled SD and could be negative, so values differ when
+  group sizes are unequal (e.g. 0.339 vs 0.347 for 1280 vs 220).
+* `table1(d =)` now also sets the decimals of continuous summaries, as
+  documented, when supplied directly or through `fmt(d = )`. `d` defaults to
+  `NULL`, which keeps the previous output (one-decimal percentages, continuous
+  digits from the journal style).
+* Tidy categorical `tb()` output attaches each ratio only to the event-outcome
+  row of its level (other rows are `NA`); it previously repeated the ratio on
+  the non-event rows. Stratified tables gain a `stratum` column with the
+  stratum-specific ratios and one row per pooled Mantel-Haenszel estimate.
+* Numeric haven/labelled columns with only some values labelled (for example
+  ages with `999 = "Unknown"`) now stay numeric, with a message, instead of
+  becoming a factor with one level per value. Fully labelled columns are still
+  converted to factors.
+* A stratified numeric `tb()` now compares groups within strata: the F-test
+  for the group term in a linear model with stratum (mean summaries), or the
+  van Elteren stratified Wilcoxon test for two groups (median summaries).
+  It previously ran a one-way ANOVA or Kruskal-Wallis test across the
+  stratum-by-group cells. Where no stratified test applies (a rank test with
+  more than two groups, or paired data) no p-value is reported and a warning
+  says why.
+* Stratified PR/RR tables now test homogeneity of the ratio with Cochran's Q
+  on the stratum log ratios (printed as "homogeneity p"). They previously
+  reported the Breslow-Day test, which tests homogeneity of odds ratios, as
+  "BD p". Odds-ratio tables still use Breslow-Day. The test name is stored in
+  the new `homogeneity_method` column of `$data$mh`.
+* Interval separators that would be misread are replaced for that interval
+  only: a comma separator becomes `"; "` when a bound contains a comma
+  (`1,94 (1,51; 2,49)` rather than `1,94 (1,51, 2,49)`), and a dash separator
+  becomes `" to "` when a bound is negative (`1.38 (-0.58 to 3.34)` rather
+  than `1.38 (-0.58 - 3.34)`). Unambiguous output is unchanged.
+* `tb()` no longer reports a "Chi-squared test for given probabilities" when
+  the complete-case table has a single observed row or column level. That
+  goodness-of-fit test is not a test of association; no p-value is reported
+  and a warning explains why.
+* `regtab()` now marks an outcome that takes a single value among complete
+  cases as failed in `model_info()` and the "Failed outcomes" footer, instead
+  of warning about non-convergence and reporting `1.00 (1.00 - 1.00)`.
+* `as_methods()` on a `table1()` result with an adjusted column now describes
+  both estimands and names the adjustment covariates. An adjusted odds ratio
+  was previously described as the crude Woolf estimator, with no mention of
+  logistic regression, and adjusted PR/RR prose omitted the covariates.
+* `table1(ref = list(sex = "Female", smoking = "Never"))` and
+  `measure(spec, ref = list(...))` now work as documented; a per-variable
+  reference list previously failed with "`ref` must be one non-missing
+  reference value". A reference level that is never applied (not a level of
+  any categorical variable, or of the named variable) now warns instead of
+  silently falling back to the first level.
+* `test()` on a `tb()` result honours `"t"`, `"wilcoxon"`, `"anova"`, and
+  `"kruskal"` for numeric variables, and a test that does not fit the
+  variable type (e.g. `"fisher"` on a numeric variable, `"t"` on a
+  categorical one) is now a classed error, as in `table1()`. Previously the
+  request was silently replaced by the summary-driven default or dropped.
+* `test(x, smd = TRUE)` on a `tb()` result now warns that `tb()` tables do
+  not report SMDs instead of silently ignoring the request.
+* `sensitivity(x, adjust = NULL)` warns when the result records no
+  adjustment covariates to drop (for example a `regtab()` whose covariates are
+  in the model formula), instead of reporting the unchanged estimate as
+  "materially unchanged".
+* `e_value()`, `sensitivity()`, and `autoplot()` on a stratified `tb()` result
+  now use its Mantel-Haenszel estimates; `e_value()` and `autoplot()`
+  previously failed with "No ratio-scale estimates" / "No effect estimates".
+* `tb()` forest plots draw each ratio once. They previously repeated every
+  estimate in a panel for each outcome level, including the non-event level.
+* `style()` now works on an `rbind()` of `tb()` results; it previously failed
+  with "no applicable method".
+* `label()` on a stratified `tb()` result now updates the "(Stratified)"
+  column header, and `label()` on a `roc()` result relabels markers, the
+  outcome, and the DeLong comparison lines.
+* `as.data.frame(x, tidy = TRUE)` on a categorical `tb()` result (and on
+  stacked tables) gains an `n` column with the cell count.
+* Stratified `tb()` printing shows the Mantel-Haenszel row once, in the
+  effect panel, rather than as an empty row in every frequency panel, and
+  draws the rule above the Total row.
+* Values that round to zero no longer print with a minus sign (for example a
+  degenerate `diag_test()` kappa interval `(-0.00 - 0.00)`). Raw evidence is
+  unchanged.
+* `register_engine()` now rejects renderers that are not functions with a
+  classed error at registration, instead of failing later with "could not
+  find function".
+* `export_docx()`, `export_pptx()`, and `export_xlsx()` reject inputs that are
+  neither SimtablR objects nor data frames; `export_xlsx(NULL, path)`
+  previously wrote an empty workbook.
+* New advice rule `ratio_in_case_control` flags a risk or prevalence ratio
+  reported for a case-control design. The explicit measure is still used;
+  the advice is non-blocking.
+
 # SimtablR 3.1.0
 
 ## New features
@@ -76,6 +229,7 @@ and reporting workflow. None of these functions shipped in a CRAN release.
 * Removed `register_test()` and `list_tests()`. The comparison-test registry
   only stored functions; no engine ever dispatched to a registered test.
   Built-in tests are selected with `test()` / `test =` as before.
+
 * Stratified `tb()` PR/OR no longer prints the one-off "additive change"
   message about Mantel-Haenszel pooling.
 
@@ -168,12 +322,15 @@ and reporting workflow. None of these functions shipped in a CRAN release.
   warning. **New behaviour:** the reader is told the estimate is not
   trustworthy. **Why:** `regtab()` already warned on separation; the descriptive
   adjusted path did not. Healthy models are unaffected.
+
 * `survtab()` rejects a zero-event cohort with a classed
   `simtab_error_engine` instead of failing inside `cox.zph()` with an error
   naming the engine's own locals. The proportional-hazards diagnostic is now
   computed defensively, so a degenerate diagnostic cannot discard the fit.
+
 * An all-missing `event` column is rejected with a classed binding error rather
   than passing the 0/1 check vacuously and failing later in base R.
+
 * **Named change.** `tb()` no longer presents an unadjusted p-value as
   adjusted. **Old behaviour:** the column was relabelled "Adjusted P-value" and
   `$data$tests` recorded the method, but a `tb()` table holds a single p-value
@@ -181,26 +338,34 @@ and reporting workflow. None of these functions shipped in a CRAN release.
   changed. **New behaviour:** the argument warns that it was ignored and the
   display stays unadjusted. **Escape hatch:** `table1(...) |> test(p.adjust =)`
   adjusts a real family of p-values across variables.
+
 * `tb()` warns instead of silently returning nothing when a requested effect
   measure cannot be estimated - an outcome with fewer than two observed levels,
   or a stratified request with fewer than two usable strata - and names the
   reason. The empty column previously read as "no association".
+
 * `tb()` announces which outcome level a ratio measure scores as the event when
   the outcome has more than two levels, instead of silently collapsing to
   "last level versus the rest".
+
 * `table1()` drops the grouping variable from its own `adjust` set with a
   warning. Adjusting an effect for its own outcome is degenerate and reported an
   odds ratio of exactly 1.00 (1.00 - 1.00) from a model that never converged.
+
 * p-value boundaries print at the precision the boundary itself needs: the
   default `pval_thresh = 0.001` rendered as `"<0.00"` at `pval_digits = 2` and
   `"<0"` at `pval_digits = 0`.
+
 * `label()` accepts a named character vector passed positionally
   (`label(x, c(age = "Age"))`), the form `table1(labels =)` and `fmt(labels =)`
   already take; it previously reported the inner names as missing.
+
 * The `sensitivity()` "requires at least one named variation" error suggested
   `denominator("complete")`, a function that does not exist, under a variation
   name the code rejects. It now names the supported shorthands.
+
 * The `diag_test()` methods sentence starts capitalised.
+
 * `repro_manifest()` gains `design_used`, a logical distinguishing a design
   that actually resolved `measure` (`resolved_from == "design"`) from a design
   that is merely recorded (for example a `set_design()` data-frame attribute
@@ -215,6 +380,7 @@ and reporting workflow. None of these functions shipped in a CRAN release.
   measure (resolution has always required `design =` on the call or
   `set_design()` on a `simtab_spec` - this is a documentation and manifest
   fix, not a change to resolution behaviour).
+
 * Fixed `vignettes/study-design-effect-measures.Rmd`, which read the wrong
   internal attribute name (`"simtab_design"` instead of `"simtablr.design"`,
   always printing `NULL`) and then demonstrated `tb()`/`table1()` calls that,
@@ -222,6 +388,7 @@ and reporting workflow. None of these functions shipped in a CRAN release.
   resolved the effect measure the surrounding prose claimed. The vignette now
   uses the `design()` accessor and passes `design =` explicitly where a
   measure is meant to resolve.
+
 * Added an `as.data.frame()` method for audit results, which previously failed
   with a generic "cannot coerce class" error.
   `as.data.frame(advise(result, audit = TRUE))` returns the checked-rules table
@@ -229,16 +396,19 @@ and reporting workflow. None of these functions shipped in a CRAN release.
   example `simtablr()`'s output) returns a named list of per-item
   data.frames, mirroring the existing `as_gt()`/`as_flextable()` behaviour for
   reports whose items are not all the same shape.
+
 * `print.simtab_audit()` (`advise(audit = TRUE)` output) now wraps its
   `Message`/`Citation`/`Fix` fields to `getOption("width")` instead of
   printing lines up to 160 characters wide regardless of console width.
+
 * `print.simtab_regtab()` no longer splits a narrow console's output into
   disconnected vertical column blocks (base `print.data.frame`'s behaviour
   when a table is wider than `options(width)`). Each row now always prints on
   one line; the `Variable` label is abbreviated with an ellipsis when the
   console is too narrow to show it in full, rather than letting a term's
   label and its estimate land in separate, unlabelled blocks.
-## Advanced visualization
+  
+  ## Advanced visualization
 
 * **Named change.** Forest plots now resolve their axis from the effect measure
   instead of always using a log axis. Ratio measures (OR, RR, PR, HR, IRR) keep
@@ -250,12 +420,14 @@ and reporting workflow. None of these functions shipped in a CRAN release.
   coefficient is a legitimate estimate, and silently omitting it misrepresented
   the model. **Escape hatch:** plot an exponentiated result to keep the ratio
   presentation.
+
 * `autoplot()` now works on `diag_test()` results, drawing either the stored
   confusion matrix (`type = "matrix"`, default) or sensitivity, specificity, and
   predictive values as points with their stored confidence intervals
   (`type = "metrics"`). Calibration curves are deliberately not offered: a binary
   index test provides no risk scale to calibrate. The existing base
   `plot.simtab_diag()` fourfold display is unchanged.
+
 * SimtablR plots now carry the canvas size that suits them - a forest plot grows
   with its row count. The new `export_plot()` honours that recommendation,
   while explicit `width`/`height` arguments always override.
@@ -595,16 +767,21 @@ the end of this section.
 ## Major Changes
 
 ### tb() Function
+
 *Overhauled tb() to return a structured list. The object inherits the S3 class vector c("tb", "simtab"). Matrices with attributes are no longer returned directly from the primary function loop.
 *Ratio Schema Standardization: Renamed fields within the internal ratios data frame to lower_ci and upper_ci to establish strict compatibility with multivariable regression tables (regtab()).
 *Simplified Continuous Syntax: Enhanced var.type parsing to accept an unnamed scalar character string shorthand (e.g., var.type = "continuous") and map it automatically to the main row variable.
+
 #### New Features
+
 *Table Stacking (rbind.tb): Implemented the rbind.tb() S3 method to support the vertical stacking of discrete tb objects sharing the same column variables.
 *Dual Export Modes: Expanded as.data.frame.tb() and as.data.frame.rbind_tb() to support a tidy toggle. tidy = FALSE (default) provides display-ready character strings for manuscripts, while tidy = TRUE returns unformatted numeric data frames optimized for ggplot2 workflows.
 *RStudio Autocomplete Replacement: Integrated an unexported interactive completion replacement hook inside zzz.R using .rs.registerAutocompleteReplacement() to dynamically expose dataset column names inside RStudio console environments.
 *Wald-Aligned Ratio Statistics: Upgraded unadjusted Prevalence Ratio (PR) and Odds Ratio (OR) calculations to compute Wald z-score p-values aligned directly alongside confidence intervals.
 *Added new runtime educational message() notifications that fire automatically under specific conditions
 *Added explicit registerS3method() entries for rbind, print, and as.data.frame generics within .onLoad() to guarantee stable dispatch across development environments, source routines, and unattached package builds.
+
 #### Other changes
+
 *Fixed a vulnerability where common column names (like p or col) matching formatting flags were silently intercepted by the NSE symbol parser.
 *Extracted all text formatting, cell stitching matrices, margin additions, and string template processing out of core workflows and isolated them within a unified internal builder called .build_display_matrix().

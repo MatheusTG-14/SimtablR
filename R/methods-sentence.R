@@ -247,22 +247,73 @@ as_methods.simtab_report <- function(x, ...) {
       ci
     ))
   }
-  if (measure %in% c("PR", "RR") && !is.null(x$meta$adjust) && length(x$meta$effect_estimators %||% character()) > 0) {
-    return(.methods_prrr_adjusted_sentence(x, measure, ci))
+  adjust_vars <- x$meta$adjust$vars %||% character()
+  if (length(adjust_vars) > 0) {
+    return(.methods_adjusted_effect_sentence(x, measure, ci, adjust_vars))
   }
-  estimator <- switch(
+  sprintf(
+    "%s was estimated using the %s with %d%% confidence intervals.%s",
+    measure, .methods_crude_estimator(measure), ci, .methods_design_rationale(x, measure)
+  )
+}
+
+#' Name the crude 2x2 estimator used for an effect measure
+#' @keywords internal
+#' @noRd
+.methods_crude_estimator <- function(measure) {
+  switch(
     measure,
     OR = "Woolf/logit odds-ratio estimator",
     PR = "Katz log prevalence-ratio estimator",
     RR = "Katz log risk-ratio estimator",
     paste0(measure, " estimator")
   )
+}
+
+#' Sentence explaining a design-resolved effect measure, or ""
+#' @keywords internal
+#' @noRd
+.methods_design_rationale <- function(x, measure) {
   design <- .result_design(x)
-  rationale <- ""
   if (identical(x$spec$effect$resolved_from, "design") && !is.null(design)) {
-    rationale <- sprintf(" The %s was chosen from the recorded study design (%s).", measure, .design_label(design))
+    return(sprintf(" The %s was chosen from the recorded study design (%s).", measure, .design_label(design)))
   }
-  sprintf("%s was estimated using the %s with %d%% confidence intervals.%s", measure, estimator, ci, rationale)
+  ""
+}
+
+#' Construct methods prose for crude plus covariate-adjusted effect columns
+#'
+#' A table with an adjusted column reports two estimands: the crude 2x2 ratio
+#' and the model-adjusted ratio. Both, and the adjustment set, belong in the
+#' methods.
+#' @keywords internal
+#' @noRd
+.methods_adjusted_effect_sentence <- function(x, measure, ci, adjust_vars) {
+  covar_labels <- vapply(
+    adjust_vars,
+    function(v) .resolve_label(v, x$used$ref$data, x$spec$fmt$labels),
+    character(1)
+  )
+  covars <- if (length(covar_labels) == 1) {
+    covar_labels
+  } else {
+    paste(paste(utils::head(covar_labels, -1), collapse = ", "), "and", utils::tail(covar_labels, 1))
+  }
+  crude <- sprintf(
+    "Crude %s was estimated using the %s with %d%% confidence intervals.",
+    measure, .methods_crude_estimator(measure), ci
+  )
+  adjusted <- if (measure %in% c("PR", "RR") && length(x$meta$effect_estimators %||% character()) > 0) {
+    .methods_prrr_adjusted_sentence(x, measure, ci, covars)
+  } else if (identical(measure, "OR")) {
+    sprintf(
+      "Adjusted OR was estimated by logistic regression adjusting for %s, with robust (HC0) standard errors and %d%% confidence intervals.",
+      covars, ci
+    )
+  } else {
+    sprintf("Adjusted %s was estimated adjusting for %s, with %d%% confidence intervals.", measure, covars, ci)
+  }
+  paste0(crude, " ", adjusted, .methods_design_rationale(x, measure))
 }
 
 #' Extract custom effect measure and confidence interval metadata
@@ -306,26 +357,21 @@ as_methods.simtab_report <- function(x, ...) {
 #' Construct methodology sentence for adjusted prevalence/risk ratio models and fallbacks
 #' @keywords internal
 #' @noRd
-.methods_prrr_adjusted_sentence <- function(x, measure, ci) {
+.methods_prrr_adjusted_sentence <- function(x, measure, ci, covars) {
   estimators <- x$meta$effect_estimators %||% character()
   fallbacks <- x$meta$logbinomial_fallback %||% logical()
   vars <- names(estimators)
   fallback_vars <- names(fallbacks)[as.logical(fallbacks)]
   fallback_vars <- intersect(fallback_vars, vars)
   logbin_vars <- setdiff(vars[estimators == "log-binomial"], fallback_vars)
-
-  rationale <- ""
-  design <- .result_design(x)
-  if (identical(x$spec$effect$resolved_from, "design") && !is.null(design)) {
-    rationale <- sprintf(" The %s was chosen from the recorded study design (%s).", measure, .design_label(design))
-  }
+  adjusted_for <- sprintf(" adjusting for %s", covars)
 
   if (length(fallback_vars) == 0) {
     return(sprintf(
-      "%s was estimated by log-binomial regression with %d%% confidence intervals.%s",
+      "Adjusted %s was estimated by log-binomial regression%s, with %d%% confidence intervals.",
       measure,
-      ci,
-      rationale
+      adjusted_for,
+      ci
     ))
   }
 
@@ -336,22 +382,22 @@ as_methods.simtab_report <- function(x, ...) {
 
   if (length(logbin_vars) == 0) {
     return(sprintf(
-      "%s was estimated by modified Poisson regression with robust standard errors because %s for %s (Zou, 2004); %d%% confidence intervals were reported.%s",
+      "Adjusted %s was estimated by modified Poisson regression with robust standard errors%s because %s for %s (Zou, 2004); %d%% confidence intervals were reported.",
       measure,
+      adjusted_for,
       reason,
       .methods_effect_labels(x, fallback_vars),
-      ci,
-      rationale
+      ci
     ))
   }
 
   sprintf(
-    "%s was estimated by log-binomial regression for %s and by modified Poisson regression with robust standard errors for %s because %s for those variable(s) (Zou, 2004); %d%% confidence intervals were reported.%s",
+    "Adjusted %s was estimated%s by log-binomial regression for %s and by modified Poisson regression with robust standard errors for %s because %s for those variable(s) (Zou, 2004); %d%% confidence intervals were reported.",
     measure,
+    adjusted_for,
     .methods_effect_labels(x, logbin_vars),
     .methods_effect_labels(x, fallback_vars),
     reason,
-    ci,
-    rationale
+    ci
   )
 }

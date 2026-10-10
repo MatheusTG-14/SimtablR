@@ -61,6 +61,17 @@
   )]
 }
 
+#' Map marker/outcome column names to publication labels set with label()
+#' @keywords internal
+#' @noRd
+.roc_display_names <- function(x, names) {
+  labels <- x$spec$fmt$labels %||% character()
+  out <- as.character(names)
+  hit <- !is.na(out) & out %in% names(labels)
+  out[hit] <- unname(labels[out[hit]])
+  out
+}
+
 #' Assemble formatted publication display data frame for ROC results
 #' @keywords internal
 #' @noRd
@@ -81,7 +92,7 @@
   ci_label <- sprintf("%s%% CI", x$meta$conf_pct)
 
   data.frame(
-    Marker = tidy$marker,
+    Marker = .roc_display_names(x, tidy$marker),
     `AUC (95% CI)` = paste0(
       .roc_fmt_num(tidy$auc, d),
       " (",
@@ -115,7 +126,7 @@
   x <- .roc_validate_result(x)
   cat("\nROC Curve Analysis\n")
   cat("==================\n")
-  cat(sprintf("Outcome: %s (positive = '%s')\n", x$meta$outcome, x$meta$positive))
+  cat(sprintf("Outcome: %s (positive = '%s')\n", .roc_display_names(x, x$meta$outcome), x$meta$positive))
   cat(sprintf("CI method: %s | Direction: %s\n\n", x$meta$ci, x$meta$direction))
   print(noquote(as.data.frame(x)), row.names = FALSE)
 
@@ -128,7 +139,14 @@
     for (i in seq_len(nrow(comps))) {
       cat(sprintf(
         "%s: AUC diff %s, z %s, p %s\n",
-        comps$pair[i],
+        if (all(c("marker_1", "marker_2") %in% names(comps))) {
+          paste(
+            .roc_display_names(x, comps$marker_1[i]), "vs",
+            .roc_display_names(x, comps$marker_2[i])
+          )
+        } else {
+          comps$pair[i]
+        },
         .roc_fmt_num(comps$auc_diff[i], d),
         .roc_fmt_num(comps$z[i], d),
         .fmt_p(comps$p.value[i], spec)

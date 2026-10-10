@@ -11,7 +11,9 @@ measure(spec, m, ref = NULL, conf.level = 0.95, adjust = NULL)
 
 \item{m}{A single effect-measure name.}
 
-\item{ref}{Optional reference level.}
+\item{ref}{Optional reference level: one level shared by every variable, or
+a named list with one level per variable, e.g.
+\code{list(sex = "Female", smoking = "Never")}.}
 
 \item{conf.level}{Confidence level between 0 and 1.}
 

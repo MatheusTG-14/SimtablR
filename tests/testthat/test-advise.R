@@ -49,3 +49,23 @@ test_that("advise rules remain non-blocking and do not mutate result evidence", 
   adv <- advise(tab)
   expect_identical(tab$data, raw_before)
 })
+
+test_that("advise flags a risk ratio reported under a case-control design", {
+  rr_cc <- suppressMessages(tb(epitabl, renal_impairment, mace_event, measure = "RR", design = "case_control"))
+  expect_identical(unique(rr_cc$data$ratios$type), "RR")
+  audit <- as.data.frame(advise(rr_cc, audit = TRUE))
+  expect_true(audit$fired[audit$id == "ratio_in_case_control"])
+
+  # The design default (OR) and other designs stay silent; advice never blocks.
+  or_cc <- suppressMessages(tb(epitabl, renal_impairment, mace_event, design = "case_control"))
+  expect_false("ratio_in_case_control" %in% as.data.frame(advise(or_cc, audit = TRUE))$id[
+    as.data.frame(advise(or_cc, audit = TRUE))$fired
+  ])
+  cohort <- suppressMessages(table1(epitabl, sex, by = mace_event, measure = "RR", design = "cohort"))
+  cohort_audit <- as.data.frame(advise(cohort, audit = TRUE))
+  expect_false(any(cohort_audit$fired[cohort_audit$id == "ratio_in_case_control"]))
+
+  t1_cc <- suppressMessages(table1(epitabl, sex, by = mace_event, measure = "RR", design = "case_control"))
+  t1_audit <- as.data.frame(advise(t1_cc, audit = TRUE))
+  expect_true(t1_audit$fired[t1_audit$id == "ratio_in_case_control"])
+})

@@ -74,7 +74,13 @@
 #' the Katz log interval (Katz et al., 1978) and odds ratios the Woolf logit
 #' interval (Woolf, 1955). With `strat`, stratum-specific tables are pooled
 #' with the Mantel-Haenszel estimator and tested with the Cochran-Mantel-Haenszel
-#' test.
+#' test. Homogeneity across strata is tested with the Breslow-Day test for odds
+#' ratios and, for prevalence and risk ratios, with Cochran's Q on the
+#' inverse-variance weighted stratum log ratios. A stratified numeric variable
+#' is compared within strata: by the F-test for the group term in a linear
+#' model with stratum when summarised by the mean, and by the van Elteren
+#' stratified Wilcoxon test (van Elteren, 1960) for two groups when summarised
+#' by the median.
 #'
 #' With `test = TRUE`, 2x2 tables use the N-1 chi-squared test (Campbell,
 #' 2007) and larger tables the Pearson chi-squared test, without continuity
@@ -363,6 +369,11 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
   is_continuous <- x$meta$is_continuous
   d <- x$meta$d
   style <- x$meta$style
+  journal <- .result_journal(style)
+  if (!is.null(journal)) {
+    style <- journal$np_template
+  }
+  iqr_sep <- if (is.null(journal)) " - " else journal$ci_sep
   bm <- x$meta$big_mark %||% ""
   dm <- x$meta$decimal_mark %||% "."
 
@@ -389,16 +400,18 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
           .tb_fmt_num(val[2], d, bm, dm)
         )
       } else {
+        bounds <- c(.tb_fmt_num(val[2], d, bm, dm), .tb_fmt_num(val[3], d, bm, dm))
         out_mat[1, nm] <- sprintf(
-          "%s (%s - %s)",
+          "%s (%s%s%s)",
           .tb_fmt_num(val[1], d, bm, dm),
-          .tb_fmt_num(val[2], d, bm, dm),
-          .tb_fmt_num(val[3], d, bm, dm)
+          bounds[1],
+          .ci_sep_safe(iqr_sep, bounds),
+          bounds[2]
         )
       }
     }
     if (!identical(x$meta$p.adjust %||% "none", "none") && is.data.frame(x$data$tests)) {
-      out_mat <- cbind(out_mat, "Adjusted P-value" = .fmt_tb_p(x$data$tests$p_value_adjusted[1], dm))
+      out_mat <- cbind(out_mat, "Adjusted P-value" = .fmt_tb_p(x$data$tests$p_value_adjusted[1], dm, journal))
     }
     return(out_mat)
   } else {
@@ -459,15 +472,16 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
         seq_len(nrow(ratios)),
         function(idx) {
           if (ratios$ref[idx]) {
-            return(paste0(.tb_fmt_num(1, 2, "", dm), " (Ref)"))
+            ref_digits <- if (is.null(journal)) 2 else journal$digits_est
+            return(paste0(.tb_fmt_num(1, ref_digits, "", dm), " (Ref)"))
           }
           if (is.na(ratios$estimate[idx])) {
             return("-")
           }
           p_val <- ratios$p_value[idx]
           paste0(
-            .tb_effect_text(ratios[idx, ], x$meta, bm, dm),
-            if (is.na(p_val)) "" else paste0(", ", .fmt_tb_p(p_val, dm))
+            .tb_effect_text(ratios[idx, ], x$meta, bm, dm, journal),
+            if (is.na(p_val)) "" else paste0(", ", .fmt_tb_p(p_val, dm, journal))
           )
         },
         character(1)
@@ -487,7 +501,7 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
       } else {
         1L
       }
-      adj_text[target] <- .fmt_tb_p(x$data$tests$p_value_adjusted[1], dm)
+      adj_text[target] <- .fmt_tb_p(x$data$tests$p_value_adjusted[1], dm, journal)
       out_mat <- cbind(out_mat, adj_text)
       colnames(out_mat)[ncol(out_mat)] <- "Adjusted P-value"
     }
@@ -514,9 +528,14 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
           if (is.na(pooled$estimate[idx])) {
             return("-")
           }
-          txt <- .tb_effect_text(pooled[idx, ], x$meta, bm, dm)
-          cmh <- if (is.na(pooled$cmh_p[idx])) "" else paste0(", CMH ", .fmt_tb_p(pooled$cmh_p[idx], dm))
-          bd <- if (is.na(pooled$homogeneity_p[idx])) "" else paste0(", BD ", .fmt_tb_p(pooled$homogeneity_p[idx], dm))
+          txt <- .tb_effect_text(pooled[idx, ], x$meta, bm, dm, journal)
+          cmh <- if (is.na(pooled$cmh_p[idx])) "" else paste0(", CMH ", .fmt_tb_p(pooled$cmh_p[idx], dm, journal))
+          homog_label <- if (startsWith(pooled$homogeneity_method[idx] %||% "Breslow-Day", "Breslow-Day")) {
+            "BD"
+          } else {
+            "homogeneity"
+          }
+          bd <- if (is.na(pooled$homogeneity_p[idx])) "" else paste0(", ", homog_label, " ", .fmt_tb_p(pooled$homogeneity_p[idx], dm, journal))
           paste0(txt, cmh, bd)
         }, character(1))
         mh_rows[, ratio_col] <- mh_text
@@ -542,32 +561,55 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
     # Format NA values consistently as character NA
     return("NA")
   }
-  formatC(
+  .unsign_zero(formatC(
     value,
     format = "f",
     digits = digits,
     big.mark = big_mark,
     decimal.mark = decimal_mark
-  )
+  ))
 }
 
 #' Fill effect ratio template string with estimates and confidence limits
+#'
+#' An explicitly customised `style.rp`/`style.or` template wins; otherwise an
+#' attached journal preset supplies digits, CI separator, brackets and template.
 #' @keywords internal
 #' @noRd
-.tb_effect_text <- function(row, meta, bm, dm) {
+.tb_effect_text <- function(row, meta, bm, dm, journal = NULL) {
   is_rp <- row$type %in% c("PR", "RR")
   txt <- if (is_rp) meta$style.rp else meta$style.or
+  default_txt <- if (is_rp) formals(tb)$style.rp else formals(tb)$style.or
+  if (!is.null(journal) && (is.null(txt) || identical(txt, default_txt))) {
+    de <- journal$digits_est
+    return(.fmt_est(
+      row$estimate, row$lower_ci, row$upper_ci, journal,
+      num = function(v) .tb_fmt_num(v, de, bm, dm)
+    ))
+  }
   txt <- gsub(if (is_rp) "{rp}" else "{or}", .tb_fmt_num(row$estimate, 2, bm, dm), txt, fixed = TRUE)
   txt <- gsub("{lower}", .tb_fmt_num(row$lower_ci, 2, bm, dm), txt, fixed = TRUE)
   gsub("{upper}", .tb_fmt_num(row$upper_ci, 2, bm, dm), txt, fixed = TRUE)
 }
 
 #' Format p-value with inequality threshold for small values
+#'
+#' With a journal preset, its threshold, digits and leading-zero rules apply.
 #' @keywords internal
 #' @noRd
-.fmt_tb_p <- function(p, decimal_mark = ".") {
+.fmt_tb_p <- function(p, decimal_mark = ".", journal = NULL) {
   if (is.na(p)) {
     return("p = NA")
+  }
+  if (!is.null(journal)) {
+    txt <- .fmt_p(p, journal)
+    if (!identical(decimal_mark, ".")) {
+      txt <- sub(".", decimal_mark, txt, fixed = TRUE)
+    }
+    if (substr(txt, 1, 1) %in% c("<", ">")) {
+      return(paste0("p ", substr(txt, 1, 1), " ", substring(txt, 2)))
+    }
+    return(paste0("p = ", txt))
   }
   if (p < 0.001) {
     paste0("p < ", .tb_fmt_num(0.001, 3, "", decimal_mark))
@@ -643,7 +685,13 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
   row_labels <- rownames(out_mat)
   col_labels <- colnames(out_mat)
 
-  has_row_total <- row_labels[nr] == "Total"
+  # Stratified tables append Mantel-Haenszel rows after the Total row, so find
+  # the Total row by label rather than assuming it is last.
+  total_rows <- which(row_labels == "Total")
+  total_row <- if (length(total_rows) > 0) max(total_rows) else NA_integer_
+  has_row_total <- !is.na(total_row)
+  # Row labels can be NA under the `miss` flag.
+  is_mh_row <- !is.na(row_labels) & startsWith(row_labels, "Mantel-Haenszel pooled")
   extra_cols <- if (any(grepl("PR \\(|RR \\(|OR \\(", col_labels))) 1L else 0L
 
   width_row <- max(safe_nchar(c(row_var, row_labels))) + 1L
@@ -714,7 +762,12 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
     cat("\n")
 
     for (i in seq_len(nr)) {
-      if (i == nr && has_row_total && nr > 1) {
+      # A pooled estimate only has content in the effect column; do not repeat
+      # an empty Mantel-Haenszel row in every frequency panel.
+      if (is_mh_row[i] && all(is.na(out_mat[i, cols_page]) | !nzchar(trimws(out_mat[i, cols_page])))) {
+        next
+      }
+      if (identical(i, total_row) && nr > 1) {
         cat(strrep("-", width_row), "-+", sep = "")
         emit_cells("+", dash_cell)
         cat("\n")
@@ -783,8 +836,11 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
       return(df_tidy)
     } else {
       # Categorical tidy schema:
-      # variable, level, estimate, lower_ci, upper_ci, p_value, outcome.
-      # Retains raw variable names and numeric measures.
+      # variable, level, estimate, lower_ci, upper_ci, p_value, outcome, n
+      # (+ stratum for stratified tables). One row per table cell; `n` is the
+      # cell count. A ratio describes the risk/odds of the event outcome, so it
+      # is attached only to the event-outcome row of each level. Stratified
+      # tables add one row per pooled Mantel-Haenszel estimate (n = NA).
       freq <- x$data$frequencies
       df0 <- as.data.frame(freq)
       n <- nrow(df0)
@@ -795,14 +851,30 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
       } else {
         as.character(df0[[2]])
       }
+      stratified <- isTRUE(x$meta$is_stratified) && is.data.frame(x$data$mh)
+      stratum <- NULL
+      if (stratified) {
+        # Stratified columns are "<stratum> : <outcome>".
+        parts <- strsplit(outcome, " : ", fixed = TRUE)
+        stratum <- vapply(parts, function(p) if (length(p) >= 2) p[[1]] else NA_character_, character(1))
+        outcome <- vapply(parts, function(p) p[[length(p)]], character(1))
+      }
 
       estimate <- rep(NA_real_, n)
       lower_ci <- rep(NA_real_, n)
       upper_ci <- rep(NA_real_, n)
       p_value <- rep(NA_real_, n)
-      if (!is.null(x$data$ratios)) {
-        ratios <- x$data$ratios
-        idx <- match(level, ratios$level)
+      ratios <- if (stratified) x$data$mh[x$data$mh$row_type == "stratum", , drop = FALSE] else x$data$ratios
+      if (is.data.frame(ratios) && nrow(ratios) > 0) {
+        event_level <- if (!is.null(ratios$event_level)) {
+          ratios$event_level[[1]]
+        } else {
+          .tb_event_level(freq)
+        }
+        key <- if (stratified) paste(level, stratum, sep = "\r") else level
+        ratio_key <- if (stratified) paste(ratios$level, ratios$stratum, sep = "\r") else ratios$level
+        idx <- match(key, ratio_key)
+        idx[is.na(outcome) | outcome != event_level] <- NA_integer_
         estimate <- ratios$estimate[idx]
         lower_ci <- ratios$lower_ci[idx]
         upper_ci <- ratios$upper_ci[idx]
@@ -816,8 +888,26 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
         lower_ci = as.numeric(lower_ci),
         upper_ci = as.numeric(upper_ci),
         p_value = as.numeric(p_value),
-        outcome = outcome
+        outcome = outcome,
+        n = as.integer(df0[[ncol(df0)]])
       )
+      if (stratified) {
+        df_tidy$stratum <- stratum
+        pooled <- x$data$mh[x$data$mh$row_type == "pooled", , drop = FALSE]
+        if (nrow(pooled) > 0) {
+          df_tidy <- rbind(df_tidy, data.frame(
+            variable = rep(x$meta$row_var_name, nrow(pooled)),
+            level = pooled$level,
+            estimate = pooled$estimate,
+            lower_ci = pooled$lower_ci,
+            upper_ci = pooled$upper_ci,
+            p_value = pooled$p_value,
+            outcome = pooled$event_level,
+            n = NA_integer_,
+            stratum = pooled$stratum
+          ))
+        }
+      }
       rownames(df_tidy) <- NULL
       return(df_tidy)
     }
@@ -826,6 +916,24 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
     attr(df, "stats") <- x$meta$stats
     return(df)
   }
+}
+
+#' Event (last observed, non-missing) outcome level of a frequency table
+#'
+#' Mirrors the engine, which scores the last column of the complete-case table
+#' (zero margins and the `miss` NA column dropped) as the event.
+#' @keywords internal
+#' @noRd
+.tb_event_level <- function(freq) {
+  if (length(dim(freq)) != 2) {
+    return(NA_character_)
+  }
+  cols <- colnames(freq)
+  keep <- !is.na(cols) & cols != "NA" & colSums(freq[!is.na(rownames(freq)), , drop = FALSE]) > 0
+  if (!any(keep)) {
+    return(NA_character_)
+  }
+  utils::tail(cols[keep], 1)
 }
 
 #' Convert rbind_tb to Data Frame
@@ -889,15 +997,16 @@ simtab_theme <- function(ft) {
   .require_pkg("flextable")
   df <- as.data.frame(x, tidy = FALSE)
   ft <- flextable::flextable(df, ...)
+  journal <- .result_journal(x$meta$style)
   stats <- x$meta$stats
   if (!is.null(stats)) {
-    p_str <- sub("^p ", "", .fmt_tb_p(stats$p.value, x$meta$decimal_mark %||% "."))
+    p_str <- sub("^p ", "", .fmt_tb_p(stats$p.value, x$meta$decimal_mark %||% ".", journal))
     stat_text <- paste0(stats$method, ": p-value ", p_str)
     ft <- flextable::add_footer_lines(ft, values = stat_text)
     ft <- flextable::align(ft, part = "footer", align = "right")
   }
   ft <- .flex_add_footnotes(ft, footnotes)
-  simtab_theme(ft)
+  if (is.null(journal)) simtab_theme(ft) else journal$flex(ft)
 }
 
 #' Convert simtab_rbind_tb Object to Flextable

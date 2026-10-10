@@ -11,7 +11,9 @@ register_engine(
   legacy_tag = NULL,
   validate = NULL,
   renderers = list(),
-  engine_opts = NULL
+  engine_opts = NULL,
+  verbs = NULL,
+  overwrite = FALSE
 )
 }
 \arguments{
@@ -35,6 +37,18 @@ hard, engine-specific errors only.}
 
 \item{engine_opts}{Optional function \verb{function(opts) -> invisible(opts)}
 validating the engine's spec-level options.}
+
+\item{verbs}{Optional character vector of the evidence-changing verbs the
+engine uses: any of \code{"stratify"}, \code{"adjust"}, \code{"measure"}, \code{"test"},
+\code{"set_summary"}, and \code{"missingness"}. Applying another of these verbs to
+a result from this engine warns and returns the result unchanged. \code{NULL}
+(the default) accepts every verb. \code{label()}, \code{fmt()}, and \code{style()}
+always apply.}
+
+\item{overwrite}{Logical. Replacing a built-in engine (\code{descriptive},
+\code{bivariate}, \code{glm}, \code{accuracy}, \code{roc}, \code{cox}, \code{e_value}) is an error unless
+\code{overwrite = TRUE}, because it changes what \code{\link[=table1]{table1()}}, \code{\link[=tb]{tb()}}, and the
+other presets compute. Re-registering your own engine needs no flag.}
 }
 \value{
 Invisibly, \code{name}.

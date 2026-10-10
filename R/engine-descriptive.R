@@ -102,6 +102,7 @@
   summary_auto <- list()
   var_data <- list()
   any_test <- FALSE
+  ref_found <- logical(0)
   for (v in vars) {
     xv <- display_data[[v]]
     vtype <- .detect_var_type(xv, override = .resolve_per_var(args$var.type, v, NULL))
@@ -153,6 +154,9 @@
       rec$n_missing <- nmiss
     } else {
       vf <- factor(xv)
+      if (!is.null(refv)) {
+        ref_found[[v]] <- as.character(refv) %in% levels(vf)
+      }
       if (!is.null(refv) && as.character(refv) %in% levels(vf)) {
         vf <- stats::relevel(vf, ref = as.character(refv))
       }
@@ -307,6 +311,9 @@
     }
 
     var_data[[v]] <- rec
+  }
+  if (!is.null(measure)) {
+    .descriptive_warn_unmatched_ref(args$ref, ref_found, vars)
   }
   var_data <- .table1_apply_p_adjust(var_data, p_adjust)
 
@@ -716,4 +723,44 @@
     ))
   }
   invisible(x)
+}
+
+#' Warn when a requested reference level was never applied
+#'
+#' A scalar `ref` is shared by every categorical variable, so it only needs to
+#' match one of them; a named per-variable `ref` must match its own variable.
+#' Otherwise the first level is used silently, which can invert a comparison.
+#' @keywords internal
+#' @noRd
+.descriptive_warn_unmatched_ref <- function(ref, ref_found, vars) {
+  if (is.null(ref)) {
+    return(invisible(NULL))
+  }
+  per_var <- !is.null(names(ref))
+  if (per_var) {
+    unknown <- setdiff(names(ref), vars)
+    missing_level <- names(ref_found)[!ref_found]
+    problems <- c(
+      if (length(unknown) > 0) sprintf("'%s' is not a described variable", unknown),
+      vapply(missing_level, function(v) {
+        sprintf("'%s' is not a level of '%s'", as.character(ref[[v]]), v)
+      }, character(1))
+    )
+  } else {
+    problems <- if (length(ref_found) > 0 && !any(ref_found)) {
+      sprintf("'%s' is not a level of any categorical variable", as.character(ref))
+    } else {
+      character(0)
+    }
+  }
+  if (length(problems) > 0) {
+    warning(
+      sprintf(
+        "Reference level not applied (%s); the first level was used as the reference.",
+        paste(unname(problems), collapse = "; ")
+      ),
+      call. = FALSE
+    )
+  }
+  invisible(NULL)
 }

@@ -34,7 +34,11 @@ the cell convention, e.g. \code{"n (\%)"} or \code{"No. (\%)"}.}
 \item{digits_est}{Integer decimals for effect-measure estimates. Default \code{2}.}
 
 \item{ci_sep}{Character separating confidence-interval bounds (and IQR bounds),
-e.g. \code{" - "}, \code{"\\u2013"}, \code{" to "}. Default \code{" - "}.}
+e.g. \code{" - "}, \code{"\\u2013"}, \code{" to "}. Default \code{" - "}. Where the separator
+would be ambiguous it is replaced for that interval only: a comma
+separator becomes \code{"; "} when a bound contains a comma (a decimal comma
+or grouping mark), and a dash separator becomes \code{" to "} when a bound is
+negative.}
 
 \item{ci_parens}{Two characters wrapping the confidence interval, e.g. \code{"()"}
 or \code{"[]"}. Default \code{"()"}.}

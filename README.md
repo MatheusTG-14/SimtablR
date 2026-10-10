@@ -451,4 +451,4 @@ To cite SimtablR in scientific manuscripts and protocols:
 citation("SimtablR")
 ```
 
-Released under the [MIT License](LICENSE.md).
+Released under the [MIT License](https://opensource.org/licenses/MIT).

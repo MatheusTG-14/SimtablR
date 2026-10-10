@@ -46,3 +46,17 @@ test_that("export functions validate table format and handle missing dependencie
   expect_error(export_docx(list(a = 1), tempfile(fileext = ".docx")))
 })
 
+
+test_that("export writers reject inputs that are not tables instead of writing empty files", {
+  skip_if_not_installed("openxlsx")
+  path <- withr::local_tempfile(fileext = ".xlsx")
+  expect_error(export_xlsx(NULL, path), class = "simtab_error_input")
+  expect_false(file.exists(path))
+  expect_error(export_xlsx(list(a = 1), path), class = "simtab_error_input")
+
+  skip_if_not_installed("flextable")
+  skip_if_not_installed("officer")
+  docx <- withr::local_tempfile(fileext = ".docx")
+  expect_error(export_docx(NULL, docx), class = "simtab_error_input")
+  expect_false(file.exists(docx))
+})

@@ -90,3 +90,31 @@ test_that("regtab tidy and glance accessors return valid data frames", {
 test_that("regtab validates input families and throws classed errors on invalid inputs", {
   expect_error(regtab(epitabl, outcomes = "adjudicated_acs", predictors = ~ nonexistent_col))
 })
+
+test_that("regtab marks a constant outcome as failed instead of reporting 1.00", {
+  dat <- epitabl
+  dat$constant_outcome <- factor("No", levels = c("No", "Yes"))
+
+  expect_warning(
+    fit <- suppressMessages(regtab(
+      dat, c("constant_outcome", "rehospitalized"), ~ age + sex,
+      family = binomial()
+    )),
+    "takes a single value"
+  )
+  info <- model_info(fit)
+  expect_true(info$failed[info$outcome == "constant_outcome"])
+  expect_false(info$failed[info$outcome == "rehospitalized"])
+  expect_false("constant_outcome" %in% fit$data$outcome)
+  expect_output(print(fit), "Failed outcomes: constant_outcome")
+
+  # A verb on the result recomputes through the same check.
+  expect_warning(refit <- adjust(fit, smoking), "takes a single value")
+  expect_true(model_info(refit)$failed[model_info(refit)$outcome == "constant_outcome"])
+
+  # A lone constant outcome cannot produce a table at all.
+  expect_error(
+    suppressWarnings(regtab(dat, "constant_outcome", ~ age, family = binomial())),
+    class = "simtab_error_engine"
+  )
+})

@@ -91,7 +91,7 @@ as_gt.simtab_rbind_tb <- function(x, ...) {
 #' @noRd
 .table1_as_gt <- function(x, footnotes = NULL, ...) {
   df <- as.data.frame(x, tidy = FALSE)
-  tab <- .gt_from_display(df, ..., footnotes = footnotes)
+  tab <- .gt_from_display(df, ..., footnotes = c(.table1_notes(x), footnotes))
   spanner <- .table1_strat_spanner(x, df)
   if (!is.null(spanner)) {
     cols <- names(df)[spanner$columns]
@@ -111,7 +111,9 @@ as_gt.simtab_rbind_tb <- function(x, ...) {
   foot <- character(0)
   stats <- x$meta$stats
   if (!is.null(stats)) {
-    p_str <- sub("^p ", "", .fmt_tb_p(stats$p.value, x$meta$decimal_mark %||% "."))
+    p_str <- sub("^p ", "", .fmt_tb_p(
+      stats$p.value, x$meta$decimal_mark %||% ".", .result_journal(x$meta$style)
+    ))
     foot <- paste0(stats$method, ": p-value ", p_str)
   }
   .gt_from_display(as.data.frame(x, tidy = FALSE), ..., footnotes = foot)

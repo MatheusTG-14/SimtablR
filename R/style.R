@@ -26,7 +26,11 @@
 #' @param digits_cont Integer decimals for continuous summaries. Default `1`.
 #' @param digits_est Integer decimals for effect-measure estimates. Default `2`.
 #' @param ci_sep Character separating confidence-interval bounds (and IQR bounds),
-#'   e.g. `" - "`, `"\u2013"`, `" to "`. Default `" - "`.
+#'   e.g. `" - "`, `"\u2013"`, `" to "`. Default `" - "`. Where the separator
+#'   would be ambiguous it is replaced for that interval only: a comma
+#'   separator becomes `"; "` when a bound contains a comma (a decimal comma
+#'   or grouping mark), and a dash separator becomes `" to "` when a bound is
+#'   negative.
 #' @param ci_parens Two characters wrapping the confidence interval, e.g. `"()"`
 #'   or `"[]"`. Default `"()"`.
 #' @param est_template Character template for an estimate-with-CI string, using
@@ -265,6 +269,28 @@ list_journals <- function() {
   ))
 }
 
+#' Resolve the journal preset attached to a result for render-edge formatting
+#'
+#' Returns the resolved `simtab_style` when `style` is a `simtab_style` object
+#' or a registered preset name, and `NULL` otherwise (cell-template shorthands
+#' such as `"n_pct"`, `"pct_n"` or `"{n} [{p}%]"`). Names in `legacy` also
+#' return `NULL`, so engines whose unstyled output predates journal presets keep
+#' their established formatting until a journal is explicitly applied.
+#' @keywords internal
+#' @noRd
+.result_journal <- function(style, legacy = character(0)) {
+  if (inherits(style, "simtab_style")) {
+    return(style)
+  }
+  if (is.character(style) && length(style) == 1 && !is.na(style) && !style %in% legacy) {
+    key <- tolower(style)
+    if (exists(key, envir = .simtab_style_registry, inherits = FALSE)) {
+      return(get(key, envir = .simtab_style_registry, inherits = FALSE))
+    }
+  }
+  NULL
+}
+
 #' Retrieve style preset by name from internal registry with fallback
 #' @keywords internal
 #' @noRd
@@ -304,31 +330,56 @@ list_journals <- function() {
     return("-")
   }
   dc <- spec$digits_cont
+  num <- function(v) .fmt_fixed(v, dc)
   if (stat == "mean") {
-    sprintf(paste0("%.", dc, "f (%.", dc, "f)"), vals[1], vals[2])
+    paste0(num(vals[1]), " (", num(vals[2]), ")")
   } else {
-    sprintf(
-      paste0("%.", dc, "f (%.", dc, "f%s%.", dc, "f)"),
-      vals[1], vals[2], spec$ci_sep, vals[3]
-    )
+    bounds <- c(num(vals[2]), num(vals[3]))
+    paste0(num(vals[1]), " (", bounds[1], .ci_sep_safe(spec$ci_sep, bounds), bounds[2], ")")
   }
+}
+
+#' Choose an interval separator that cannot be misread
+#'
+#' A comma separator next to bounds written with a comma (decimal or grouping
+#' mark) reads as more numbers, e.g. `1,94 (1,51, 2,49)`; a dash separator
+#' next to a negative bound reads as a range, e.g. `(-0.57 - 3.44)`. Only
+#' those ambiguous cases change: to `"; "` and `" to "` respectively.
+#' @param sep The configured separator.
+#' @param bounds Character vector of the already formatted bounds.
+#' @keywords internal
+#' @noRd
+.ci_sep_safe <- function(sep, bounds) {
+  bounds <- bounds[!is.na(bounds)]
+  core <- trimws(sep)
+  if (grepl(",", core, fixed = TRUE) && any(grepl(",", bounds, fixed = TRUE))) {
+    return("; ")
+  }
+  if (core %in% c("-", intToUtf8(0x2013), intToUtf8(0x2014)) && any(startsWith(trimws(bounds), "-"))) {
+    return(" to ")
+  }
+  sep
 }
 
 #' Compose effect estimate and confidence interval display string
 #' @keywords internal
 #' @noRd
-.fmt_est <- function(estimate, lower, upper, spec) {
+.fmt_est <- function(estimate, lower, upper, spec, num = NULL) {
   if (is.na(estimate)) {
     return("-")
   }
   de <- spec$digits_est
+  if (is.null(num)) {
+    num <- function(v) .fmt_fixed(v, de)
+  }
   lp <- substr(spec$ci_parens, 1, 1)
   rp <- substr(spec$ci_parens, 2, 2)
   txt <- spec$est_template
-  txt <- gsub("{est}", sprintf(paste0("%.", de, "f"), estimate), txt, fixed = TRUE)
-  txt <- gsub("{lower}", sprintf(paste0("%.", de, "f"), lower), txt, fixed = TRUE)
-  txt <- gsub("{upper}", sprintf(paste0("%.", de, "f"), upper), txt, fixed = TRUE)
-  txt <- gsub("{sep}", spec$ci_sep, txt, fixed = TRUE)
+  bounds <- c(num(lower), num(upper))
+  txt <- gsub("{est}", num(estimate), txt, fixed = TRUE)
+  txt <- gsub("{lower}", bounds[1], txt, fixed = TRUE)
+  txt <- gsub("{upper}", bounds[2], txt, fixed = TRUE)
+  txt <- gsub("{sep}", .ci_sep_safe(spec$ci_sep, bounds), txt, fixed = TRUE)
   txt <- gsub("{lp}", lp, txt, fixed = TRUE)
   gsub("{rp}", rp, txt, fixed = TRUE)
 }

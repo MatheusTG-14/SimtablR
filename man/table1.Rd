@@ -22,7 +22,7 @@ table1(
   var.type = NULL,
   labels = NULL,
   style = "default",
-  d = 1,
+  d = NULL,
   conf.level = 0.95,
   design = NULL
 )
@@ -90,7 +90,10 @@ are used by default.}
 a \code{\link[=journal_style]{journal_style()}} object, \code{"n_pct"} or \code{"pct_n"}, a template using
 \code{{n}} and \code{{p}}, or a named list per variable.}
 
-\item{d}{Integer. Decimal places for percentages and continuous summaries.}
+\item{d}{Integer. Decimal places for percentages and continuous summaries.
+If \code{NULL} (the default), percentages use one decimal and continuous
+summaries use the style's \code{digits_cont} (one decimal for the built-in
+journals).}
 
 \item{conf.level}{Number between 0 and 1. Confidence level for effect
 measure intervals.}
@@ -152,6 +155,10 @@ the whole table to complete cases, so the displayed numbers can change.
 Multiplicity adjustment, paired tests, and standardized mean differences
 (Austin, 2009) are set afterwards with \code{\link[=test]{test()}}, e.g.
 \code{table1(df, vars, by = group, test = TRUE) |> test(p.adjust = "holm", smd = TRUE)}.
+SMDs are reported as absolute values and need a two-level \code{by}; numeric
+variables use the difference in means over the square root of the
+unweighted average of the two group variances, and categorical variables
+the multinomial generalisation of Yang & Dalton (2012).
 With \code{paired = TRUE}, two equal-sized groups are treated as matched pairs in
 row order. Use \code{\link[=add_effect]{add_effect()}} to add or replace the effect-measure columns
 and \code{\link[=fmt]{fmt()}} to change decimals.

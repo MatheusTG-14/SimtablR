@@ -44,6 +44,16 @@
 #'   `function(x, ...)`.
 #' @param engine_opts Optional function `function(opts) -> invisible(opts)`
 #'   validating the engine's spec-level options.
+#' @param verbs Optional character vector of the evidence-changing verbs the
+#'   engine uses: any of `"stratify"`, `"adjust"`, `"measure"`, `"test"`,
+#'   `"set_summary"`, and `"missingness"`. Applying another of these verbs to
+#'   a result from this engine warns and returns the result unchanged. `NULL`
+#'   (the default) accepts every verb. `label()`, `fmt()`, and `style()`
+#'   always apply.
+#' @param overwrite Logical. Replacing a built-in engine (`descriptive`,
+#'   `bivariate`, `glm`, `accuracy`, `roc`, `cox`, `e_value`) is an error unless
+#'   `overwrite = TRUE`, because it changes what [table1()], [tb()], and the
+#'   other presets compute. Re-registering your own engine needs no flag.
 #' @return Invisibly, `name`.
 #' @seealso [list_engines()], [is_simtab()]
 #' @examples
@@ -58,9 +68,22 @@ register_engine <- function(
   legacy_tag = NULL,
   validate = NULL,
   renderers = list(),
-  engine_opts = NULL
+  engine_opts = NULL,
+  verbs = NULL,
+  overwrite = FALSE
 ) {
   key <- .normalise_registry_name(name)
+  if (!is.logical(overwrite) || length(overwrite) != 1 || is.na(overwrite)) {
+    simtab_abort_input("{.arg overwrite} must be {.code TRUE} or {.code FALSE}.")
+  }
+  if (!isTRUE(overwrite) && key %in% .builtin_engine_names() &&
+      exists(key, envir = .simtab_engine_registry, inherits = FALSE)) {
+    simtab_abort_input(c(
+      "{.val {key}} is a built-in SimtablR engine.",
+      "i" = "Replacing it changes what the built-in presets (e.g. {.fn table1}, {.fn tb}) compute.",
+      "v" = "Register your engine under a new name, or pass {.code overwrite = TRUE} to replace it deliberately."
+    ))
+  }
   entry <- structure(
     list(
       name = key,
@@ -69,7 +92,8 @@ register_engine <- function(
       legacy_tag = legacy_tag,
       validate = validate,
       renderers = renderers,
-      engine_opts = engine_opts
+      engine_opts = engine_opts,
+      verbs = verbs
     ),
     class = "simtab_engine"
   )
@@ -77,6 +101,13 @@ register_engine <- function(
 
   assign(key, entry, envir = .simtab_engine_registry)
   invisible(name)
+}
+
+#' Names of the engines seeded by SimtablR itself
+#' @keywords internal
+#' @noRd
+.builtin_engine_names <- function() {
+  c("bivariate", "descriptive", "glm", "e_value", "accuracy", "roc", "cox")
 }
 
 #' List registered SimtablR engines
@@ -247,10 +278,12 @@ list_measures <- function() {
 .seed_builtin_registries <- function() {
   register_engine(
     "bivariate",
+    overwrite = TRUE,
     compute = .engine_tb,
     subclass = "simtab_tb",
     legacy_tag = "tb",
     renderers = .tb_renderers(),
+    verbs = c("stratify", "measure", "test", "set_summary", "missingness"),
     engine_opts = .engine_opts_validator(
       "bivariate",
       c(
@@ -262,19 +295,23 @@ list_measures <- function() {
   )
   register_engine(
     "descriptive",
+    overwrite = TRUE,
     compute = .engine_descriptive,
     subclass = "simtab_table1",
     validate = .validate_descriptive,
     renderers = .table1_renderers(),
+    verbs = .evidence_verbs(),
     engine_opts = .engine_opts_validator("descriptive", "var.type")
   )
   register_engine(
     "glm",
+    overwrite = TRUE,
     compute = .engine_glm,
     subclass = "simtab_regtab",
     legacy_tag = "regtab",
     validate = .validate_glm,
     renderers = .regtab_renderers(),
+    verbs = "adjust",
     engine_opts = .engine_opts_validator(
       "glm",
       c(
@@ -286,6 +323,7 @@ list_measures <- function() {
   )
   register_engine(
     "e_value",
+    overwrite = TRUE,
     compute = function(spec, data) {
       simtab_abort_engine(c(
         "{.fn e_value} is an extractor and is not computed directly from a specification.",
@@ -294,15 +332,18 @@ list_measures <- function() {
       ))
     },
     subclass = "simtab_e_value",
-    renderers = .e_value_renderers()
+    renderers = .e_value_renderers(),
+    verbs = character(0)
   )
   register_engine(
     "accuracy",
+    overwrite = TRUE,
     compute = .engine_diag,
     subclass = "simtab_diag",
     legacy_tag = "diag_test",
     validate = .validate_accuracy,
     renderers = .diag_renderers(),
+    verbs = character(0),
     engine_opts = .engine_opts_validator(
       "accuracy",
       c("positive", "test_positive", "ci", "conf.level", "percent")
@@ -310,10 +351,12 @@ list_measures <- function() {
   )
   register_engine(
     "roc",
+    overwrite = TRUE,
     compute = .engine_roc,
     subclass = "simtab_roc",
     validate = .validate_roc,
     renderers = .roc_renderers(),
+    verbs = character(0),
     engine_opts = .engine_opts_validator(
       "roc",
       c("positive", "direction", "ci", "cutpoint", "conf.level", "percent")
@@ -321,10 +364,12 @@ list_measures <- function() {
   )
   register_engine(
     "cox",
+    overwrite = TRUE,
     compute = .engine_cox,
     subclass = "simtab_cox",
     validate = .validate_cox,
     renderers = .cox_renderers(),
+    verbs = c("stratify", "adjust"),
     engine_opts = .engine_opts_validator(
       "cox",
       c("predictors", "conf.level", "d", "ties")

@@ -194,6 +194,28 @@
   )
 }
 
+#' Stop when the complete-case outcome takes a single value
+#'
+#' A constant response has no variation to model: glm() "fits" it with a
+#' diverging intercept and reports slopes of exactly 1 with degenerate
+#' intervals. The error is caught by the per-outcome handler, which records the
+#' outcome as failed.
+#' @keywords internal
+#' @noRd
+.glm_check_outcome_varies <- function(formula, data, outcome) {
+  model_frame <- stats::model.frame(formula, data = data, na.action = stats::na.omit)
+  y <- stats::model.response(model_frame)
+  n_values <- length(unique(y[!is.na(y)]))
+  if (n_values < 2L) {
+    simtab_abort_engine(c(
+      "Outcome {.val {outcome}} takes a single value among complete cases.",
+      "i" = "A constant outcome has no variation to model, so no effect is estimable.",
+      "v" = "Check the outcome coding, or drop it from {.arg outcomes}."
+    ))
+  }
+  invisible(TRUE)
+}
+
 #' Count outcome events from model response frame for Firth regression
 #' @keywords internal
 #' @noRd
@@ -328,6 +350,7 @@
     ))
   }
 
+  cfg$predictors <- .formula_with_adjust(cfg$predictors, spec)
   conf.level <- cfg$conf.level %||% 0.95
   method <- cfg$method %||% "glm"
   if (!method %in% c("glm", "firth")) {
@@ -394,6 +417,7 @@
           call("~", as.name(outcome), model_rhs),
           env = environment(cfg$predictors)
         )
+        .glm_check_outcome_varies(full_formula, data, outcome)
         if (identical(method, "firth")) {
           fit <- logistf::logistf(full_formula, data = data, pl = TRUE, alpha = 1 - conf.level)
           converged <- .glm_firth_converged(fit)

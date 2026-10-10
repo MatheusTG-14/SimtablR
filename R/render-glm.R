@@ -34,16 +34,20 @@
 #' @noRd
 .regtab_term_labels <- function(x) {
   labels <- x$meta$predictor_labels
+  # Labels set later through label()/fmt() win over constructor labels.
+  fmt_labels <- x$spec$fmt$labels
   data <- x$spec$data_src$ref$data
   terms <- x$meta$term_order
   stats::setNames(
     vapply(
       terms,
       function(term) {
-        if (!is.null(labels) && term %in% names(labels)) {
+        if (!is.null(fmt_labels) && term %in% names(fmt_labels)) {
+          unname(fmt_labels[[term]])
+        } else if (!is.null(labels) && term %in% names(labels)) {
           labels[[term]]
         } else {
-          .simtab_model_term_label(data, term)
+          .simtab_model_term_label(data, term, fmt_labels)
         }
       },
       character(1)
@@ -109,7 +113,8 @@
 #' @noRd
 .format_regtab_interval <- function(estimate, lower, upper, d) {
   fmt <- function(x) format(round(x, d), nsmall = d, trim = TRUE)
-  paste0(fmt(estimate), " (", fmt(lower), " - ", fmt(upper), ")")
+  bounds <- c(fmt(lower), fmt(upper))
+  paste0(fmt(estimate), " (", bounds[1], .ci_sep_safe(" - ", bounds), bounds[2], ")")
 }
 
 #' Format regression p-value string with threshold formatting
@@ -125,6 +130,17 @@
   format(round(p, max(3L, d)), nsmall = max(3L, d), trim = TRUE)
 }
 
+#' Resolve the journal preset applied to a regression result
+#'
+#' `"default"` keeps the established regtab formatting (which honours `d`);
+#' any other preset or `journal_style()` object, set via `style()` on the
+#' result or on the specification, drives estimate/CI and p-value text.
+#' @keywords internal
+#' @noRd
+.regtab_journal <- function(x) {
+  .result_journal(x$meta$style %||% x$spec$style, legacy = "default")
+}
+
 #' Assemble formatted multi-outcome regression display data frame
 #' @keywords internal
 #' @noRd
@@ -133,6 +149,17 @@
   outcome_labels <- .regtab_outcome_labels(x)
   term_labels <- .regtab_term_labels(x)
   d <- x$meta$d %||% 2L
+  journal <- .regtab_journal(x)
+  fmt_interval <- if (is.null(journal)) {
+    function(est, lo, hi) .format_regtab_interval(est, lo, hi, d)
+  } else {
+    function(est, lo, hi) .fmt_est(est, lo, hi, journal)
+  }
+  fmt_p <- if (is.null(journal)) {
+    function(p) .format_regtab_p(p, d)
+  } else {
+    function(p) .fmt_p(p, journal)
+  }
 
   display <- data.frame(
     Variable = unname(term_labels)
@@ -146,7 +173,7 @@
     estimates <- rep("", length(term_labels))
     estimates[!is.na(idx)] <- vapply(
       idx[!is.na(idx)],
-      function(i) .format_regtab_interval(rows$estimate[i], rows$lower[i], rows$upper[i], d),
+      function(i) fmt_interval(rows$estimate[i], rows$lower[i], rows$upper[i]),
       character(1)
     )
     display[[label]] <- estimates
@@ -156,7 +183,7 @@
       p_values <- rep("", length(term_labels))
       p_values[!is.na(idx)] <- vapply(
         idx[!is.na(idx)],
-        function(i) .format_regtab_p(rows$p[i], d),
+        function(i) fmt_p(rows$p[i]),
         character(1)
       )
       display[[p_col]] <- p_values
@@ -366,7 +393,8 @@
     ft <- flextable::align(ft, part = "footer", align = "left")
   }
   ft <- .flex_add_footnotes(ft, footnotes)
-  simtab_theme(ft)
+  journal <- .regtab_journal(x)
+  if (is.null(journal)) simtab_theme(ft) else journal$flex(ft)
 }
 
 #' Engine vtable renderer dictionary for regtab GLM models

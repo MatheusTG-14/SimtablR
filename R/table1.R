@@ -52,6 +52,9 @@
 #'   a [journal_style()] object, `"n_pct"` or `"pct_n"`, a template using
 #'   `{n}` and `{p}`, or a named list per variable.
 #' @param d Integer. Decimal places for percentages and continuous summaries.
+#'   If `NULL` (the default), percentages use one decimal and continuous
+#'   summaries use the style's `digits_cont` (one decimal for the built-in
+#'   journals).
 #' @param conf.level Number between 0 and 1. Confidence level for effect
 #'   measure intervals.
 #' @param design String. Study design used to choose the effect measure when
@@ -95,6 +98,10 @@
 #' Multiplicity adjustment, paired tests, and standardized mean differences
 #' (Austin, 2009) are set afterwards with [test()], e.g.
 #' `table1(df, vars, by = group, test = TRUE) |> test(p.adjust = "holm", smd = TRUE)`.
+#' SMDs are reported as absolute values and need a two-level `by`; numeric
+#' variables use the difference in means over the square root of the
+#' unweighted average of the two group variances, and categorical variables
+#' the multinomial generalisation of Yang & Dalton (2012).
 #' With `paired = TRUE`, two equal-sized groups are treated as matched pairs in
 #' row order. Use [add_effect()] to add or replace the effect-measure columns
 #' and [fmt()] to change decimals.
@@ -166,7 +173,7 @@ table1 <- function(
   var.type = NULL,
   labels = NULL,
   style = "default",
-  d = 1,
+  d = NULL,
   conf.level = 0.95,
   design = NULL
 ) {
@@ -189,7 +196,9 @@ table1 <- function(
   adjust_quo <- rlang::enquo(adjust)
   test_explicit <- !missing(test)
   missing_explicit <- !missing(missing)
-  .check_d(d)
+  if (!is.null(d)) {
+    .check_d(d)
+  }
   .check_conf_level(conf.level)
   denominator <- match.arg(denominator)
   na_model <- match.arg(na_model)
@@ -651,7 +660,11 @@ table1 <- function(
   .table1_smd_categorical(x, gf)
 }
 
-#' Computes pooled-SD standardized mean difference for continuous data
+#' Computes the absolute standardized mean difference for continuous data
+#'
+#' Uses the unweighted average of the two group variances (Austin, 2009), the
+#' same convention as the categorical Yang-Dalton SMD, so balance thresholds
+#' read the same for every variable regardless of group sizes.
 #' @keywords internal
 #' @noRd
 .table1_smd_continuous <- function(y, group) {
@@ -668,11 +681,11 @@ table1 <- function(
     return(NA_real_)
   }
   vars <- vapply(parts, stats::var, numeric(1))
-  pooled <- sqrt(((n[[1]] - 1) * vars[[1]] + (n[[2]] - 1) * vars[[2]]) / (n[[1]] + n[[2]] - 2))
+  pooled <- sqrt((vars[[1]] + vars[[2]]) / 2)
   if (!is.finite(pooled) || pooled <= 0) {
     return(NA_real_)
   }
-  (mean(parts[[2]]) - mean(parts[[1]])) / pooled
+  abs(mean(parts[[2]]) - mean(parts[[1]])) / pooled
 }
 
 #' Computes Yang-Dalton distance SMD for categorical distributions
@@ -724,7 +737,7 @@ table1 <- function(
   if (length(x) != 1 || is.na(x)) {
     return("")
   }
-  sprintf(paste0("%.", spec$digits_est, "f"), x)
+  .fmt_fixed(x, spec$digits_est)
 }
 
 #########
@@ -798,13 +811,18 @@ table1 <- function(
 
   # Append the per-variable "Missing" count row (shared by the continuous and
   # categorical branches below); appends to the builder state via <<-.
-  missing_row <- function(rec, v) {
+  missing_row <- function(rec, v, sp) {
     if (!.table1_show_missing(meta) || sum(rec$n_missing) == 0) {
       return(invisible(NULL))
     }
     rm <- blank_row()
     for (g in gnames) {
       rm[group_header(g)] <- as.character(rec$n_missing[[g]])
+    }
+    # Under na_model = "explicit" the adjusted model estimates missingness as
+    # its own "(Missing)" level; crude estimates use observed values only.
+    if (has_adj && identical(meta$missing$model_na, "explicit")) {
+      rm[adj_col] <- effect_cell(rec$adjusted, "(Missing)", sp)
     }
     labels <<- c(labels, "  Missing")
     row_type <<- c(row_type, "missing")
@@ -828,8 +846,12 @@ table1 <- function(
 
     if (rec$type == "continuous") {
       r <- blank_row()
+      sp_cont <- sp
+      if (isTRUE(x$spec$fmt$d_explicit)) {
+        sp_cont$digits_cont <- d
+      }
       for (g in gnames) {
-        r[group_header(g)] <- .fmt_cont(rec$summary[[g]], rec$stat, sp)
+        r[group_header(g)] <- .fmt_cont(rec$summary[[g]], rec$stat, sp_cont)
       }
       if (has_smd) r[smd_col] <- smd_str
       if (has_p) r[p_col] <- p_str
@@ -843,7 +865,7 @@ table1 <- function(
       row_level <- c(row_level, NA_character_)
       rows[[length(rows) + 1]] <- r
 
-      missing_row(rec, v)
+      missing_row(rec, v, sp)
     } else {
       # header row
       hr <- blank_row()
@@ -871,7 +893,7 @@ table1 <- function(
         rows[[length(rows) + 1]] <- r
       }
 
-      missing_row(rec, v)
+      missing_row(rec, v, sp)
     }
   }
 
@@ -953,6 +975,10 @@ table1 <- function(
       cat("\nTests: ", paste(um, collapse = "; "), "\n", sep = "")
     }
   }
+  notes <- .table1_notes(x)
+  if (length(notes) > 0) {
+    cat(paste0("\nNote: ", notes, collapse = ""), "\n", sep = "")
+  }
   .print_advice(x)
   invisible(x)
 }
@@ -971,7 +997,44 @@ table1 <- function(
   attr(df, "row_type") <- bd$row_type
   attr(df, "row_var") <- bd$row_var
   attr(df, "row_level") <- bd$row_level
+  attr(df, "notes") <- .table1_notes(x)
   df
+}
+
+#' Table notes that qualify the displayed numbers
+#'
+#' Shared by print, gt, and flextable so every rendering states the same
+#' caveats: an Overall column that includes rows with a missing `by` value, and
+#' an adjusted model that treated missing categories as their own level.
+#' @keywords internal
+#' @noRd
+.table1_notes <- function(x) {
+  meta <- x$meta
+  notes <- character(0)
+  strat <- meta$strat_var
+  group_n <- meta$group_n
+  if (!is.null(strat) && isTRUE(meta$overall) && "Overall" %in% names(group_n)) {
+    in_groups <- sum(group_n[setdiff(names(group_n), "Overall")])
+    n_missing_by <- as.integer(group_n[["Overall"]] - in_groups)
+    if (n_missing_by > 0) {
+      by_label <- .resolve_label(strat, x$used$ref$data, x$spec$fmt$labels)
+      notes <- c(notes, sprintf(
+        "Overall includes %d participant%s with missing %s.",
+        n_missing_by, if (n_missing_by == 1) "" else "s", by_label
+      ))
+    }
+  }
+  if (!is.null(meta$adjust) && identical(meta$missing$model_na, "explicit")) {
+    shown <- .table1_show_missing(meta) && any(vapply(meta$vars, function(v) {
+      adj <- x$data[[v]]$adjusted
+      is.data.frame(adj) && "(Missing)" %in% adj$level
+    }, logical(1)))
+    notes <- c(notes, paste0(
+      "Adjusted models treated missing values of categorical variables as their own category",
+      if (shown) "; its estimate is shown in the Missing row." else "."
+    ))
+  }
+  notes
 }
 
 #' @keywords internal
@@ -1114,6 +1177,7 @@ table1 <- function(
       foot <- c(foot, paste0("Tests: ", paste(methods, collapse = "; "), "."))
     }
   }
+  foot <- c(foot, .table1_notes(x))
   if (!is.null(footnotes)) foot <- c(foot, footnotes)
   if (length(foot) > 0) {
     ft <- flextable::add_footer_lines(ft, values = foot)
