@@ -28,7 +28,8 @@ regtab(
   conf.level = 0.95,
   include_intercept = FALSE,
   p_values = FALSE,
-  design = NULL
+  design = NULL,
+  exposure = NULL
 )
 ```
 
@@ -52,9 +53,11 @@ regtab(
 - family:
 
   A [`stats::family()`](https://rdrr.io/r/stats/family.html) object.
-  Poisson-log needs a numeric outcome (counts or 0/1);
-  [`binomial()`](https://rdrr.io/r/stats/family.html) also accepts
-  two-level factors.
+  Poisson-log needs a count, a 0/1 outcome, or a two-level factor,
+  character, or logical outcome, which is coded 1 for the second level
+  (as [`binomial()`](https://rdrr.io/r/stats/family.html) and
+  [`simtablr()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr.md)
+  do) with a note.
 
 - offset:
 
@@ -109,9 +112,31 @@ regtab(
 
 - design:
 
-  String. Optional study design recorded on the result. With a
-  Poisson-log model and an `offset`, it lets the estimate be labelled as
-  an incidence-rate ratio.
+  String. Optional study design recorded on the result. It does not
+  change the family; it labels log-link estimates on binary outcomes as
+  prevalence ratios (`"cross_sectional"`) or risk ratios, names the
+  design in
+  [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md)
+  and
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md),
+  and lets
+  [`advise()`](https://MatheusTG-14.github.io/SimtablR/reference/advise.md)
+  flag odds ratios for a common outcome under a cohort or
+  cross-sectional design.
+
+- exposure:
+
+  Optional exposure column: a bare name or string. It must be a
+  main-effect term of `predictors`; the other terms form the adjustment
+  set. The exposure is recorded on the specification and used by
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md),
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md),
+  the forest plot,
+  [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md),
+  and
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md),
+  so covariate coefficients are not reported as effects (the Table 2
+  fallacy).
 
 ## Value
 
@@ -217,16 +242,17 @@ fit <- regtab(
   predictors = ~ age + sex + smoking
 )
 fit
-#> Variable  Emergency department revisits during 1-year follow-up  Index hospital length of stay (days)
-#> Age at …  1.00 (1.00 - 1.01)                                     1.01 (1.00 - 1.01)
-#> Sex rec…  0.99 (0.89 - 1.11)                                     1.00 (0.88 - 1.14)
-#> Smoking…  1.09 (0.96 - 1.24)                                     1.01 (0.87 - 1.17)
-#> Smoking…  1.17 (1.01 - 1.36)                                     1.29 (1.09 - 1.53)
-#> N         1500                                                   1500
+#> Variable  Emergency department revisits during 1-year follow-up, IRR (95% CI)  Index hospital length of stay (days), IRR (95% CI)
+#> Age at …  1.00 (1.00 - 1.01)                                                   1.01 (1.00 - 1.01)
+#> Sex rec…  0.99 (0.89 - 1.11)                                                   1.00 (0.88 - 1.14)
+#> Smoking…  1.09 (0.96 - 1.24)                                                   1.01 (0.87 - 1.17)
+#> Smoking…  1.17 (1.01 - 1.36)                                                   1.29 (1.09 - 1.53)
+#> N         1500                                                                 1500
 #> ℹ Methodological guidance
 #>   Adjusted coefficients for covariates are conditional associations, not
 #>   automatically total causal effects. Footnote covariate rows or present the
-#>   pre-specified exposure estimate separately.
+#>   exposure estimate separately; record it with regtab(exposure = ) so reviewer
+#>   tools skip covariates.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 
 # Odds ratios for a binary outcome, with p-values
@@ -234,15 +260,16 @@ regtab(
   epitabl, "rehospitalized", ~ age + sex + diabetes,
   family = binomial(), p_values = TRUE
 )
-#> Variable  Hospital readmission during 1-year follow-up  Hospital readmission during 1-year follow-up p-value
-#> Age at …  0.99 (0.99 - 1.00)                            0.132
-#> Sex rec…  0.98 (0.79 - 1.22)                            0.890
-#> History…  1.57 (1.23 - 2.00)                            <0.001
+#> Variable  Hospital readmission during 1-year follow-up, OR (95% CI)  Hospital readmission during 1-year follow-up p-value
+#> Age at …  0.99 (0.99 - 1.00)                                         0.132
+#> Sex rec…  0.98 (0.79 - 1.22)                                         0.890
+#> History…  1.57 (1.23 - 2.00)                                         <0.001
 #> N         1500
 #> ℹ Methodological guidance
 #>   Adjusted coefficients for covariates are conditional associations, not
 #>   automatically total causal effects. Footnote covariate rows or present the
-#>   pre-specified exposure estimate separately.
+#>   exposure estimate separately; record it with regtab(exposure = ) so reviewer
+#>   tools skip covariates.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 
 # One row per term, for further processing
@@ -256,4 +283,22 @@ generics::tidy(fit)
 #> 6 length_of_stay        sexMale 1.001773 0.8786926  1.142094 0.978868858
 #> 7 length_of_stay  smokingFormer 1.008002 0.8681319  1.170409 0.916710451
 #> 8 length_of_stay smokingCurrent 1.289284 1.0893462  1.525918 0.003123299
+
+# Name the exposure so reviewer tools skip the covariates
+adjusted <- regtab(
+  epitabl, "mace_event", ~ renal_impairment + age + sex,
+  family = binomial("log"), design = "cohort", exposure = renal_impairment
+)
+e_value(adjusted)
+#> E-values
+#> 
+#>  source    outcome                term measure estimate conf.low conf.high
+#>  regtab mace_event renal_impairmentYes      RR 1.619658 1.237364  2.120065
+#>   e_value e_value_ci approximation  rare
+#>  2.621474   1.779311         FALSE FALSE
+#> ℹ Methodological guidance
+#>   E-values summarise the minimum unmeasured-confounding strength needed to
+#>   explain away a ratio estimate. Interpret E-values alongside design quality,
+#>   measured confounding control, and outcome prevalence.
+#>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```

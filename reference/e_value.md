@@ -20,7 +20,12 @@ e_value(x, measure = NULL, rare = FALSE, ...)
 
 - x:
 
-  A computed SimtablR result containing ratio estimates.
+  A computed SimtablR result containing ratio estimates. For
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  and
+  [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  results, only the rows of the recorded `exposure` are used; without
+  one, every term is returned with a warning.
 
 - ...:
 

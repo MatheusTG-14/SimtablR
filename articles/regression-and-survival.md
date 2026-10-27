@@ -100,19 +100,20 @@ fit_logistic <- regtab(
   )
 )
 fit_logistic
-#> Variable                                    Adjudicated acute coronary syndrome
-#> Age at index presentation (years)           1.02 (1.02 - 1.03)
-#> Sex recorded for clinical assessment: Male  1.29 (1.04 - 1.60)
-#> Smoking status: Former                      0.97 (0.76 - 1.24)
-#> Current Smoker                              1.56 (1.18 - 2.07)
-#> Hypertension                                1.03 (0.83 - 1.29)
-#> Diabetes Mellitus                           1.73 (1.35 - 2.21)
-#> Renal Impairment                            0.74 (0.56 - 0.99)
-#> N                                           1500
+#> Variable                        Adjudicated acute coronary syndrome, OR (95% CI)
+#> Age at index presentation (ye…  1.02 (1.02 - 1.03)
+#> Sex recorded for clinical ass…  1.29 (1.04 - 1.60)
+#> Smoking status: Former          0.97 (0.76 - 1.24)
+#> Current Smoker                  1.56 (1.18 - 2.07)
+#> Hypertension                    1.03 (0.83 - 1.29)
+#> Diabetes Mellitus               1.73 (1.35 - 2.21)
+#> Renal Impairment                0.74 (0.56 - 0.99)
+#> N                               1500
 #> ℹ Methodological guidance
 #>   Adjusted coefficients for covariates are conditional associations, not
 #>   automatically total causal effects. Footnote covariate rows or present the
-#>   pre-specified exposure estimate separately.
+#>   exposure estimate separately; record it with regtab(exposure = ) so reviewer
+#>   tools skip covariates.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```
 
@@ -152,15 +153,16 @@ fit_multi <- regtab(
   )
 )
 fit_multi
-#> Variable                             Acute Coronary Syndrome  1-Year Readmission
-#> Age at index presentation (years)    1.03 (1.02 - 1.04)       0.99 (0.98 - 1.00)
-#> Sex recorded for clinical assessme…  1.29 (1.04 - 1.59)       0.98 (0.79 - 1.21)
-#> Renal impairment (eGFR below 60 mL…  0.84 (0.63 - 1.10)       1.44 (1.09 - 1.90)
-#> N                                    1500                     1500
+#> Variable   Acute Coronary Syndrome, OR (95% CI)  1-Year Readmission, OR (95% CI)
+#> Age at i…  1.03 (1.02 - 1.04)                    0.99 (0.98 - 1.00)
+#> Sex reco…  1.29 (1.04 - 1.59)                    0.98 (0.79 - 1.21)
+#> Renal im…  0.84 (0.63 - 1.10)                    1.44 (1.09 - 1.90)
+#> N          1500                                  1500
 #> ℹ Methodological guidance
 #>   Adjusted coefficients for covariates are conditional associations, not
 #>   automatically total causal effects. Footnote covariate rows or present the
-#>   pre-specified exposure estimate separately.
+#>   exposure estimate separately; record it with regtab(exposure = ) so reviewer
+#>   tools skip covariates.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```
 
@@ -219,15 +221,16 @@ fit_firth <- regtab(
   method = "firth"
 )
 fit_firth
-#> Variable                                    Adjudicated acute coronary syndrome
-#> Age at index presentation (years)           1.02 (1.02 - 1.03)
-#> Sex recorded for clinical assessment: Male  1.29 (1.04 - 1.59)
-#> Maintenance dialysis: Yes                   0.42 (0.10 - 1.36)
-#> N                                           1500
+#> Variable                        Adjudicated acute coronary syndrome, OR (95% CI)
+#> Age at index presentation (ye…  1.02 (1.02 - 1.03)
+#> Sex recorded for clinical ass…  1.29 (1.04 - 1.59)
+#> Maintenance dialysis: Yes       0.42 (0.10 - 1.36)
+#> N                               1500
 #> ℹ Methodological guidance
 #>   Adjusted coefficients for covariates are conditional associations, not
 #>   automatically total causal effects. Footnote covariate rows or present the
-#>   pre-specified exposure estimate separately.
+#>   exposure estimate separately; record it with regtab(exposure = ) so reviewer
+#>   tools skip covariates.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```
 
@@ -322,5 +325,5 @@ produces publication-ready text describing the Cox modeling strategy:
 ``` r
 
 cat(as_methods(fit_cox))
-#> Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972); hazard ratios with 95% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994).
+#> Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972) using the Efron method for ties; hazard ratios with 95% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994).
 ```

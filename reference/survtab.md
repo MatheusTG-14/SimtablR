@@ -19,7 +19,8 @@ survtab(
   conf.level = 0.95,
   d = 2,
   labels = NULL,
-  style = "default"
+  style = "default",
+  exposure = NULL
 )
 ```
 
@@ -66,6 +67,18 @@ survtab(
   String. A journal preset name (see
   [`list_journals()`](https://MatheusTG-14.github.io/SimtablR/reference/list_journals.md))
   that controls formatting such as p-values.
+
+- exposure:
+
+  Optional exposure column: a bare name or string, as in
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md).
+  It must be a main-effect term of `predictors` and is used by
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md),
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md),
+  the forest plot,
+  [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md),
+  and
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md).
 
 ## Value
 

@@ -18,11 +18,18 @@ repro_manifest(result)
 
 ## Value
 
-A `simtab_manifest` list. `design` and `design_source` describe any
-study design recorded on the specification or the source data frame,
-whether or not it took part in resolving `measure`; `design_used`
-distinguishes the two, and is `TRUE` only when `resolved_from` is
-`"design"`. A design recorded only on the data frame
+A `simtab_manifest` list. `estimator`, `interval_method`, `tests`, and
+the corrections in `engine_decisions` are the same recorded decisions
+that
+[`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+writes as prose. `packages` lists SimtablR, its Imports, and the
+suggested packages the result's engine used (for example pROC for
+[`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md)),
+alongside the R version and platform in `r`. `design` and
+`design_source` describe any study design recorded on the specification
+or the source data frame, whether or not it took part in resolving
+`measure`; `design_used` distinguishes the two, and is `TRUE` only when
+`resolved_from` is `"design"`. A design recorded only on the data frame
 ([`set_design()`](https://MatheusTG-14.github.io/SimtablR/reference/set_design.md)
 on a `data.frame`) is advisory and never sets `design_used`; see
 [`set_design()`](https://MatheusTG-14.github.io/SimtablR/reference/set_design.md).

@@ -466,7 +466,7 @@ as_gt(report$table2)
 flextable::as_flextable(report$table2)
 ```
 
-|  |  | adjudicated_acs |  |  |  |  |
+|  |  | Adjudicated acute coronary syndrome |  |  |  |  |
 |----|----|----|----|----|----|----|
 | Characteristic | Overall (N=1500) | No (N=928) | Yes (N=572) | P-value | RR (95% CI) | Adjusted RR (95% CI) |
 | Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%) |  |  |  | 0.268 |  |  |
@@ -485,9 +485,9 @@ tmp_docx <- tempfile(fileext = ".docx")
 tmp_xlsx <- tempfile(fileext = ".xlsx")
 
 export_docx(report, path = tmp_docx)
-#> Report exported to: /tmp/RtmpMgYz7u/file1ea02390afd3.docx
+#> Report exported to: /tmp/RtmpFsD6oa/file1fab316da2fa.docx
 export_xlsx(report, path = tmp_xlsx)
-#> Report exported to: /tmp/RtmpMgYz7u/file1ea0a209664.xlsx
+#> Report exported to: /tmp/RtmpFsD6oa/file1fab43339660.xlsx
 
 # Verify exported files exist
 file.exists(tmp_docx)
@@ -507,5 +507,5 @@ describing the analytical steps taken:
 ``` r
 
 cat(as_methods(report))
-#> Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. Crude RR was estimated using the Katz log risk-ratio estimator with 95% confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% confidence intervals. The RR was chosen from the recorded study design (cohort).
+#> Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. Crude RR was estimated using the Katz log risk-ratio estimator with 95% Katz log confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% Wald confidence intervals (model-based standard errors). The RR was chosen from the recorded study design (cohort).
 ```

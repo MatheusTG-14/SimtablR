@@ -55,7 +55,14 @@ register_engine(
 
   Named list of renderer functions, names drawn from `.renderer_verbs()`
   (`print`, `as_data_frame`, `as_flextable`, `as_gt`, `tidy`, `glance`,
-  `autoplot`, `as_methods`). Each function takes `function(x, ...)`.
+  `autoplot`, `as_methods`, `decisions`). Each function takes
+  `function(x, ...)`. `decisions` returns a named list of the recorded
+  `estimator`, `interval_method`, `tests`, `corrections`, and Suggests
+  `packages` used;
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  prose and
+  [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md)
+  both read it.
 
 - engine_opts:
 
