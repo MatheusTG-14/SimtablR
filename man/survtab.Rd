@@ -13,7 +13,8 @@ survtab(
   conf.level = 0.95,
   d = 2,
   labels = NULL,
-  style = "default"
+  style = "default",
+  exposure = NULL
 )
 }
 \arguments{
@@ -39,6 +40,11 @@ already stored in \code{data} are used by default.}
 
 \item{style}{String. A journal preset name (see \code{\link[=list_journals]{list_journals()}}) that
 controls formatting such as p-values.}
+
+\item{exposure}{Optional exposure column: a bare name or string, as in
+\code{\link[=regtab]{regtab()}}. It must be a main-effect term of \code{predictors} and is used by
+\code{\link[=e_value]{e_value()}}, \code{\link[=sensitivity]{sensitivity()}}, the forest plot, \code{\link[=why]{why()}}, and
+\code{\link[=as_methods]{as_methods()}}.}
 }
 \value{
 A \code{simtab_result} of class \code{simtab_cox}. Print it to see the

@@ -10,7 +10,12 @@ repro_manifest(result)
 \item{result}{A \code{simtab_result} or \code{simtab_spec}.}
 }
 \value{
-A \code{simtab_manifest} list. \code{design} and \code{design_source} describe
+A \code{simtab_manifest} list. \code{estimator}, \code{interval_method}, \code{tests},
+and the corrections in \code{engine_decisions} are the same recorded decisions
+that \code{\link[=as_methods]{as_methods()}} writes as prose. \code{packages} lists SimtablR, its
+Imports, and the suggested packages the result's engine used (for
+example pROC for \code{\link[=roc]{roc()}}), alongside the R version and platform in \code{r}.
+\code{design} and \code{design_source} describe
 any study design recorded on the specification or the source data frame,
 whether or not it took part in resolving \code{measure}; \code{design_used}
 distinguishes the two, and is \code{TRUE} only when \code{resolved_from} is

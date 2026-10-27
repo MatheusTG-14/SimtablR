@@ -50,7 +50,12 @@
   register_rule(
     "or_as_rr_common_outcome",
     applies = function(result) {
-      # Only applies to 2x2/cross-tables reporting OR in cohort or cross-sectional designs
+      # Tables reporting OR outside case-control designs, or logistic models
+      # with a declared cohort or cross-sectional design
+      if (inherits(result, "simtab_regtab")) {
+        return(any(.regtab_measures(result) == "OR") &&
+          isTRUE(.result_design(result) %in% c("cohort", "cross_sectional")))
+      }
       .is_table_result(result) &&
         .result_uses_measure(result, "OR") &&
         !identical(.result_design(result), "case_control")
@@ -85,6 +90,47 @@
         outcome = factor(c(rep("No", 25), rep("Yes", 25), rep("No", 10), rep("Yes", 40)))
       )
       table1(dat, "exposure", by = "outcome", measure = "OR", design = "case_control")
+    }
+  )
+
+  # Rule: Risk or prevalence ratio reported from a case-control design
+  # Case-control sampling fixes the outcome margin, so only the odds ratio is
+  # estimable; an explicitly requested RR/PR still wins but is flagged.
+
+  register_rule(
+    "ratio_in_case_control",
+    applies = function(result) {
+      .is_table_result(result) &&
+        identical(.result_design(result), "case_control") &&
+        .result_uses_measure(result, c("RR", "PR"))
+    },
+    check = function(result) {
+      measure <- toupper(result$spec$effect$measure %||% result$meta$effect %||% "RR")
+      list(
+        message = sprintf(
+          "A %s is reported for a case-control design; only the odds ratio is estimable.",
+          measure
+        ),
+        why = "Case-control sampling fixes the numbers of cases and controls, so outcome risks and prevalences, and their ratios, are not identified from the table."
+      )
+    },
+    severity = 4,
+    citation = "Rothman, Greenland & Lash 2008",
+    fix = "Use measure = 'OR' (the case-control default), or record the actual study design.",
+    version = version,
+    example_fires = function() {
+      dat <- data.frame(
+        exposure = factor(rep(c("ref", "exp"), each = 50)),
+        outcome = factor(c(rep("No", 25), rep("Yes", 25), rep("No", 10), rep("Yes", 40)))
+      )
+      table1(dat, "exposure", by = "outcome", measure = "RR", design = "case_control")
+    },
+    example_silent = function() {
+      dat <- data.frame(
+        exposure = factor(rep(c("ref", "exp"), each = 50)),
+        outcome = factor(c(rep("No", 25), rep("Yes", 25), rep("No", 10), rep("Yes", 40)))
+      )
+      table1(dat, "exposure", by = "outcome", design = "case_control")
     }
   )
 
@@ -778,14 +824,24 @@
     "table2_fallacy",
     applies = function(result) inherits(result, "simtab_regtab") && length(result$meta$term_order) > 1,
     check = function(result) {
+      decisions <- .model_exposure_decisions(result)
+      message <- if (is.null(decisions) || length(decisions$adjustment) == 0) {
+        "Adjusted coefficients for covariates are conditional associations, not automatically total causal effects."
+      } else {
+        sprintf(
+          "Rows for %s are adjustment covariates for the exposure %s: conditional associations, not total causal effects.",
+          paste(decisions$adjustment, collapse = ", "),
+          decisions$exposure
+        )
+      }
       list(
-        message = "Adjusted coefficients for covariates are conditional associations, not automatically total causal effects.",
+        message = message,
         why = "Table 2 covariate rows can invite causal interpretation even when covariates were included only for adjustment."
       )
     },
     severity = 1,
     citation = "Westreich & Greenland 2013",
-    fix = "Footnote covariate rows or present the pre-specified exposure estimate separately.",
+    fix = "Footnote covariate rows or present the exposure estimate separately; record it with regtab(exposure = ) so reviewer tools skip covariates.",
     version = version,
     example_fires = function() {
       dat <- data.frame(y = stats::rpois(80, 2), exposure = rep(c(0, 1), 40), age = rep(30:69, each = 2))

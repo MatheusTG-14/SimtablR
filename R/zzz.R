@@ -40,7 +40,11 @@
     "\n",
     cli::col_green(cli::symbol$tick),
     " Export: ",
-    cli::col_blue("export_docx(), as_flextable(), as_gt(), autoplot()")
+    cli::col_blue("export_docx(), as_flextable(), as_gt(), autoplot()"),
+    "\n",
+    cli::col_green(cli::symbol$info),
+    " Learning SimtablR? ",
+    cli::col_cyan("Use browseVignettes(package = 'SimtablR') for guides")
   )
   packageStartupMessage(
     cli::col_silver("Use suppressPackageStartupMessages() to silence.")

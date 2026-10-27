@@ -19,6 +19,20 @@
   invisible(TRUE)
 }
 
+#' Reject export inputs that are neither SimtablR objects nor data frames
+#' @keywords internal
+#' @noRd
+.check_exportable <- function(x) {
+  if (inherits(x, "simtab") || is.data.frame(x)) {
+    return(invisible(x))
+  }
+  simtab_abort_input(c(
+    "{.arg x} must be a SimtablR result, specification, report, or data frame.",
+    "i" = "Received an object of class {.cls {class(x)[[1]]}}.",
+    "v" = "Export the result of {.fn table1}, {.fn tb}, {.fn regtab}, or another SimtablR function."
+  ))
+}
+
 #' Validate and normalize a user-selected export path
 #'
 #' @keywords internal
@@ -170,6 +184,78 @@
 # WORD AND POWERPOINT EXPORT WRAPPERS
 # Render tables to flextable objects and save into Office documents.
 
+#' Usable width in inches of an officer document's first section
+#' @keywords internal
+#' @noRd
+.docx_usable_width <- function(doc = officer::read_docx()) {
+  dims <- officer::docx_dim(doc)
+  unname(dims$page[["width"]] - dims$margins[["left"]] - dims$margins[["right"]])
+}
+
+#' Usable width in inches of a PowerPoint slide (content area, with side margins)
+#' @keywords internal
+#' @noRd
+.pptx_usable_width <- function(pptx = officer::read_pptx(), margin = 0.5) {
+  size <- officer::slide_size(pptx)
+  unname(size[["width"]]) - 2 * margin
+}
+
+#' Constrain a flextable to a maximum width (inches) at the render edge
+#'
+#' Autofits to natural width, then rescales column widths proportionally when
+#' the table is too wide so that cell text wraps instead of overflowing the
+#' page. Font size is only reduced as a last resort, and never below `min_size`.
+#' @keywords internal
+#' @noRd
+.fit_flextable_width <- function(ft, max_width, min_size = 9) {
+  ft <- flextable::autofit(ft)
+  current <- sum(dim(ft)$widths)
+  if (current <= max_width + 1e-6) {
+    return(ft)
+  }
+  factor <- max_width / current
+  if (factor < 0.75) {
+    # Wrapping alone would break words mid-token; trim the font modestly first.
+    size <- suppressWarnings(as.numeric(ft$body$styles$text$font.size$data[1, 1]))
+    if (is.na(size)) size <- 11
+    ft <- flextable::fontsize(ft, size = max(min_size, min(size, round(size * 0.85))), part = "all")
+    ft <- flextable::autofit(ft)
+    current <- sum(dim(ft)$widths)
+  }
+  if (current > max_width + 1e-6) {
+    ft <- flextable::width(ft, width = .shrink_widths(dim(ft)$widths, max_width))
+  }
+  ft
+}
+
+#' Shrink column widths to a total, protecting narrow columns from word breaks
+#'
+#' Columns that scaling would push below `floor` inches (or below their natural
+#' width, when that is smaller) are pinned; the remaining columns, typically the
+#' long label column, absorb the reduction proportionally.
+#' @keywords internal
+#' @noRd
+.shrink_widths <- function(widths, max_width, floor = 0.75) {
+  pinned <- rep(FALSE, length(widths))
+  repeat {
+    free <- !pinned
+    share <- max_width - sum(widths[pinned] * 0 + pmin(widths[pinned], floor))
+    scaled <- widths[free] * share / sum(widths[free])
+    low <- scaled < pmin(widths[free], floor)
+    if (!any(low) || !any(free)) break
+    pinned[which(free)[low]] <- TRUE
+  }
+  out <- widths
+  out[pinned] <- pmin(widths[pinned], floor)
+  free <- !pinned
+  if (any(free)) {
+    out[free] <- widths[free] * (max_width - sum(out[pinned])) / sum(widths[free])
+  } else {
+    out <- out * max_width / sum(out)
+  }
+  out
+}
+
 #' Export a SimtablR table to a Word (.docx) file
 #'
 #' @param x A SimtablR object with an `as_flextable()` method (e.g. from
@@ -201,10 +287,11 @@ export_docx <- function(x, path, footnotes = NULL, methods = FALSE, overwrite = 
 
 #' @export
 export_docx.default <- function(x, path, footnotes = NULL, methods = FALSE, overwrite = FALSE, ...) {
+  .check_exportable(x)
   target <- .prepare_export_path(path, "docx", overwrite = overwrite)
   .require_export_pkg("flextable")
   .require_export_pkg("officer")
-  ft <- flextable::as_flextable(x, footnotes = footnotes)
+  ft <- .fit_flextable_width(flextable::as_flextable(x, footnotes = footnotes), .docx_usable_width())
   .write_export_transaction(target, function(temporary) {
     if (isTRUE(methods)) {
       doc <- officer::read_docx()
@@ -232,7 +319,8 @@ export_docx.simtab_report <- function(x, path, footnotes = NULL, methods = FALSE
   target <- .prepare_export_path(path, "docx", overwrite = overwrite)
   .require_export_pkg("flextable")
   .require_export_pkg("officer")
-  fts <- flextable::as_flextable(x, footnotes = footnotes)
+  usable <- .docx_usable_width()
+  fts <- lapply(flextable::as_flextable(x, footnotes = footnotes), .fit_flextable_width, max_width = usable)
   .write_export_transaction(target, function(temporary) {
     if (isTRUE(methods)) {
       doc <- officer::read_docx()
@@ -272,12 +360,13 @@ export_pptx <- function(x, path, font_size = 14, overwrite = FALSE, ...) {
 
 #' @export
 export_pptx.default <- function(x, path, font_size = 14, overwrite = FALSE, ...) {
+  .check_exportable(x)
   target <- .prepare_export_path(path, "pptx", overwrite = overwrite)
   .require_export_pkg("flextable")
   .require_export_pkg("officer")
   ft <- flextable::as_flextable(x)
   ft <- flextable::fontsize(ft, size = font_size, part = "all")
-  ft <- flextable::autofit(ft)
+  ft <- .fit_flextable_width(ft, .pptx_usable_width())
   .write_export_transaction(target, function(temporary) {
     flextable::save_as_pptx(ft, path = temporary, ...)
   })
@@ -299,9 +388,10 @@ export_pptx.simtab_report <- function(x, path, font_size = 14, overwrite = FALSE
   .require_export_pkg("flextable")
   .require_export_pkg("officer")
   fts <- flextable::as_flextable(x)
+  usable <- .pptx_usable_width()
   fts <- lapply(fts, function(ft) {
     ft <- flextable::fontsize(ft, size = font_size, part = "all")
-    flextable::autofit(ft)
+    .fit_flextable_width(ft, usable)
   })
   .write_export_transaction(target, function(temporary) {
     flextable::save_as_pptx(values = fts, path = temporary, ...)
@@ -351,6 +441,7 @@ export_xlsx.default <- function(
   overwrite = FALSE,
   ...
 ) {
+  .check_exportable(x)
   target <- .prepare_export_path(path, "xlsx", overwrite = overwrite)
   .require_export_pkg("openxlsx")
   machine_sheet <- "machine-readable"

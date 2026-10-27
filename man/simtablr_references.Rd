@@ -59,6 +59,14 @@ variables is such that it can be reasonably supposed to have arisen from
 random sampling. \emph{Philosophical Magazine, Series 5}, 50(302),
 157--175. \doi{10.1080/14786440009463897}.
 
+\strong{Rothman, Greenland & Lash 2008.} Rothman, K. J., Greenland, S., & Lash,
+T. L. (2008). \emph{Modern Epidemiology} (3rd ed.). Lippincott Williams &
+Wilkins.
+
+\strong{van Elteren 1960.} van Elteren, P. H. (1960). On the combination of
+independent two-sample tests of Wilcoxon. \emph{Bulletin of the
+International Statistical Institute}, 37, 351--361.
+
 \strong{Woolf 1955.} Woolf, B. (1955). On estimating the relation between blood
 group and disease. \emph{Annals of Human Genetics}, 19(4), 251--253.
 \doi{10.1111/j.1469-1809.1955.tb01348.x}.

@@ -528,7 +528,8 @@
     function(x) {
       (is.factor(x) || is.character(x) || is.logical(x)) &&
         identical(family$family, "poisson") &&
-        identical(family$link, "log")
+        identical(family$link, "log") &&
+        is.null(.glm_binary_outcome_01(x))
     },
     logical(1)
   )]
@@ -539,8 +540,8 @@
         paste(sprintf("'%s'", incompatible), collapse = ", "),
         "poisson(link = \"log\")"
       ),
-      "i" = "Poisson-log models require a numeric count or rate outcome; this outcome is factor, character, or logical.",
-      "v" = "For a binary outcome, use family = binomial()."
+      "i" = "Poisson-log models need a numeric count or rate outcome, or a binary outcome with exactly two observed levels.",
+      "v" = "Recode the outcome to two levels or a count, or choose another family."
     ))
   }
 
@@ -927,6 +928,10 @@ roc <- function(
 #' @param predictors The right-hand side of the model, as a one-sided formula
 #'   (`~ age + sex`) or a character vector of column names.
 #' @param design String. Optional study design recorded on the result.
+#' @param exposure Optional exposure column: a bare name or string, as in
+#'   [regtab()]. It must be a main-effect term of `predictors` and is used by
+#'   [e_value()], [sensitivity()], the forest plot, [why()], and
+#'   [as_methods()].
 #' @param conf.level Number between 0 and 1. Confidence level for intervals.
 #' @param d Integer. Decimal places for hazard ratios and intervals.
 #' @param labels Named character vector of display labels for model terms,
@@ -997,7 +1002,8 @@ survtab <- function(
   conf.level = 0.95,
   d = 2,
   labels = NULL,
-  style = "default"
+  style = "default",
+  exposure = NULL
 ) {
   if (missing(data)) {
     .abort_preset_missing_data(
@@ -1063,6 +1069,7 @@ survtab <- function(
       ties = "efron"
     )
   )
+  spec <- .bind_model_exposure(spec, rlang::enquo(exposure), spec$engine_opts$cox$predictors, "survtab")
   spec["call"] <- list(match.call())
 
   evaluate(spec)

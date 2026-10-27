@@ -163,9 +163,9 @@
       return(NA_character_)
     }
     if (isTRUE(scale)) {
-      paste0(sprintf(paste0("%.", digits, "f"), value * 100), "%")
+      paste0(.fmt_fixed(value * 100, digits), "%")
     } else {
-      sprintf(paste0("%.", digits, "f"), value)
+      .fmt_fixed(value, digits)
     }
   }
 
@@ -181,7 +181,8 @@
     ci_chr[i] <- if (is.na(lo) || is.na(hi)) {
       ""
     } else {
-      paste0(lp, fmt_value(lo, scale_i), style_spec$ci_sep, fmt_value(hi, scale_i), rp)
+      bounds <- c(fmt_value(lo, scale_i), fmt_value(hi, scale_i))
+      paste0(lp, bounds[1], .ci_sep_safe(style_spec$ci_sep, bounds), bounds[2], rp)
     }
   }
 
@@ -536,7 +537,8 @@ plot.simtab_diag <- function(
     as_data_frame = .diag_as_data_frame,
     as_flextable = .diag_as_flextable,
     autoplot = .diag_autoplot,
-    as_methods = .methods_as_diag
+    as_methods = .methods_as_diag,
+    decisions = .decisions_diag
   )
 }
 

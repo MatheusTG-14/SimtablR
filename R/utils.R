@@ -12,6 +12,26 @@
 #' @noRd
 `%||%` <- function(a, b) if (is.null(a)) b else a
 
+#' Drop the sign from formatted numbers that round to zero
+#'
+#' `sprintf("%.2f", -0.001)` and `formatC()` give `"-0.00"`, which reads as a
+#' real negative value. Applied to already formatted strings so any grouping or
+#' decimal mark is preserved; non-zero digits keep their sign.
+#' @keywords internal
+#' @noRd
+.unsign_zero <- function(txt) {
+  zero <- !is.na(txt) & grepl("^-[0.,[:space:]]*$", txt) & grepl("0", txt, fixed = TRUE)
+  txt[zero] <- substring(txt[zero], 2L)
+  txt
+}
+
+#' Format numbers to fixed decimals without a negative zero
+#' @keywords internal
+#' @noRd
+.fmt_fixed <- function(x, digits) {
+  .unsign_zero(sprintf(paste0("%.", digits, "f"), x))
+}
+
 #' Detect whether variable is summarized as continuous or categorical
 #' @keywords internal
 #' @noRd

@@ -555,6 +555,65 @@
   )
 }
 
+#' Cochran Q homogeneity test for stratified risk or prevalence ratios
+#'
+#' Breslow-Day tests odds-ratio homogeneity, so it does not answer whether a
+#' risk or prevalence ratio is constant across strata. This is the
+#' inverse-variance Q statistic on the stratum log ratios, using the Katz
+#' variance (with the same Haldane-Anscombe correction as the crude ratios).
+#' Strata with no events, or without both exposure groups, carry no
+#' information about the ratio and are skipped.
+#'
+#' @param strata List of 2x2 matrices. Rows are index/reference exposure;
+#'   columns are event/non-event outcome.
+#' @return A list with raw numeric Q statistic, df, p-value, and method.
+#' @keywords internal
+#' @noRd
+.rr_homogeneity_q <- function(strata) {
+  na_out <- list(
+    statistic = NA_real_,
+    parameter = NA_real_,
+    p = NA_real_,
+    method = "Cochran Q homogeneity test of log ratios"
+  )
+  tabs <- .mh_strata_list(strata)
+  log_rr <- var_log <- numeric(0)
+  for (tab in tabs) {
+    a_i <- tab[1, 1]
+    n_i <- sum(tab[1, ])
+    a_r <- tab[2, 1]
+    n_r <- sum(tab[2, ])
+    if (n_i <= 0 || n_r <= 0 || (a_i + a_r) == 0) {
+      next
+    }
+    if (.has_zero_2x2_cell(a_i, n_i, a_r, n_r)) {
+      a_i <- a_i + 0.5
+      n_i <- n_i + 1
+      a_r <- a_r + 0.5
+      n_r <- n_r + 1
+    }
+    v <- (1 / a_i - 1 / n_i) + (1 / a_r - 1 / n_r)
+    if (!is.finite(v) || v <= 0) {
+      next
+    }
+    log_rr <- c(log_rr, log((a_i / n_i) / (a_r / n_r)))
+    var_log <- c(var_log, v)
+  }
+  if (length(log_rr) < 2) {
+    return(na_out)
+  }
+  w <- 1 / var_log
+  pooled <- sum(w * log_rr) / sum(w)
+  stat <- sum(w * (log_rr - pooled)^2)
+  df <- length(log_rr) - 1
+  list(
+    statistic = stat,
+    parameter = df,
+    p = stats::pchisq(stat, df, lower.tail = FALSE),
+    method = na_out$method
+  )
+}
+
 #' Coerce stratified 2x2 contingency tables into a validated list of matrices
 #' @keywords internal
 #' @noRd

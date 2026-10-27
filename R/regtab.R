@@ -18,8 +18,10 @@
 #' @param predictors The right-hand side of the model, as a one-sided formula
 #'   (`~ age + sex`) or a string (`"age * sex + smoking"`). Write
 #'   transformations such as centring directly in the formula.
-#' @param family A [stats::family()] object. Poisson-log needs a numeric
-#'   outcome (counts or 0/1); `binomial()` also accepts two-level factors.
+#' @param family A [stats::family()] object. Poisson-log needs a count, a 0/1
+#'   outcome, or a two-level factor, character, or logical outcome, which is
+#'   coded 1 for the second level (as `binomial()` and [simtablr()] do) with a
+#'   note.
 #' @param offset Optional person-time column: a bare name or string. With a
 #'   Poisson-log model, `offset(log(offset))` is added so estimates become
 #'   incidence-rate ratios.
@@ -40,9 +42,17 @@
 #' @param conf.level Number between 0 and 1. Confidence level for intervals.
 #' @param include_intercept Logical. If `TRUE`, show the intercept row.
 #' @param p_values Logical. If `TRUE`, add a p-value column for each outcome.
-#' @param design String. Optional study design recorded on the result. With a
-#'   Poisson-log model and an `offset`, it lets the estimate be labelled as an
-#'   incidence-rate ratio.
+#' @param exposure Optional exposure column: a bare name or string. It must be
+#'   a main-effect term of `predictors`; the other terms form the adjustment
+#'   set. The exposure is recorded on the specification and used by
+#'   [e_value()], [sensitivity()], the forest plot, [why()], and [as_methods()],
+#'   so covariate coefficients are not reported as effects (the Table 2
+#'   fallacy).
+#' @param design String. Optional study design recorded on the result. It does
+#'   not change the family; it labels log-link estimates on binary outcomes as
+#'   prevalence ratios (`"cross_sectional"`) or risk ratios, names the design in
+#'   [why()] and [as_methods()], and lets [advise()] flag odds ratios for a
+#'   common outcome under a cohort or cross-sectional design.
 #'
 #' @details
 #' ## Statistical methods
@@ -99,6 +109,13 @@
 #'
 #' # One row per term, for further processing
 #' generics::tidy(fit)
+#'
+#' # Name the exposure so reviewer tools skip the covariates
+#' adjusted <- regtab(
+#'   epitabl, "mace_event", ~ renal_impairment + age + sex,
+#'   family = binomial("log"), design = "cohort", exposure = renal_impairment
+#' )
+#' e_value(adjusted)
 #' @references Zou, G. (2004). A modified Poisson regression approach to
 #'   prospective studies with binary data. \emph{American Journal of
 #'   Epidemiology}, 159(7), 702--706. \doi{10.1093/aje/kwh090}.
@@ -132,7 +149,8 @@ regtab <- function(
   conf.level = 0.95,
   include_intercept = FALSE,
   p_values = FALSE,
-  design = NULL
+  design = NULL,
+  exposure = NULL
 ) {
   spec <- .regtab_spec(
     data = data,
@@ -154,6 +172,7 @@ regtab <- function(
   if (!is.null(design)) {
     spec <- set_design(spec, design)
   }
+  spec <- .bind_model_exposure(spec, rlang::enquo(exposure), spec$engine_opts$glm$predictors, "regtab")
   evaluate(spec)
 }
 

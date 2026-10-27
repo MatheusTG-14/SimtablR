@@ -49,12 +49,16 @@
 #' @noRd
 .effect_forest_frame_regtab <- function(x) {
   tidy <- generics::tidy(x)
+  exposure_terms <- .model_exposure_coefficients(x)
+  if (!is.null(exposure_terms)) {
+    tidy <- tidy[tidy$term %in% exposure_terms, , drop = FALSE]
+  }
   if (nrow(tidy) == 0) {
     return(.empty_effect_forest_frame())
   }
   .new_effect_forest_frame(
     panel = tidy$outcome,
-    label = tidy$term,
+    label = .forest_term_labels(x, tidy$term),
     estimate = tidy$estimate,
     conf.low = tidy$conf.low,
     conf.high = tidy$conf.high,
@@ -67,25 +71,33 @@
 #' @keywords internal
 #' @noRd
 .effect_forest_frame_tb <- function(x) {
-  tidy <- generics::tidy(x)
-  if (!all(c("estimate", "lower_ci", "upper_ci") %in% names(tidy))) {
+  # Read the stored ratio evidence directly: one row per exposure level (or per
+  # stratum and the pooled estimate). The tidy frame repeats each ratio under
+  # every outcome level, which would draw the same estimate in a panel for the
+  # non-event outcome.
+  ratios <- x$data$mh %||% x$data$ratios
+  if (!is.data.frame(ratios) || nrow(ratios) == 0 ||
+      !all(c("estimate", "lower_ci", "upper_ci") %in% names(ratios))) {
     return(.empty_effect_forest_frame())
   }
-  rows <- !is.na(tidy$estimate)
-  tidy <- tidy[rows, , drop = FALSE]
-  if (nrow(tidy) == 0) {
+  ratios <- ratios[!is.na(ratios$estimate), , drop = FALSE]
+  if (nrow(ratios) == 0) {
     return(.empty_effect_forest_frame())
   }
-  lower <- tidy$lower_ci
-  upper <- tidy$upper_ci
+  label_base <- x$meta$row_label %||% ratios$variable
+  label <- paste(label_base, ratios$level)
+  if (!is.null(ratios$stratum)) {
+    label <- paste0(label, " (", ratios$stratum, ")")
+  }
+  ref <- ratios$ref %in% TRUE
   .new_effect_forest_frame(
-    panel = tidy$outcome %||% rep("Effect", nrow(tidy)),
-    label = paste(tidy$variable, tidy$level),
-    estimate = tidy$estimate,
-    conf.low = lower,
-    conf.high = upper,
-    p.value = tidy$p_value %||% rep(NA_real_, nrow(tidy)),
-    is_reference = !is.na(tidy$estimate) & tidy$estimate == 1 & is.na(lower) & is.na(upper)
+    panel = rep(x$meta$col_label %||% "Effect", nrow(ratios)),
+    label = label,
+    estimate = ratios$estimate,
+    conf.low = ratios$lower_ci,
+    conf.high = ratios$upper_ci,
+    p.value = ratios$p_value %||% rep(NA_real_, nrow(ratios)),
+    is_reference = ref | (ratios$estimate == 1 & is.na(ratios$lower_ci) & is.na(ratios$upper_ci))
   )
 }
 
@@ -139,17 +151,40 @@
 #' @noRd
 .effect_forest_frame_cox <- function(x) {
   tidy <- generics::tidy(x)
+  exposure_terms <- .model_exposure_coefficients(x)
+  if (!is.null(exposure_terms)) {
+    tidy <- tidy[tidy$term %in% exposure_terms, , drop = FALSE]
+  }
   if (nrow(tidy) == 0) {
     return(.empty_effect_forest_frame())
   }
   .new_effect_forest_frame(
     panel = rep("Model", nrow(tidy)),
-    label = tidy$term,
+    label = .forest_term_labels(x, tidy$term),
     estimate = tidy$estimate,
     conf.low = tidy$conf.low,
     conf.high = tidy$conf.high,
     p.value = tidy$p.value,
     is_reference = rep(FALSE, nrow(tidy))
+  )
+}
+
+#' Resolve model-term display labels exactly as the table renderers do
+#' @keywords internal
+#' @noRd
+.forest_term_labels <- function(x, terms) {
+  if (inherits(x, "simtab_regtab")) {
+    labels <- .regtab_term_labels(x)
+    out <- unname(labels[terms])
+    return(ifelse(is.na(out), terms, out))
+  }
+  vapply(
+    terms,
+    .simtab_model_term_label,
+    character(1),
+    data = x$spec$data_src$ref$data,
+    labels = x$spec$fmt$labels %||% NULL,
+    USE.NAMES = FALSE
   )
 }
 
@@ -273,17 +308,20 @@
     return("HR")
   }
   if (inherits(x, "simtab_regtab")) {
-    if (!isTRUE(x$meta$exponentiate)) {
-      return("Estimate")
-    }
-    return(switch(
-      x$meta$family %||% "",
-      binomial = "OR",
-      poisson = "IRR",
-      "Estimate"
-    ))
+    return(.forest_regtab_measure(x))
   }
   x$spec$effect$measure %||% x$meta$effect %||% "Effect estimate"
+}
+
+#' Resolve one effect-measure label for all outcomes of a GLM result
+#'
+#' Outcomes measured on different scales (e.g. a 0/1 and a count outcome in
+#' one Poisson model) share the generic label "Ratio".
+#' @keywords internal
+#' @noRd
+.forest_regtab_measure <- function(x) {
+  measures <- unique(.regtab_measures(x))
+  if (length(measures) == 1L) measures else "Ratio"
 }
 
 #' Calculate calibrated canvas height in inches for forest plot export

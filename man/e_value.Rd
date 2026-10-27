@@ -10,7 +10,9 @@ e_value(x, ...)
 \method{e_value}{simtab_result}(x, measure = NULL, rare = FALSE, ...)
 }
 \arguments{
-\item{x}{A computed SimtablR result containing ratio estimates.}
+\item{x}{A computed SimtablR result containing ratio estimates. For
+\code{\link[=regtab]{regtab()}} and \code{\link[=survtab]{survtab()}} results, only the rows of the recorded
+\code{exposure} are used; without one, every term is returned with a warning.}
 
 \item{...}{Reserved for future options.}
 

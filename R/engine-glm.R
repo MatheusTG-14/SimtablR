@@ -194,6 +194,46 @@
   )
 }
 
+#' Stop when the complete-case outcome takes a single value
+#'
+#' A constant response has no variation to model: glm() "fits" it with a
+#' diverging intercept and reports slopes of exactly 1 with degenerate
+#' intervals. The error is caught by the per-outcome handler, which records the
+#' outcome as failed.
+#' @keywords internal
+#' @noRd
+.glm_check_outcome_varies <- function(formula, data, outcome) {
+  model_frame <- stats::model.frame(formula, data = data, na.action = stats::na.omit)
+  y <- stats::model.response(model_frame)
+  n_values <- length(unique(y[!is.na(y)]))
+  if (n_values < 2L) {
+    simtab_abort_engine(c(
+      "Outcome {.val {outcome}} takes a single value among complete cases.",
+      "i" = "A constant outcome has no variation to model, so no effect is estimable.",
+      "v" = "Check the outcome coding, or drop it from {.arg outcomes}."
+    ))
+  }
+  invisible(TRUE)
+}
+
+#' Code a binary factor, character, or logical outcome as 0/1
+#'
+#' Follows the `simtablr()` convention: the event is the second level of the
+#' observed values (`TRUE` for logicals), as `binomial()` also uses.
+#' @keywords internal
+#' @noRd
+.glm_binary_outcome_01 <- function(y) {
+  yf <- droplevels(factor(y))
+  if (nlevels(yf) != 2L) {
+    return(NULL)
+  }
+  list(
+    values = as.integer(yf == levels(yf)[2]),
+    event = levels(yf)[2],
+    reference = levels(yf)[1]
+  )
+}
+
 #' Count outcome events from model response frame for Firth regression
 #' @keywords internal
 #' @noRd
@@ -328,6 +368,7 @@
     ))
   }
 
+  cfg$predictors <- .formula_with_adjust(cfg$predictors, spec)
   conf.level <- cfg$conf.level %||% 0.95
   method <- cfg$method %||% "glm"
   if (!method %in% c("glm", "firth")) {
@@ -376,9 +417,22 @@
   model_evidence <- list()
   term_order <- character(0)
   model_rows <- vector("list", length(cfg$outcomes))
+  outcome_coding <- list()
 
   for (i in seq_along(cfg$outcomes)) {
     outcome <- cfg$outcomes[[i]]
+    y <- data[[outcome]]
+    if (cfg$family$family %in% c("poisson", "quasipoisson") && (is.factor(y) || is.character(y) || is.logical(y))) {
+      coded <- .glm_binary_outcome_01(y)
+      if (!is.null(coded)) {
+        data[[outcome]] <- coded$values
+        outcome_coding[[outcome]] <- c(event = coded$event, reference = coded$reference)
+        message(sprintf(
+          "Note: Outcome '%s' coded 1 = '%s', 0 = '%s' for the %s(%s) model.",
+          outcome, coded$event, coded$reference, cfg$family$family, cfg$family$link
+        ))
+      }
+    }
     model_n <- NA_integer_
     converged <- NA
     boundary <- NA
@@ -394,6 +448,7 @@
           call("~", as.name(outcome), model_rhs),
           env = environment(cfg$predictors)
         )
+        .glm_check_outcome_varies(full_formula, data, outcome)
         if (identical(method, "firth")) {
           fit <- logistf::logistf(full_formula, data = data, pl = TRUE, alpha = 1 - conf.level)
           converged <- .glm_firth_converged(fit)
@@ -533,7 +588,7 @@
   rownames(data_out) <- NULL
   successful <- model_info[!model_info$failed, , drop = FALSE]
 
-  list(
+  out <- list(
     data = data_out,
     meta = list(
       engine = "glm",
@@ -562,4 +617,8 @@
       n_failed = sum(model_info$failed)
     )
   )
+  if (length(outcome_coding) > 0) {
+    out$meta$outcome_coding <- outcome_coding
+  }
+  out
 }

@@ -17,6 +17,14 @@ test_that("e_value calculates E-values from simtab_result", {
   expect_true(is.numeric(ev$data$e_value))
 })
 
+test_that("e_value on a tb result skips reference rows and names levels", {
+  tab <- suppressMessages(tb(epitabl, smoking, diabetes, or = TRUE, ref = "Never"))
+  ev <- e_value(tab)
+  expect_identical(nrow(ev$data), 2L)
+  expect_setequal(ev$data$term, c("smoking: Former", "smoking: Current"))
+  expect_false(any(ev$data$estimate == 1 & is.na(ev$data$conf.low)))
+})
+
 test_that("flow tracks participant flow and exclusions", {
   tab <- suppressMessages(table1(epitabl, "age", by = "adjudicated_acs"))
   fl <- flow(tab)
@@ -58,3 +66,177 @@ test_that("as_methods generates reproducible methods paragraph", {
   expect_true(nzchar(meth))
 })
 
+
+test_that("sensitivity(adjust = NULL) warns when there is no adjustment to drop", {
+  tab <- suppressMessages(table1(epitabl, renal_impairment, by = mace_event, measure = "RR"))
+  expect_warning(sensitivity(tab, adjust = NULL), "left the analysis unchanged")
+
+  # Covariates added with adjust() are dropped, and silently so.
+  adjusted <- suppressMessages(adjust(tab, sex))
+  expect_no_warning(sens <- sensitivity(adjusted, adjust = NULL))
+  rows <- attr(sens, "sensitivity_rows")
+  expect_false(isTRUE(all.equal(rows$estimate[[1]], rows$estimate[[2]])))
+})
+
+test_that("regtab and survtab reviewer tools use the recorded exposure", {
+  fit <- suppressMessages(regtab(
+    epitabl, "mace_event", ~ age + sex + renal_impairment,
+    family = binomial("log"), design = "cohort", exposure = renal_impairment
+  ))
+  expect_identical(SimtablR:::.model_exposure_coefficients(fit), "renal_impairmentYes")
+
+  ev <- e_value(fit)
+  expect_identical(ev$data$term, "renal_impairmentYes")
+  expect_identical(ev$data$measure, "RR")
+
+  # adjust = NULL drops the formula covariates and those added with adjust().
+  sens <- suppressMessages(sensitivity(adjust(fit, diabetes), adjust = NULL))
+  rows <- attr(sens, "sensitivity_rows")
+  expect_identical(rows$measure, c("RR", "RR"))
+  crude <- suppressMessages(tb(epitabl, renal_impairment, mace_event, rr, ref = "No"))
+  expect_equal(rows$estimate[[2]], crude$data$ratios$estimate[[2]], tolerance = 1e-6)
+
+  # The forest plot, why(), as_methods() and the manifest name the exposure.
+  expect_identical(nrow(SimtablR:::.effect_forest_frame(fit)), 1L)
+  invisible(capture.output(expl <- why(fit)))
+  expect_true("Exposure: renal_impairment; adjustment set: age, sex" %in% expl$lines)
+  expect_match(as_methods(fit), "adjusted for Age at index presentation (years) and Sex", fixed = TRUE)
+  expect_identical(repro_manifest(fit)$engine_decisions$adjustment, c("age", "sex"))
+  fallacy <- Filter(function(a) identical(a$id, "table2_fallacy"), fit$advice)
+  expect_match(fallacy[[1]]$message, "Rows for age, sex are adjustment covariates", fixed = TRUE)
+
+  # A string works, and the exposure must be a model term.
+  by_name <- suppressMessages(regtab(epitabl, "mace_event", ~ age + renal_impairment,
+                                     family = binomial("log"), exposure = "renal_impairment"))
+  expect_identical(nrow(e_value(by_name)$data), 1L)
+  expect_error(
+    regtab(epitabl, "mace_event", ~ age, family = binomial("log"), exposure = sex),
+    class = "simtab_error"
+  )
+
+  skip_if_not_installed("survival")
+  cox <- survtab(epitabl, mace_time_days, mace_event, ~ renal_impairment + age, exposure = renal_impairment)
+  expect_identical(e_value(cox)$data$term, "renal_impairmentYes")
+  cox_rows <- attr(suppressMessages(sensitivity(cox, adjust = NULL)), "sensitivity_rows")
+  expect_identical(cox_rows$measure, c("HR", "HR"))
+  expect_false(isTRUE(all.equal(cox_rows$estimate[[1]], cox_rows$estimate[[2]])))
+})
+
+test_that("model reviewer tools without an exposure warn or stop instead of guessing", {
+  fit <- suppressMessages(regtab(epitabl, "mace_event", ~ age + renal_impairment, family = binomial("log")))
+  expect_warning(ev <- e_value(fit), "including covariates")
+  expect_identical(nrow(ev$data), 2L)
+  expect_error(sensitivity(fit, adjust = NULL), class = "simtab_error")
+  invisible(capture.output(expl <- why(fit)))
+  expect_true(any(grepl("^Exposure: not recorded", expl$lines)))
+})
+
+test_that("e_value and sensitivity use the pooled estimate of a stratified tb result", {
+  strat <- suppressMessages(tb(epitabl, renal_impairment, mace_event, rr, strat = sex))
+  pooled <- strat$data$mh[strat$data$mh$row_type == "pooled", ]
+
+  ev <- e_value(strat)
+  expect_identical(nrow(ev$data), 1L)
+  expect_equal(ev$data$estimate, pooled$estimate)
+  expect_match(ev$data$term, "Mantel-Haenszel")
+
+  sens <- suppressMessages(sensitivity(strat, measure = "OR"))
+  expect_equal(attr(sens, "sensitivity_rows")$estimate[[1]], pooled$estimate)
+})
+
+test_that("tb forest plots draw each ratio once, not once per outcome level", {
+  skip_if_not_installed("ggplot2")
+  res <- suppressMessages(tb(epitabl, smoking, mace_event, rr, ref = "Never"))
+  frame <- SimtablR:::.effect_forest_frame(res)
+  expect_identical(nrow(frame), nrow(res$data$ratios))
+  expect_length(unique(frame$panel), 1L)
+  expect_equal(frame$estimate, res$data$ratios$estimate)
+
+  strat <- suppressMessages(tb(epitabl, renal_impairment, mace_event, rr, strat = sex))
+  p <- ggplot2::autoplot(strat)
+  expect_s3_class(p, "ggplot")
+  expect_identical(nrow(p$data), nrow(strat$data$mh))
+})
+
+test_that("as_methods names the adjusted model and its covariates", {
+  or_adj <- suppressMessages(table1(epitabl, sex, by = mace_event, measure = "OR", adjust = c(age, diabetes)))
+  meth <- as_methods(or_adj)
+  expect_match(meth, "Crude OR was estimated using the Woolf/logit", fixed = TRUE)
+  expect_match(meth, "Adjusted OR was estimated by logistic regression", fixed = TRUE)
+  expect_match(meth, "Age at index presentation (years) and History of diabetes", fixed = TRUE)
+
+  rr_adj <- suppressMessages(table1(epitabl, sex, by = mace_event, measure = "RR", adjust = age))
+  expect_match(as_methods(rr_adj), "Adjusted RR was estimated by log-binomial regression adjusting for Age", fixed = TRUE)
+
+  # Adding covariates through the verb updates the prose too.
+  crude <- suppressMessages(table1(epitabl, sex, by = mace_event, measure = "OR"))
+  expect_false(grepl("Adjusted", as_methods(crude)))
+  expect_match(as_methods(suppressMessages(adjust(crude, age))), "adjusting for Age", fixed = TRUE)
+})
+
+expect_manifest_matches_prose <- function(result) {
+  prose <- as_methods(result)
+  decisions <- SimtablR:::.result_decisions(result)
+  manifest <- repro_manifest(result)
+  named <- c(decisions$estimator, decisions$interval_method, decisions$tests, decisions$corrections)
+  expect_gt(length(named), 0)
+  for (decision in named) {
+    expect_true(grepl(decision, prose, fixed = TRUE), info = decision)
+  }
+  expect_identical(manifest$estimator, if (length(decisions$estimator)) decisions$estimator)
+  expect_identical(manifest$interval_method, if (length(decisions$interval_method)) decisions$interval_method)
+  expect_identical(manifest$tests, decisions$tests)
+  if (length(decisions$corrections)) {
+    expect_identical(manifest$engine_decisions$corrections, decisions$corrections)
+  }
+  expect_true(all(c("SimtablR", "cli", "stats") %in% names(manifest$packages)))
+  expect_false("testthat" %in% names(manifest$packages))
+  manifest
+}
+
+test_that("manifest records every decision the methods prose names, for each engine", {
+  zero <- data.frame(
+    e = factor(c(rep("No", 20), rep("Yes", 10))),
+    o = factor(c(rep("No", 15), rep("Yes", 5), rep("No", 10)))
+  )
+  suppressMessages({
+    pr <- expect_manifest_matches_prose(tb(epitabl, hypertension, adjudicated_acs, design = "cross_sectional"))
+    expect_identical(unname(pr$estimator), "Katz log prevalence-ratio estimator")
+    strat <- expect_manifest_matches_prose(
+      tb(epitabl, renal_impairment, mace_event, strat = sex, flags = c("rr", "p"), design = "cohort")
+    )
+    expect_identical(unname(strat$interval_method[["pooled"]]), "Greenland-Robins confidence intervals")
+    zero_m <- expect_manifest_matches_prose(tb(zero, e, o, flags = c("or", "p")))
+    expect_match(zero_m$engine_decisions$corrections, "Haldane-Anscombe", fixed = TRUE)
+    expect_manifest_matches_prose(table1(epitabl, c(age, sex), by = adjudicated_acs, test = TRUE, measure = "PR"))
+    adjusted <- expect_manifest_matches_prose(
+      adjust(table1(epitabl, renal_impairment, by = mace_event, design = "cohort"), age, sex)
+    )
+    expect_true("adjusted_log_binomial" %in% names(adjusted$estimator))
+    expect_manifest_matches_prose(adjust(table1(epitabl, renal_impairment, by = mace_event, measure = "OR"), age, sex))
+    expect_manifest_matches_prose(diag_test(epitabl, poc_hstn_positive, adjudicated_acs, positive = "Yes"))
+    glm <- expect_manifest_matches_prose(
+      regtab(epitabl, "adjudicated_acs", ~ age + sex, family = binomial("log"), design = "cross_sectional")
+    )
+    expect_identical(glm$engine_decisions$convergence, "all models converged")
+  })
+})
+
+test_that("manifest packages list the Suggests each engine used", {
+  skip_if_not_installed("pROC")
+  skip_if_not_installed("survival")
+  suppressMessages({
+    roc_m <- expect_manifest_matches_prose(roc(epitabl, poc_hstn_value, adjudicated_acs))
+    cox_m <- expect_manifest_matches_prose(survtab(epitabl, mace_time_days, mace_event, ~ renal_impairment + age))
+  })
+  expect_true("pROC" %in% names(roc_m$packages))
+  expect_false("survival" %in% names(roc_m$packages))
+  expect_true("survival" %in% names(cox_m$packages))
+  expect_identical(cox_m$engine_decisions$ties, "Efron")
+
+  skip_if_not_installed("logistf")
+  firth <- suppressMessages(expect_manifest_matches_prose(
+    regtab(epitabl, "adjudicated_acs", ~ age + sex, family = binomial("logit"), method = "firth")
+  ))
+  expect_true("logistf" %in% names(firth$packages))
+})

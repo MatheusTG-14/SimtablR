@@ -61,6 +61,17 @@
   )]
 }
 
+#' Map marker/outcome column names to publication labels set with label()
+#' @keywords internal
+#' @noRd
+.roc_display_names <- function(x, names) {
+  labels <- x$spec$fmt$labels %||% character()
+  out <- as.character(names)
+  hit <- !is.na(out) & out %in% names(labels)
+  out[hit] <- unname(labels[out[hit]])
+  out
+}
+
 #' Assemble formatted publication display data frame for ROC results
 #' @keywords internal
 #' @noRd
@@ -81,7 +92,7 @@
   ci_label <- sprintf("%s%% CI", x$meta$conf_pct)
 
   data.frame(
-    Marker = tidy$marker,
+    Marker = .roc_display_names(x, tidy$marker),
     `AUC (95% CI)` = paste0(
       .roc_fmt_num(tidy$auc, d),
       " (",
@@ -115,7 +126,7 @@
   x <- .roc_validate_result(x)
   cat("\nROC Curve Analysis\n")
   cat("==================\n")
-  cat(sprintf("Outcome: %s (positive = '%s')\n", x$meta$outcome, x$meta$positive))
+  cat(sprintf("Outcome: %s (positive = '%s')\n", .roc_display_names(x, x$meta$outcome), x$meta$positive))
   cat(sprintf("CI method: %s | Direction: %s\n\n", x$meta$ci, x$meta$direction))
   print(noquote(as.data.frame(x)), row.names = FALSE)
 
@@ -128,7 +139,14 @@
     for (i in seq_len(nrow(comps))) {
       cat(sprintf(
         "%s: AUC diff %s, z %s, p %s\n",
-        comps$pair[i],
+        if (all(c("marker_1", "marker_2") %in% names(comps))) {
+          paste(
+            .roc_display_names(x, comps$marker_1[i]), "vs",
+            .roc_display_names(x, comps$marker_2[i])
+          )
+        } else {
+          comps$pair[i]
+        },
         .roc_fmt_num(comps$auc_diff[i], d),
         .roc_fmt_num(comps$z[i], d),
         .fmt_p(comps$p.value[i], spec)
@@ -180,25 +198,49 @@
 #' @noRd
 .roc_as_methods <- function(x, ...) {
   x <- .roc_validate_result(x)
+  decisions <- .result_decisions(x)
   ci <- x$meta$conf_pct %||% round((x$meta$conf.level %||% 0.95) * 100)
   markers <- paste(x$meta$marker %||% x$data$auc$marker, collapse = ", ")
-  ci_sentence <- sprintf("%d%% DeLong confidence intervals were reported for AUC (DeLong et al. 1988).", ci)
-  cutpoint_sentence <- if (!identical(x$meta$cutpoint %||% "youden", "none")) {
-    "Data-driven Youden cutpoints were reported; these can be optimistic when selected and evaluated in the same data (Ewald 2006)."
+  ci_sentence <- sprintf(
+    "%d%% %s were reported for AUC (DeLong et al. 1988).",
+    ci, decisions$interval_method
+  )
+  cutpoint_sentence <- if (!identical(decisions$cutpoint, "none")) {
+    sprintf(
+      "Data-driven %s cutpoints were reported; these can be optimistic when selected and evaluated in the same data (Ewald 2006).",
+      decisions$cutpoint
+    )
   } else {
     "No data-driven cutpoint was reported."
   }
-  comparison_sentence <- if (is.data.frame(x$data$comparisons) && nrow(x$data$comparisons) > 0) {
-    "Paired marker AUC comparisons used DeLong's test (DeLong et al. 1988)."
+  comparison_sentence <- if (length(decisions$tests) > 0) {
+    sprintf("Paired marker AUC comparisons used %s (DeLong et al. 1988).", decisions$tests)
   } else {
     ""
   }
 
-  paste(
-    sprintf("ROC analysis for %s estimated AUC using pROC (Robin et al. 2011).", markers),
+  parts <- c(
+    sprintf("ROC analysis for %s used the %s (Robin et al. 2011).", markers, decisions$estimator),
     ci_sentence,
     cutpoint_sentence,
     comparison_sentence
+  )
+  paste(parts[nzchar(parts)], collapse = " ")
+}
+
+#' Record the estimator, interval, cutpoint, and tests of an ROC result
+#' @keywords internal
+#' @noRd
+.roc_decisions <- function(x, ...) {
+  ci <- x$meta$ci %||% "delong"
+  cutpoint <- x$meta$cutpoint %||% "youden"
+  list(
+    measure = "AUC",
+    estimator = "empirical AUC estimated with pROC",
+    interval_method = if (identical(ci, "delong")) "DeLong confidence intervals" else paste(ci, "confidence intervals"),
+    tests = if (is.data.frame(x$data$comparisons) && nrow(x$data$comparisons) > 0) "DeLong's test" else character(),
+    cutpoint = if (identical(cutpoint, "youden")) "Youden" else cutpoint,
+    packages = "pROC"
   )
 }
 
@@ -325,6 +367,7 @@ autoplot.simtab_spec <- function(object, ...) {
     tidy = .roc_tidy,
     glance = .roc_glance,
     as_methods = .roc_as_methods,
+    decisions = .roc_decisions,
     as_flextable = .roc_as_flextable,
     autoplot = .roc_autoplot
   )

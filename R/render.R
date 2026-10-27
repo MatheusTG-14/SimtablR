@@ -224,3 +224,36 @@ style.simtab_result <- function(x, journal) {
   }
   x
 }
+
+#' @export
+style.simtab_report <- function(x, journal) {
+  x <- validate_simtab_report(x)
+  if (missing(journal)) {
+    simtab_abort_input(c(
+      "{.arg journal} is required.",
+      "i" = "{.fn style} needs to know which presentation to apply.",
+      "v" = "Call {.code style(report, \"lancet\")}, or see {.fn list_journals}."
+    ))
+  }
+  x$items <- lapply(x$items, style, journal = journal)
+  x
+}
+
+#' @export
+style.simtab_rbind_tb <- function(x, journal) {
+  if (missing(journal)) {
+    simtab_abort_input(c(
+      "{.arg journal} is required.",
+      "i" = "{.fn style} needs to know which presentation to apply.",
+      "v" = "Call {.code style(stacked, \"lancet\")}, or see {.fn list_journals}."
+    ))
+  }
+  # Stacked tables keep each component's metadata; the bivariate renderer reads
+  # the journal from there, so restyle every component without touching $data.
+  .resolve_table_style(journal)
+  x$meta$tables <- lapply(x$meta$tables, function(meta) {
+    meta$style <- journal
+    meta
+  })
+  x
+}

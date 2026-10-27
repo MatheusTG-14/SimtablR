@@ -14,7 +14,9 @@
 #' conversion `(1 - 0.5^sqrt(HR)) / (1 - 0.5^sqrt(1/HR))`; with `rare = TRUE`
 #' the supplied ratio is treated as a rare-outcome risk-ratio approximation.
 #'
-#' @param x A computed SimtablR result containing ratio estimates.
+#' @param x A computed SimtablR result containing ratio estimates. For
+#'   [regtab()] and [survtab()] results, only the rows of the recorded
+#'   `exposure` are used; without one, every term is returned with a warning.
 #' @param measure Optional ratio measure override: `"RR"`, `"OR"`, or `"HR"`.
 #' @param rare Logical. Treat OR/HR estimates as rare-outcome approximations to
 #'   risk ratios instead of applying the square-root approximation.
@@ -43,6 +45,9 @@ e_value <- function(x, ...) {
 e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
   x <- validate_simtab_result(x)
   rows <- .e_value_source_rows(x, measure = measure)
+  if (inherits(x, "simtab_regtab") || inherits(x, "simtab_cox")) {
+    rows <- .e_value_exposure_rows(x, rows)
+  }
   if (nrow(rows) == 0) {
     simtab_abort_input(c(
       "No ratio-scale estimates were found for {.fn e_value}.",
@@ -142,16 +147,33 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
   }
 
   ratios <- x$data$ratios %||% NULL
+  mh <- x$data$mh %||% NULL
+  if (is.null(ratios) && is.data.frame(mh) && "row_type" %in% names(mh)) {
+    # A stratified table reports the Mantel-Haenszel pooled estimate; the
+    # stratum-specific rows are descriptive, not the adjusted association.
+    ratios <- mh[mh$row_type == "pooled", , drop = FALSE]
+    ratios$level <- paste0(ratios$level, " (Mantel-Haenszel)")
+  }
   if (is.data.frame(ratios)) {
     est_col <- .e_value_first_col(ratios, c("estimate", "ratio", "value"))
     low_col <- .e_value_first_col(ratios, c("lower", "lower_ci", "conf.low"))
     high_col <- .e_value_first_col(ratios, c("upper", "upper_ci", "conf.high"))
     type_col <- .e_value_first_col(ratios, c("type", "measure"))
     if (!anyNA(c(est_col, low_col, high_col, type_col))) {
+      # Reference rows (fixed at 1, no interval) carry no association to bound.
+      if ("ref" %in% names(ratios)) {
+        ratios <- ratios[!ratios$ref, , drop = FALSE]
+      }
+    }
+    if (!anyNA(c(est_col, low_col, high_col, type_col)) && nrow(ratios) > 0) {
+      term <- ratios$variable %||% ratios$term %||% rep(NA_character_, nrow(ratios))
+      if (!is.null(ratios$level)) {
+        term <- ifelse(is.na(ratios$level), term, paste(term, ratios$level, sep = ": "))
+      }
       return(data.frame(
         source = x$meta$engine %||% x$spec$engine %||% "simtab",
         outcome = ratios$outcome %||% NA_character_,
-        term = ratios$variable %||% ratios$term %||% NA_character_,
+        term = term,
         measure = vapply(ratios[[type_col]], function(m) .normalise_e_value_measure(measure %||% m), character(1)),
         estimate = ratios[[est_col]],
         conf.low = ratios[[low_col]],
@@ -228,6 +250,29 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
     return(NA_character_)
   }
   found[[1]]
+}
+
+#' Keep the exposure rows of a model result, or warn that covariates are included
+#' @keywords internal
+#' @noRd
+.e_value_exposure_rows <- function(x, rows) {
+  exposure_terms <- .model_exposure_coefficients(x)
+  if (is.null(exposure_terms)) {
+    fn <- if (inherits(x, "simtab_cox")) "survtab" else "regtab"
+    warning(
+      sprintf(
+        paste0(
+          "e_value() returned E-values for every model term, including covariates, ",
+          "because no exposure is recorded. Covariate E-values are not effects of interest ",
+          "(Table 2 fallacy); name the exposure with %s(exposure = ) to keep only its rows."
+        ),
+        fn
+      ),
+      call. = FALSE
+    )
+    return(rows)
+  }
+  rows[rows$term %in% exposure_terms, , drop = FALSE]
 }
 
 #' Infer ratio scale from GLM family and link specification

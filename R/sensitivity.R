@@ -39,6 +39,16 @@ sensitivity <- function(result, ...) {
     ))
   }
 
+  if ((inherits(result, "simtab_regtab") || inherits(result, "simtab_cox")) &&
+      is.null(.model_exposure(result$spec))) {
+    fn <- if (inherits(result, "simtab_cox")) "survtab" else "regtab"
+    simtab_abort_input(c(
+      sprintf("{.fn sensitivity} needs the exposure of a {.fn %s} result.", fn),
+      "i" = "Without it the primary estimate would be an arbitrary model term, often a covariate.",
+      "v" = sprintf("Refit with {.code %s(..., exposure = your_exposure)}.", fn)
+    ))
+  }
+
   items <- list(primary = result)
   for (nm in dot_names) {
     edit_fn <- .sensitivity_variation_fn(nm, dots[[nm]])
@@ -81,6 +91,31 @@ sensitivity <- function(result, ...) {
           ))
         }
         spec <- validate_simtab_spec(spec)
+        model_engine <- intersect(spec$engine, c("glm", "cox"))
+        exposure <- if (length(model_engine)) .model_exposure(spec)
+        if (!is.null(exposure)) {
+          # Dropping adjustment in a model keeps only the exposure terms.
+          predictors <- spec$engine_opts[[model_engine]]$predictors
+          crude <- stats::reformulate(.exposure_term_labels(predictors, exposure))
+          environment(crude) <- environment(predictors)
+          spec$engine_opts[[model_engine]]$predictors <- crude
+          spec$roles$adjust <- NULL
+          return(spec)
+        }
+        if (is.null(spec$roles$adjust)) {
+          # Without this the variation silently equals the primary analysis
+          # and the methods prose reports the result as "materially unchanged".
+          warning(
+            paste0(
+              "Sensitivity variation `adjust = NULL` left the analysis unchanged: ",
+              "the result records no adjustment covariates to drop. ",
+              "Model-formula predictors are removed only when the model records its exposure ",
+              "(regtab(exposure = ) or survtab(exposure = )); otherwise pass a function that edits ",
+              "the specification."
+            ),
+            call. = FALSE
+          )
+        }
         spec$roles$adjust <- NULL
         spec
       }
@@ -152,11 +187,24 @@ sensitivity <- function(result, ...) {
 #' @noRd
 .sensitivity_headline <- function(result) {
   frame <- .effect_forest_frame(result)
+  mh <- result$data$mh
+  if (inherits(result, "simtab_tb") && is.data.frame(mh)) {
+    # A stratified table's headline is the pooled estimate, not the first stratum.
+    # The forest frame keeps the mh rows with an estimate, in order.
+    row_type <- mh$row_type[!is.na(mh$estimate)]
+    if (length(row_type) == nrow(frame)) {
+      frame <- frame[row_type == "pooled", , drop = FALSE]
+    }
+  }
   # `is_reference` is a per-row logical column; use a vectorised test.
   # `isTRUE()` would collapse the whole column to a single FALSE, leaving the
   # reference row (estimate 1, NA CIs) in the frame and hijacking the headline.
   frame <- frame[!is.na(frame$estimate) & !(frame$is_reference %in% TRUE), , drop = FALSE]
-  measure <- toupper(result$spec$effect$measure %||% result$meta$effect %||% "Estimate")
+  measure <- if (inherits(result, "simtab_regtab") || inherits(result, "simtab_cox")) {
+    .forest_measure(result)
+  } else {
+    toupper(result$spec$effect$measure %||% result$meta$effect %||% "Estimate")
+  }
   if (nrow(frame) == 0) {
     return(list(measure = measure, estimate = NA_real_, conf.low = NA_real_, conf.high = NA_real_))
   }

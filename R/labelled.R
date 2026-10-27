@@ -16,13 +16,28 @@
   }
 
   changed <- FALSE
+  kept_numeric <- character(0)
   out <- data
   for (nm in names(out)) {
     converted <- .as_simtab_factor(out[[nm]])
+    if (isTRUE(attr(converted, "simtab_partially_labelled"))) {
+      attr(converted, "simtab_partially_labelled") <- NULL
+      kept_numeric <- c(kept_numeric, nm)
+    }
     if (!identical(converted, out[[nm]])) {
       out[[nm]] <- converted
       changed <- TRUE
     }
+  }
+  if (length(kept_numeric) > 0) {
+    message(sprintf(
+      paste0(
+        "Kept partially labelled numeric column(s) numeric: %s. Labelled codes ",
+        "(e.g. a missing-value code) remain numeric values; recode them to NA or ",
+        "convert with haven::as_factor() if they are categories."
+      ),
+      paste(kept_numeric, collapse = ", ")
+    ))
   }
 
   if (isTRUE(changed)) out else data
@@ -44,6 +59,20 @@
 
   var_label <- attr(x, "label", exact = TRUE)
   raw <- unclass(x)
+
+  # A numeric column with only some values labelled (e.g. ages with
+  # 999 = "Unknown") is a measurement with annotated codes, not a set of
+  # categories: keep it numeric rather than making every value a level.
+  observed <- raw[!is.na(raw)]
+  if (is.numeric(raw) && length(observed) > 0 && !all(observed %in% unname(value_labels))) {
+    out <- as.vector(raw)
+    if (!is.null(var_label)) {
+      attr(out, "label") <- var_label
+    }
+    attr(out, "simtab_partially_labelled") <- TRUE
+    return(out)
+  }
+
   raw_key <- as.character(raw)
   label_key <- stats::setNames(names(value_labels), as.character(unname(value_labels)))
 

@@ -34,16 +34,20 @@
 #' @noRd
 .regtab_term_labels <- function(x) {
   labels <- x$meta$predictor_labels
+  # Labels set later through label()/fmt() win over constructor labels.
+  fmt_labels <- x$spec$fmt$labels
   data <- x$spec$data_src$ref$data
   terms <- x$meta$term_order
   stats::setNames(
     vapply(
       terms,
       function(term) {
-        if (!is.null(labels) && term %in% names(labels)) {
+        if (!is.null(fmt_labels) && term %in% names(fmt_labels)) {
+          unname(fmt_labels[[term]])
+        } else if (!is.null(labels) && term %in% names(labels)) {
           labels[[term]]
         } else {
-          .simtab_model_term_label(data, term)
+          .simtab_model_term_label(data, term, fmt_labels)
         }
       },
       character(1)
@@ -100,6 +104,62 @@
   paste(labelled, collapse = " \u00d7 ")
 }
 
+#' Resolve the effect-measure label of each GLM outcome from its recorded link
+#'
+#' The label follows the fitted link, not the family alone: logit gives OR; a
+#' log link gives IRR for rate/count models (offset or non-binary outcome) and
+#' PR/RR for binary outcomes (log-binomial or modified Poisson), choosing PR or
+#' RR from the recorded study design (RR when none is recorded). An explicit
+#' measure on the specification wins. Display only; no evidence changes.
+#' @keywords internal
+#' @noRd
+.regtab_measures <- function(x) {
+  outcomes <- x$meta$model_info$outcome[!x$meta$model_info$failed]
+  measure <- function(value) stats::setNames(rep(value, length(outcomes)), outcomes)
+  if (!isTRUE(x$meta$exponentiate)) {
+    return(measure("Estimate"))
+  }
+  explicit <- x$spec$effect$measure
+  if (is.character(explicit) && length(explicit) == 1L && nzchar(explicit)) {
+    return(measure(explicit))
+  }
+  link <- x$meta$link %||% ""
+  family <- x$meta$family %||% ""
+  if (identical(link, "logit")) {
+    return(measure("OR"))
+  }
+  if (!identical(link, "log")) {
+    return(measure("Estimate"))
+  }
+  binary_measure <- switch(
+    .result_design(x) %||% "",
+    cross_sectional = "PR",
+    "RR"
+  )
+  if (family %in% c("binomial", "quasibinomial")) {
+    return(measure(binary_measure))
+  }
+  if (!family %in% c("poisson", "quasipoisson")) {
+    return(measure("Estimate"))
+  }
+  if (!is.null(x$meta$offset)) {
+    return(measure("IRR"))
+  }
+  data <- x$spec$data_src$ref$data
+  is_binary <- vapply(outcomes, function(o) {
+    v <- data[[o]]
+    !is.null(x$meta$outcome_coding[[o]]) || (is.numeric(v) && all(v[!is.na(v)] %in% c(0, 1)))
+  }, logical(1))
+  stats::setNames(ifelse(is_binary, binary_measure, "IRR"), outcomes)
+}
+
+#' Format the column header of a regression outcome with its measure and CI
+#' @keywords internal
+#' @noRd
+.regtab_estimate_header <- function(label, measure, conf_pct) {
+  sprintf("%s, %s (%d%% CI)", label, measure, as.integer(conf_pct))
+}
+
 #########
 # REGRESSION DISPLAY MATRIX CONSTRUCTION
 # Assembles multi-outcome display frames, confidence intervals, p-values, and VIF metrics.
@@ -109,7 +169,8 @@
 #' @noRd
 .format_regtab_interval <- function(estimate, lower, upper, d) {
   fmt <- function(x) format(round(x, d), nsmall = d, trim = TRUE)
-  paste0(fmt(estimate), " (", fmt(lower), " - ", fmt(upper), ")")
+  bounds <- c(fmt(lower), fmt(upper))
+  paste0(fmt(estimate), " (", bounds[1], .ci_sep_safe(" - ", bounds), bounds[2], ")")
 }
 
 #' Format regression p-value string with threshold formatting
@@ -125,6 +186,17 @@
   format(round(p, max(3L, d)), nsmall = max(3L, d), trim = TRUE)
 }
 
+#' Resolve the journal preset applied to a regression result
+#'
+#' `"default"` keeps the established regtab formatting (which honours `d`);
+#' any other preset or `journal_style()` object, set via `style()` on the
+#' result or on the specification, drives estimate/CI and p-value text.
+#' @keywords internal
+#' @noRd
+.regtab_journal <- function(x) {
+  .result_journal(x$meta$style %||% x$spec$style, legacy = "default")
+}
+
 #' Assemble formatted multi-outcome regression display data frame
 #' @keywords internal
 #' @noRd
@@ -133,6 +205,24 @@
   outcome_labels <- .regtab_outcome_labels(x)
   term_labels <- .regtab_term_labels(x)
   d <- x$meta$d %||% 2L
+  journal <- .regtab_journal(x)
+  fmt_interval <- if (is.null(journal)) {
+    function(est, lo, hi) .format_regtab_interval(est, lo, hi, d)
+  } else {
+    function(est, lo, hi) .fmt_est(est, lo, hi, journal)
+  }
+  fmt_p <- if (is.null(journal)) {
+    function(p) .format_regtab_p(p, d)
+  } else {
+    function(p) .fmt_p(p, journal)
+  }
+
+  measures <- .regtab_measures(x)
+  conf_pct <- x$meta$conf_pct %||% 95
+  headers <- stats::setNames(
+    .regtab_estimate_header(outcome_labels, measures[names(outcome_labels)], conf_pct),
+    names(outcome_labels)
+  )
 
   display <- data.frame(
     Variable = unname(term_labels)
@@ -146,17 +236,17 @@
     estimates <- rep("", length(term_labels))
     estimates[!is.na(idx)] <- vapply(
       idx[!is.na(idx)],
-      function(i) .format_regtab_interval(rows$estimate[i], rows$lower[i], rows$upper[i], d),
+      function(i) fmt_interval(rows$estimate[i], rows$lower[i], rows$upper[i]),
       character(1)
     )
-    display[[label]] <- estimates
+    display[[headers[[outcome]]]] <- estimates
 
     if (isTRUE(x$meta$p_values)) {
       p_col <- paste0(label, " p-value")
       p_values <- rep("", length(term_labels))
       p_values[!is.na(idx)] <- vapply(
         idx[!is.na(idx)],
-        function(i) .format_regtab_p(rows$p[i], d),
+        function(i) fmt_p(rows$p[i]),
         character(1)
       )
       display[[p_col]] <- p_values
@@ -184,8 +274,7 @@
   n_row[1, ] <- ""
   n_row$Variable <- "N"
   for (outcome in names(outcome_labels)) {
-    label <- outcome_labels[[outcome]]
-    n_row[[label]][1] <- as.character(x$meta$model_n[[outcome]])
+    n_row[[headers[[outcome]]]][1] <- as.character(x$meta$model_n[[outcome]])
   }
 
   rbind(display, n_row)
@@ -366,7 +455,8 @@
     ft <- flextable::align(ft, part = "footer", align = "left")
   }
   ft <- .flex_add_footnotes(ft, footnotes)
-  simtab_theme(ft)
+  journal <- .regtab_journal(x)
+  if (is.null(journal)) simtab_theme(ft) else journal$flex(ft)
 }
 
 #' Engine vtable renderer dictionary for regtab GLM models
@@ -380,6 +470,7 @@
     glance = .regtab_glance,
     as_flextable = .regtab_as_flextable,
     autoplot = .forest_plot,
-    as_methods = .methods_as_regtab
+    as_methods = .methods_as_regtab,
+    decisions = .decisions_regtab
   )
 }

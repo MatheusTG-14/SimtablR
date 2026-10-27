@@ -19,7 +19,8 @@ regtab(
   conf.level = 0.95,
   include_intercept = FALSE,
   p_values = FALSE,
-  design = NULL
+  design = NULL,
+  exposure = NULL
 )
 }
 \arguments{
@@ -32,8 +33,10 @@ its own model with the same predictors.}
 (\code{~ age + sex}) or a string (\code{"age * sex + smoking"}). Write
 transformations such as centring directly in the formula.}
 
-\item{family}{A \code{\link[stats:family]{stats::family()}} object. Poisson-log needs a numeric
-outcome (counts or 0/1); \code{binomial()} also accepts two-level factors.}
+\item{family}{A \code{\link[stats:family]{stats::family()}} object. Poisson-log needs a count, a 0/1
+outcome, or a two-level factor, character, or logical outcome, which is
+coded 1 for the second level (as \code{binomial()} and \code{\link[=simtablr]{simtablr()}} do) with a
+note.}
 
 \item{offset}{Optional person-time column: a bare name or string. With a
 Poisson-log model, \code{offset(log(offset))} is added so estimates become
@@ -65,9 +68,18 @@ terms, e.g. \code{c(sexMale = "Male sex")}.}
 
 \item{p_values}{Logical. If \code{TRUE}, add a p-value column for each outcome.}
 
-\item{design}{String. Optional study design recorded on the result. With a
-Poisson-log model and an \code{offset}, it lets the estimate be labelled as an
-incidence-rate ratio.}
+\item{design}{String. Optional study design recorded on the result. It does
+not change the family; it labels log-link estimates on binary outcomes as
+prevalence ratios (\code{"cross_sectional"}) or risk ratios, names the design in
+\code{\link[=why]{why()}} and \code{\link[=as_methods]{as_methods()}}, and lets \code{\link[=advise]{advise()}} flag odds ratios for a
+common outcome under a cohort or cross-sectional design.}
+
+\item{exposure}{Optional exposure column: a bare name or string. It must be
+a main-effect term of \code{predictors}; the other terms form the adjustment
+set. The exposure is recorded on the specification and used by
+\code{\link[=e_value]{e_value()}}, \code{\link[=sensitivity]{sensitivity()}}, the forest plot, \code{\link[=why]{why()}}, and \code{\link[=as_methods]{as_methods()}},
+so covariate coefficients are not reported as effects (the Table 2
+fallacy).}
 }
 \value{
 A \code{simtab_result} of class \code{simtab_regtab}. Print it to see the
@@ -140,6 +152,13 @@ regtab(
 
 # One row per term, for further processing
 generics::tidy(fit)
+
+# Name the exposure so reviewer tools skip the covariates
+adjusted <- regtab(
+  epitabl, "mace_event", ~ renal_impairment + age + sex,
+  family = binomial("log"), design = "cohort", exposure = renal_impairment
+)
+e_value(adjusted)
 }
 \references{
 Zou, G. (2004). A modified Poisson regression approach to

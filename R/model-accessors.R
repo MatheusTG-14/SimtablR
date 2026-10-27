@@ -2,6 +2,119 @@
 # Implements standard S3 statistical methods (coef, confint, vcov, formula, nobs)
 # and model_info diagnostics over retained regression and survival model evidence.
 
+#########
+# MODEL EXPOSURE RESOLUTION
+# Identifies the recorded exposure of regtab()/survtab() and its coefficient rows.
+
+#' Bind and validate the exposure role of a model specification
+#' @keywords internal
+#' @noRd
+.bind_model_exposure <- function(spec, exposure_quo, predictors, fn) {
+  if (rlang::quo_is_null(exposure_quo)) {
+    return(spec)
+  }
+  spec <- .bind_role(spec, "exposure", exposure_quo)
+  exposure <- .resolve_single_role(spec, "exposure")
+  if (length(.exposure_term_labels(predictors, exposure)) == 0) {
+    simtab_abort_binding(c(
+      sprintf("Exposure {.val %s} is not a main-effect term of {.arg predictors}.", exposure),
+      "i" = "The exposure must be one of the model terms; the other terms form the adjustment set.",
+      "v" = sprintf("Add it to the formula, e.g. {.code %s(..., ~ %s + age, exposure = %s)}.", fn, exposure, exposure)
+    ))
+  }
+  spec
+}
+
+#' Resolve the recorded exposure column of a model specification, or NULL
+#' @keywords internal
+#' @noRd
+.model_exposure <- function(spec) {
+  if (is.null(spec$roles$exposure)) {
+    return(NULL)
+  }
+  .resolve_single_role(spec, "exposure")
+}
+
+#' Formula term labels that are main effects of the exposure
+#' @keywords internal
+#' @noRd
+.exposure_term_labels <- function(predictors, exposure) {
+  labels <- labels(stats::terms(predictors))
+  labels[vapply(labels, function(label) {
+    !grepl(":", label, fixed = TRUE) && exposure %in% all.vars(str2lang(label))
+  }, logical(1))]
+}
+
+#' Predictor formula of a regtab() or survtab() result, after adjust()
+#' @keywords internal
+#' @noRd
+.model_result_predictors <- function(x) {
+  if (inherits(x, "simtab_cox")) {
+    return(stats::as.formula(x$meta$predictors))
+  }
+  stats::reformulate(x$meta$predictor_terms)
+}
+
+#' Coefficient names of the exposure in a regtab() or survtab() result
+#'
+#' Returns `NULL` when no exposure is recorded. Each coefficient is assigned to
+#' the longest formula term it starts with, so `age2` is never read as a level
+#' of `age`; interaction coefficients are never exposure effects.
+#' @keywords internal
+#' @noRd
+.model_exposure_coefficients <- function(x) {
+  exposure <- .model_exposure(x$spec)
+  if (is.null(exposure)) {
+    return(NULL)
+  }
+  predictors <- .model_result_predictors(x)
+  labels <- labels(stats::terms(predictors))
+  coefficients <- if (inherits(x, "simtab_cox")) x$data$terms$term else unique(x$data$term)
+  coefficients <- coefficients[!grepl(":", coefficients, fixed = TRUE)]
+  owner <- vapply(coefficients, function(term) {
+    hits <- labels[startsWith(term, labels)]
+    if (length(hits) == 0) NA_character_ else hits[[which.max(nchar(hits))]]
+  }, character(1))
+  coefficients[owner %in% .exposure_term_labels(predictors, exposure)]
+}
+
+#' Record the exposure and adjustment set of a model result, or NULL
+#' @keywords internal
+#' @noRd
+.model_exposure_decisions <- function(x) {
+  exposure <- .model_exposure(x$spec)
+  if (is.null(exposure)) {
+    return(NULL)
+  }
+  labels <- labels(stats::terms(.model_result_predictors(x)))
+  list(
+    exposure = exposure,
+    adjustment = setdiff(labels, .exposure_term_labels(.model_result_predictors(x), exposure))
+  )
+}
+
+#' Sentence naming the exposure and adjustment set of a model result, or ""
+#' @keywords internal
+#' @noRd
+.model_exposure_sentence <- function(x, decisions) {
+  if (is.null(decisions$exposure)) {
+    return("")
+  }
+  data <- x$spec$data_src$ref$data
+  label <- function(term) {
+    if (term %in% names(data)) .simtab_model_column_label(data, term, x$spec$fmt$labels) else term
+  }
+  adjustment <- unname(vapply(decisions$adjustment, label, character(1)))
+  if (length(adjustment) > 1) {
+    adjustment <- paste(paste(utils::head(adjustment, -1), collapse = ", "), "and", utils::tail(adjustment, 1))
+  }
+  sprintf(
+    " The exposure was %s%s.",
+    label(decisions$exposure),
+    if (length(adjustment) == 0) ", with no adjustment covariates" else paste0(", adjusted for ", adjustment)
+  )
+}
+
 #' Access retained model evidence
 #'
 #' `regtab()` and `survtab()` are reporting-evidence objects rather than mutable

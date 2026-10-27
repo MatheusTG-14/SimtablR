@@ -46,7 +46,8 @@
     event = NULL,
     offset = NULL,
     test = NULL,
-    ref_std = NULL
+    ref_std = NULL,
+    exposure = NULL
   )
 }
 

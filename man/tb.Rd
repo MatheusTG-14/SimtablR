@@ -129,7 +129,13 @@ taking the last column level as the event. Prevalence and risk ratios use
 the Katz log interval (Katz et al., 1978) and odds ratios the Woolf logit
 interval (Woolf, 1955). With \code{strat}, stratum-specific tables are pooled
 with the Mantel-Haenszel estimator and tested with the Cochran-Mantel-Haenszel
-test.
+test. Homogeneity across strata is tested with the Breslow-Day test for odds
+ratios and, for prevalence and risk ratios, with Cochran's Q on the
+inverse-variance weighted stratum log ratios. A stratified numeric variable
+is compared within strata: by the F-test for the group term in a linear
+model with stratum when summarised by the mean, and by the van Elteren
+stratified Wilcoxon test (van Elteren, 1960) for two groups when summarised
+by the median.
 
 With \code{test = TRUE}, 2x2 tables use the N-1 chi-squared test (Campbell,
 2007) and larger tables the Pearson chi-squared test, without continuity

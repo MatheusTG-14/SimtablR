@@ -48,8 +48,15 @@ why.simtab_result <- function(x, ...) {
     "Status: computed result.",
     sprintf("Engine: %s", x$meta$engine %||% x$spec$engine %||% "not recorded"),
     sprintf("Design: %s", .result_design(x) %||% "not recorded"),
-    sprintf("Measure: %s", x$spec$effect$measure %||% x$meta$effect %||% "not selected"),
-    sprintf("Measure source: %s", x$spec$effect$resolved_from %||% "not recorded"),
+    .why_exposure_line(x),
+    if (inherits(x, "simtab_regtab")) {
+      .why_regtab_lines(x)
+    } else {
+      c(
+        sprintf("Measure: %s", x$spec$effect$measure %||% x$meta$effect %||% "not selected"),
+        sprintf("Measure source: %s", x$spec$effect$resolved_from %||% "not recorded")
+      )
+    },
     sprintf("Ruleset version: %s", x$meta$ruleset_version %||% .simtab_ruleset_version())
   )
   if (length(advice) > 0) {
@@ -72,6 +79,50 @@ why.simtab_report <- function(x, ...) {
     lines <- c(lines, "Advice:", vapply(advice, .format_advice_line, character(1), level = simtablr_guidance()))
   }
   .new_simtab_explanation(lines, subject_class = class(x))
+}
+
+#' Describe the exposure and adjustment set of a model result, or nothing
+#' @keywords internal
+#' @noRd
+.why_exposure_line <- function(x) {
+  if (!inherits(x, "simtab_regtab") && !inherits(x, "simtab_cox")) {
+    return(character())
+  }
+  decisions <- .model_exposure_decisions(x)
+  if (is.null(decisions)) {
+    return("Exposure: not recorded; every model term is reported alike")
+  }
+  sprintf(
+    "Exposure: %s; adjustment set: %s",
+    decisions$exposure,
+    if (length(decisions$adjustment) == 0) "none" else paste(decisions$adjustment, collapse = ", ")
+  )
+}
+
+#' Describe the measure, its source, and convergence of a regression result
+#' @keywords internal
+#' @noRd
+.why_regtab_lines <- function(x) {
+  measures <- unique(.regtab_measures(x))
+  explicit <- x$spec$effect$measure
+  source <- if (is.character(explicit) && length(explicit) == 1L && nzchar(explicit)) {
+    "explicit measure"
+  } else {
+    sprintf(
+      "%s family, %s link, %s",
+      x$meta$family %||% "unknown",
+      x$meta$link %||% "unknown",
+      if (is.null(.result_design(x))) "no recorded design" else paste(.result_design(x), "design")
+    )
+  }
+  lines <- c(
+    sprintf("Measure: %s", paste(measures, collapse = ", ")),
+    sprintf("Measure source: %s", source)
+  )
+  if (identical(x$meta$link, "log")) {
+    lines <- c(lines, sprintf("Convergence: %s", .regtab_convergence_text(x)))
+  }
+  lines
 }
 
 #########

@@ -695,6 +695,14 @@ print.simtab_audit <- function(x, ...) {
       return(as.numeric(n_event) / n_total)
     }
   }
+  if (inherits(result, "simtab_regtab")) {
+    # Most common outcome among the fitted binary models
+    info <- result$meta$model_info
+    info <- info[!info$failed & !is.na(info$events) & info$n > 0, , drop = FALSE]
+    if (nrow(info) > 0) {
+      return(max(info$events / info$n))
+    }
+  }
   NA_real_
 }
 
