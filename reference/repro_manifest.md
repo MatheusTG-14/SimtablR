@@ -40,7 +40,7 @@ on a `data.frame`) is advisory and never sets `design_used`; see
 res <- tb(epitabl, sex, diabetes)
 repro_manifest(res)
 #> SimtablR reproducibility manifest
-#>   R: R version 4.6.1 (2026-06-24)
+#>   R: R version 4.6.2 (2026-10-29)
 #>   data hash (xxhash64): c0787c425db7e792
 #>   design: <unset>
 #>   measure: <unset>
