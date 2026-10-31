@@ -49,6 +49,8 @@
 #' @noRd
 .effect_forest_frame_regtab <- function(x) {
   tidy <- generics::tidy(x)
+  diverged <- paste(tidy$outcome, tidy$term) %in% paste(x$meta$not_estimable$outcome, x$meta$not_estimable$term)
+  tidy <- tidy[!diverged, , drop = FALSE]
   exposure_terms <- .model_exposure_coefficients(x)
   if (!is.null(exposure_terms)) {
     tidy <- tidy[tidy$term %in% exposure_terms, , drop = FALSE]

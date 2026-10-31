@@ -1,5 +1,5 @@
 # E-VALUE SENSITIVITY CALCULATOR FOR UNMEASURED CONFOUNDING
-# Evaluates VanderWeele-Ding E-values for ratio estimates (RR, OR, HR) and confidence
+# Evaluates VanderWeele-Ding E-values for ratio estimates (RR, PR, OR, HR) and confidence
 # limits, quantifying the minimum confounding strength needed to explain away effects.
 
 #########
@@ -9,7 +9,10 @@
 #' Compute E-values for SimtablR ratio estimates
 #'
 #' Computes VanderWeele-Ding E-values for ratio-scale estimates and confidence
-#' limits. Risk ratios are used directly. For common outcomes, odds ratios use
+#' limits. Risk ratios are used directly, and so are prevalence ratios: a
+#' prevalence ratio is a ratio of proportions, so the risk-ratio formula
+#' applies to it as the estimand (VanderWeele & Ding, 2017); the result keeps
+#' the "PR" label. For common outcomes, odds ratios use
 #' the square-root approximation and hazard ratios use the VanderWeele-Ding
 #' conversion `(1 - 0.5^sqrt(HR)) / (1 - 0.5^sqrt(1/HR))`; with `rare = TRUE`
 #' the supplied ratio is treated as a rare-outcome risk-ratio approximation.
@@ -17,7 +20,11 @@
 #' @param x A computed SimtablR result containing ratio estimates. For
 #'   [regtab()] and [survtab()] results, only the rows of the recorded
 #'   `exposure` are used; without one, every term is returned with a warning.
-#' @param measure Optional ratio measure override: `"RR"`, `"OR"`, or `"HR"`.
+#'   The [regtab()] measure follows the link and design as in its table (OR,
+#'   RR, or PR, including modified Poisson); incidence-rate ratios from count
+#'   models are rejected.
+#' @param measure Optional ratio measure override: `"RR"`, `"PR"`, `"OR"`, or
+#'   `"HR"`.
 #' @param rare Logical. Treat OR/HR estimates as rare-outcome approximations to
 #'   risk ratios instead of applying the square-root approximation.
 #' @param ... Reserved for future options.
@@ -51,7 +58,7 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
   if (nrow(rows) == 0) {
     simtab_abort_input(c(
       "No ratio-scale estimates were found for {.fn e_value}.",
-      "i" = "E-values quantify unmeasured confounding for a ratio measure (RR, OR, HR).",
+      "i" = "E-values quantify unmeasured confounding for a ratio measure (RR, PR, OR, HR).",
       "v" = "Compute a ratio-scale effect first, or name one with {.arg measure}."
     ))
   }
@@ -116,13 +123,17 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
 #' @noRd
 .e_value_source_rows <- function(x, measure = NULL) {
   if (inherits(x, "simtab_regtab")) {
-    inferred <- .e_value_regtab_measure(x)
-    measure <- .normalise_e_value_measure(measure %||% inferred)
+    measures <- if (is.null(measure)) .e_value_regtab_measure(x) else .normalise_e_value_measure(measure)
+    flagged <- x$meta$not_estimable
+    if (is.data.frame(flagged)) {
+      # A diverged (separated) coefficient is not an estimate to bound.
+      x$data <- x$data[!paste(x$data$outcome, x$data$term) %in% paste(flagged$outcome, flagged$term), , drop = FALSE]
+    }
     return(data.frame(
       source = "regtab",
       outcome = x$data$outcome,
       term = x$data$term,
-      measure = measure,
+      measure = if (is.null(measure)) unname(measures[x$data$outcome]) else measures,
       estimate = x$data$estimate,
       conf.low = x$data$lower,
       conf.high = x$data$upper
@@ -275,21 +286,28 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
   rows[rows$term %in% exposure_terms, , drop = FALSE]
 }
 
-#' Infer ratio scale from GLM family and link specification
+#' Resolve the ratio measure of each regtab outcome for E-values
+#'
+#' Uses the same link-and-design resolution as the table, so a log-binomial or
+#' modified Poisson model reads PR or RR and a logit model reads OR.
 #' @keywords internal
 #' @noRd
 .e_value_regtab_measure <- function(x) {
-  if (identical(x$meta$family, "binomial") && identical(x$meta$link, "logit")) {
-    return("OR")
+  measures <- .regtab_measures(x)
+  unsupported <- !measures %in% c("OR", "RR", "PR")
+  if (any(unsupported)) {
+    simtab_abort_input(c(
+      "{.fn e_value} for {.fn regtab} needs an odds, risk, or prevalence ratio.",
+      "i" = sprintf(
+        "Outcome %s is reported as %s (%s family, %s link).",
+        paste(sprintf("'%s'", names(measures)[unsupported]), collapse = ", "),
+        paste(unique(measures[unsupported]), collapse = "/"),
+        x$meta$family, x$meta$link
+      ),
+      "v" = "E-values are not defined here for incidence-rate ratios or unexponentiated estimates; use a binary outcome, or set {.arg measure} if the ratio approximates a risk ratio."
+    ))
   }
-  if (identical(x$meta$family, "binomial") && identical(x$meta$link, "log")) {
-    return("RR")
-  }
-  simtab_abort_input(c(
-    "{.fn e_value} for {.fn regtab} supports binomial logit (OR) and binomial log (RR) models.",
-    "i" = "This model is {.val {x$meta$family}} with a {.val {x$meta$link}} link.",
-    "v" = "Refit with {.code family = binomial(\"logit\")} or {.code binomial(\"log\")}."
-  ))
+  measures
 }
 
 #' Validate and normalize user or inferred ratio measure name
@@ -298,7 +316,7 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
 .normalise_e_value_measure <- function(measure) {
   bad_measure <- function(received) {
     simtab_abort_input(c(
-      "{.arg measure} must be one of {.val RR}, {.val OR}, or {.val HR}.",
+      "{.arg measure} must be one of {.val RR}, {.val PR}, {.val OR}, or {.val HR}.",
       "i" = "Received: {.val {received}}.",
       "v" = "E-values are defined for ratio measures only."
     ))
@@ -307,7 +325,7 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
     bad_measure(measure)
   }
   measure <- toupper(measure)
-  if (!measure %in% c("RR", "OR", "HR")) {
+  if (!measure %in% c("RR", "PR", "OR", "HR")) {
     bad_measure(measure)
   }
   measure
@@ -413,7 +431,40 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
 #' @keywords internal
 #' @noRd
 .e_value_as_methods <- function(x, ...) {
-  "E-values were computed using the VanderWeele-Ding closed-form sensitivity analysis for ratio estimates."
+  decisions <- .result_decisions(x)
+  conversions <- decisions$estimator[names(decisions$estimator) != "e_value"]
+  paste0(
+    sprintf("E-values were computed using the %s for ratio estimates", decisions$estimator[["e_value"]]),
+    if (length(conversions) == 0) "." else sprintf("; %s.", paste(conversions, collapse = "; ")),
+    " An E-value is the minimum strength of association an unmeasured confounder would need with both exposure and outcome to explain away the estimate (VanderWeele & Ding 2017)."
+  )
+}
+
+#' Record the E-value formula and the scale conversion applied per measure
+#' @keywords internal
+#' @noRd
+.e_value_decisions <- function(x, ...) {
+  measures <- unique(x$data$measure)
+  rare <- isTRUE(x$meta$rare)
+  estimator <- c(e_value = "VanderWeele-Ding closed-form sensitivity analysis")
+  if ("PR" %in% measures) {
+    estimator[["PR"]] <- "prevalence ratios used the risk-ratio formula as ratios of proportions"
+  }
+  if ("OR" %in% measures) {
+    estimator[["OR"]] <- if (rare) {
+      "odds ratios were treated as rare-outcome risk ratios"
+    } else {
+      "odds ratios used the square-root approximation to the risk ratio"
+    }
+  }
+  if ("HR" %in% measures) {
+    estimator[["HR"]] <- if (rare) {
+      "hazard ratios were treated as rare-outcome risk ratios"
+    } else {
+      "hazard ratios used the common-outcome conversion to the risk ratio"
+    }
+  }
+  list(measure = measures, estimator = estimator)
 }
 
 #' Engine vtable renderer dictionary for E-value results
@@ -424,6 +475,7 @@ e_value.simtab_result <- function(x, measure = NULL, rare = FALSE, ...) {
     print = .e_value_print,
     as_data_frame = .e_value_as_data_frame,
     tidy = .e_value_as_data_frame,
-    as_methods = .e_value_as_methods
+    as_methods = .e_value_as_methods,
+    decisions = .e_value_decisions
   )
 }

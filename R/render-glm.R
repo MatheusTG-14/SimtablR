@@ -153,6 +153,39 @@
   stats::setNames(ifelse(is_binary, binary_measure, "IRR"), outcomes)
 }
 
+#' Model terms flagged as not estimable for one outcome (or all outcomes)
+#' @keywords internal
+#' @noRd
+.regtab_not_estimable <- function(x, outcome = NULL) {
+  flagged <- x$meta$not_estimable
+  if (!is.data.frame(flagged) || nrow(flagged) == 0) {
+    return(character())
+  }
+  if (!is.null(outcome)) {
+    flagged <- flagged[flagged$outcome == outcome, , drop = FALSE]
+  }
+  flagged$term
+}
+
+#' Footnotes explaining cells rendered as not estimable
+#' @keywords internal
+#' @noRd
+.regtab_notes <- function(x) {
+  flagged <- x$meta$not_estimable
+  if (!is.data.frame(flagged) || nrow(flagged) == 0) {
+    return(character())
+  }
+  term_labels <- .regtab_term_labels(x)
+  labels <- ifelse(is.na(term_labels[flagged$term]), flagged$term, term_labels[flagged$term])
+  if (length(unique(flagged$outcome)) > 1) {
+    labels <- paste0(.regtab_outcome_labels(x)[flagged$outcome], ": ", labels)
+  }
+  sprintf(
+    "\u2014 Not estimable: the maximum-likelihood estimate diverged (separation) for %s. Refit with method = \"firth\" or simplify the predictor.",
+    paste(unname(labels), collapse = "; ")
+  )
+}
+
 #' Format the column header of a regression outcome with its measure and CI
 #' @keywords internal
 #' @noRd
@@ -239,6 +272,8 @@
       function(i) fmt_interval(rows$estimate[i], rows$lower[i], rows$upper[i]),
       character(1)
     )
+    diverged <- !is.na(idx) & names(term_labels) %in% .regtab_not_estimable(x, outcome)
+    estimates[diverged] <- "\u2014"
     display[[headers[[outcome]]]] <- estimates
 
     if (isTRUE(x$meta$p_values)) {
@@ -249,6 +284,7 @@
         function(i) fmt_p(rows$p[i]),
         character(1)
       )
+      p_values[diverged] <- "\u2014"
       display[[p_col]] <- p_values
     }
 
@@ -370,6 +406,10 @@
     cat("\n")
   }
   .print_regtab_table(as.data.frame(x, tidy = FALSE), width = getOption("width", 80L))
+  notes <- .regtab_notes(x)
+  if (length(notes) > 0) {
+    cat("\n", paste(strwrap(notes, width = getOption("width", 80L)), collapse = "\n"), "\n", sep = "")
+  }
 
   if (isTRUE(x$meta$n_failed > 0)) {
     failed <- x$meta$model_info[x$meta$model_info$failed, "outcome", drop = TRUE]
@@ -454,7 +494,7 @@
     )
     ft <- flextable::align(ft, part = "footer", align = "left")
   }
-  ft <- .flex_add_footnotes(ft, footnotes)
+  ft <- .flex_add_footnotes(ft, c(.regtab_notes(x), footnotes))
   journal <- .regtab_journal(x)
   if (is.null(journal)) simtab_theme(ft) else journal$flex(ft)
 }

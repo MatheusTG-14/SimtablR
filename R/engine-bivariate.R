@@ -429,12 +429,25 @@
         nr <- nrow(tab)
         nc <- ncol(tab)
         pct_full <- matrix(NA_real_, nr, nc)
-        pct_calc <- switch(
-          args$flags$by,
-          total = tab / sum(tab),
-          row = tab / rowSums(tab),
-          col = sweep(tab, 2, colSums(tab), "/")
-        )
+        # Stratified columns are "stratum : outcome"; row and cell percentages
+        # use each stratum's own columns as the denominator, so a row's event
+        # percentage is the risk within that stratum.
+        col_groups <- if (isTRUE(is_stratified)) {
+          .tb_column_strata(colnames(tab), vars[[2]], strat_val)
+        } else {
+          rep("all", nc)
+        }
+        pct_calc <- matrix(NA_real_, nr, nc)
+        for (group in unique(col_groups)) {
+          cols <- which(col_groups == group)
+          block <- tab[, cols, drop = FALSE]
+          pct_calc[, cols] <- switch(
+            args$flags$by,
+            total = block / sum(block),
+            row = block / rowSums(block),
+            col = sweep(block, 2, colSums(block), "/")
+          )
+        }
         pct_full[seq_len(nr), seq_len(nc)] <- pct_calc * 100
       }
     }
@@ -951,6 +964,20 @@
     paired = isTRUE(tb$paired),
     smd = isTRUE(spec$comparison$smd)
   )
+}
+
+#' Map stratified "stratum : outcome" table columns to their stratum
+#'
+#' Columns without a recorded stratum (the `miss` NA column) form their own
+#' group.
+#' @keywords internal
+#' @noRd
+.tb_column_strata <- function(columns, combined, strat) {
+  key <- unique(data.frame(column = as.character(combined), stratum = as.character(strat)))
+  key <- key[!is.na(key$column), , drop = FALSE]
+  out <- key$stratum[match(columns, key$column)]
+  out[is.na(out)] <- paste0(".missing.", columns[is.na(out)])
+  out
 }
 
 #' Rebuild contingency table from complete cases dropping NA margins

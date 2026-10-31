@@ -12,11 +12,15 @@ e_value(x, ...)
 \arguments{
 \item{x}{A computed SimtablR result containing ratio estimates. For
 \code{\link[=regtab]{regtab()}} and \code{\link[=survtab]{survtab()}} results, only the rows of the recorded
-\code{exposure} are used; without one, every term is returned with a warning.}
+\code{exposure} are used; without one, every term is returned with a warning.
+The \code{\link[=regtab]{regtab()}} measure follows the link and design as in its table (OR,
+RR, or PR, including modified Poisson); incidence-rate ratios from count
+models are rejected.}
 
 \item{...}{Reserved for future options.}
 
-\item{measure}{Optional ratio measure override: \code{"RR"}, \code{"OR"}, or \code{"HR"}.}
+\item{measure}{Optional ratio measure override: \code{"RR"}, \code{"PR"}, \code{"OR"}, or
+\code{"HR"}.}
 
 \item{rare}{Logical. Treat OR/HR estimates as rare-outcome approximations to
 risk ratios instead of applying the square-root approximation.}
@@ -26,7 +30,10 @@ A \code{simtab_e_value} result with raw E-value numerics.
 }
 \description{
 Computes VanderWeele-Ding E-values for ratio-scale estimates and confidence
-limits. Risk ratios are used directly. For common outcomes, odds ratios use
+limits. Risk ratios are used directly, and so are prevalence ratios: a
+prevalence ratio is a ratio of proportions, so the risk-ratio formula
+applies to it as the estimand (VanderWeele & Ding, 2017); the result keeps
+the "PR" label. For common outcomes, odds ratios use
 the square-root approximation and hazard ratios use the VanderWeele-Ding
 conversion \code{(1 - 0.5^sqrt(HR)) / (1 - 0.5^sqrt(1/HR))}; with \code{rare = TRUE}
 the supplied ratio is treated as a rare-outcome risk-ratio approximation.

@@ -38,8 +38,10 @@
 #' @param subset A logical expression evaluated in `data` to keep only some
 #'   rows, e.g. `subset = age >= 65`.
 #' @param strat A variable to stratify by: a bare name or string. The table is
-#'   repeated within each stratum and, if an effect measure is requested,
-#'   a Mantel-Haenszel pooled estimate is added.
+#'   repeated within each stratum and, if an effect measure is requested, the
+#'   stratum-specific estimates and a Mantel-Haenszel pooled estimate are
+#'   added. Row and cell percentages use each stratum as the denominator, so
+#'   a row's event percentage is the risk within that stratum.
 #' @param rp Deprecated; use the `pr` flag or `measure = "PR"` instead.
 #' @param or Logical. If `TRUE`, add odds ratios. Same as the `or` flag.
 #' @param ref Reference level of the row (exposure) variable for effect
@@ -508,6 +510,7 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
     if (!is.null(x$data$mh)) {
       mh <- x$data$mh
       pooled <- mh[mh$row_type == "pooled", , drop = FALSE]
+      strata <- mh[mh$row_type == "stratum", , drop = FALSE]
       if (nrow(pooled) > 0) {
         ratio_col <- grep(" \\(95% CI\\)$| MH \\(95% CI\\)$", colnames(out_mat), value = TRUE)
         if (length(ratio_col) == 0) {
@@ -517,6 +520,24 @@ rbind.simtab_tb <- function(..., deparse.level = 1) {
         } else {
           ratio_col <- ratio_col[1]
         }
+
+        stratum_rows <- matrix(
+          "",
+          nrow = nrow(strata),
+          ncol = ncol(out_mat),
+          dimnames = list(paste0("Stratum ", strata$stratum, ": ", strata$level), colnames(out_mat))
+        )
+        stratum_rows[, ratio_col] <- vapply(seq_len(nrow(strata)), function(idx) {
+          if (is.na(strata$estimate[idx])) {
+            return("-")
+          }
+          p_val <- strata$p_value[idx]
+          paste0(
+            .tb_effect_text(strata[idx, ], x$meta, bm, dm, journal),
+            if (is.na(p_val)) "" else paste0(", ", .fmt_tb_p(p_val, dm, journal))
+          )
+        }, character(1))
+        out_mat <- rbind(out_mat, stratum_rows)
 
         mh_rows <- matrix(
           "",
@@ -691,7 +712,8 @@ print.simtab_rbind_tb <- function(x, digits = NULL, ...) {
   total_row <- if (length(total_rows) > 0) max(total_rows) else NA_integer_
   has_row_total <- !is.na(total_row)
   # Row labels can be NA under the `miss` flag.
-  is_mh_row <- !is.na(row_labels) & startsWith(row_labels, "Mantel-Haenszel pooled")
+  is_mh_row <- !is.na(row_labels) & seq_len(nr) > (if (is.na(total_row)) nr else total_row) &
+    (startsWith(row_labels, "Mantel-Haenszel pooled") | startsWith(row_labels, "Stratum "))
   extra_cols <- if (any(grepl("PR \\(|RR \\(|OR \\(", col_labels))) 1L else 0L
 
   width_row <- max(safe_nchar(c(row_var, row_labels))) + 1L

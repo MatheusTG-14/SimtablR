@@ -70,8 +70,10 @@ chosen test; or force \code{"chisq"}, \code{"fisher"}, or \code{"mcnemar"}. See
 rows, e.g. \code{subset = age >= 65}.}
 
 \item{strat}{A variable to stratify by: a bare name or string. The table is
-repeated within each stratum and, if an effect measure is requested,
-a Mantel-Haenszel pooled estimate is added.}
+repeated within each stratum and, if an effect measure is requested, the
+stratum-specific estimates and a Mantel-Haenszel pooled estimate are
+added. Row and cell percentages use each stratum as the denominator, so
+a row's event percentage is the risk within that stratum.}
 
 \item{rp}{Deprecated; use the \code{pr} flag or \code{measure = "PR"} instead.}
 

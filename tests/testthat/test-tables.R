@@ -359,3 +359,32 @@ test_that("table1 notes when Overall includes rows with a missing by value", {
   skip_if_not_installed("gt")
   expect_true(any(grepl("Overall includes 50", unlist(as_gt(res)[["_source_notes"]]), fixed = TRUE)))
 })
+
+test_that("stratified tb shows stratum estimates and percentages within each stratum", {
+  st <- suppressMessages(tb(epitabl, renal_impairment, mace_event, strat = sex,
+                            flags = c("row", "rr"), design = "cohort"))
+  freq <- st$data$frequencies
+  pct <- st$data$percentages
+  female <- grep("^Female", colnames(freq))
+  # Row percentage of "Yes" is the risk within the stratum: 72 / (478 + 72).
+  expect_equal(pct[1, female[2]], freq[1, female[2]] / sum(freq[1, female]) * 100)
+  expect_equal(unname(rowSums(pct[, female])), c(100, 100))
+
+  df <- as.data.frame(st)
+  rows <- df[[1]]
+  expect_true(all(c("Stratum Female: Yes", "Stratum Male: Yes", "Mantel-Haenszel pooled: Yes") %in% rows))
+  ratio_col <- grep("RR", names(df), value = TRUE)
+  expect_match(df[rows == "Stratum Female: Yes", ratio_col], "1.74 (1.19 - 2.54)", fixed = TRUE)
+  expect_output(print(st), "Stratum Male: Yes", fixed = TRUE)
+
+  # Cell percentages sum to 100 within each stratum; column percentages are unchanged.
+  cell <- suppressMessages(tb(epitabl, renal_impairment, mace_event, strat = sex, flags = "cell"))
+  expect_equal(sum(cell$data$percentages[, female]), 100)
+  col <- suppressMessages(tb(epitabl, renal_impairment, mace_event, strat = sex, flags = "col"))
+  expect_equal(unname(colSums(col$data$percentages)), rep(100, 4))
+
+  # The same plan through the grammar gives the same percentages.
+  verb <- suppressMessages(stratify(tb(epitabl, renal_impairment, mace_event, flags = c("row", "rr"),
+                                       design = "cohort"), sex))
+  expect_equal(verb$data$percentages, pct)
+})

@@ -138,8 +138,8 @@ as_gt.simtab_rbind_tb <- function(x, ...) {
 #' Render regression result as a gt table with failed outcome notes
 #' @keywords internal
 #' @noRd
-.regtab_as_gt <- function(x, ...) {
-  tab <- .gt_from_display(as.data.frame(x, tidy = FALSE), ...)
+.regtab_as_gt <- function(x, footnotes = NULL, ...) {
+  tab <- .gt_from_display(as.data.frame(x, tidy = FALSE), ..., footnotes = c(.regtab_notes(x), footnotes))
   if (isTRUE(x$meta$n_failed > 0)) {
     failed <- x$meta$model_info[x$meta$model_info$failed, "outcome", drop = TRUE]
     tab <- gt::tab_source_note(tab, source_note = paste0("Failed outcomes: ", paste(failed, collapse = ", ")))

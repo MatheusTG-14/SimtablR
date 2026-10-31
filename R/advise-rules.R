@@ -353,7 +353,8 @@
       # suspicious: ORs (>1000 or <0.001), or optimizer failure
       suspicious <- any(!is.finite(estimates), na.rm = TRUE) ||
         any(estimates > 1000 | estimates < 0.001, na.rm = TRUE) ||
-        any(!result$meta$model_info$converged, na.rm = TRUE)
+        any(!result$meta$model_info$converged, na.rm = TRUE) ||
+        is.data.frame(result$meta$not_estimable)
       if (!suspicious) {
         return(NULL)
       }

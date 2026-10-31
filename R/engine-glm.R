@@ -234,6 +234,23 @@
   )
 }
 
+#' Flag coefficients whose maximum-likelihood estimate diverged (separation)
+#'
+#' Under separation the binary-outcome MLE drifts towards infinity and glm()
+#' stops with a huge model-based standard error, while a sandwich error can
+#' stay small and give a falsely narrow interval. A link-scale model-based
+#' standard error above 100 marks the coefficient as not estimable. Gaussian
+#' models are exempt, where a large standard error can be legitimate.
+#' @keywords internal
+#' @noRd
+.glm_not_estimable_terms <- function(fit) {
+  if (!fit$family$family %in% c("binomial", "quasibinomial", "poisson", "quasipoisson")) {
+    return(character())
+  }
+  se <- summary(fit)$coefficients[, "Std. Error"]
+  names(se)[!is.finite(se) | se > 100]
+}
+
 #' Count outcome events from model response frame for Firth regression
 #' @keywords internal
 #' @noRd
@@ -418,6 +435,7 @@
   term_order <- character(0)
   model_rows <- vector("list", length(cfg$outcomes))
   outcome_coding <- list()
+  not_estimable <- list()
 
   for (i in seq_along(cfg$outcomes)) {
     outcome <- cfg$outcomes[[i]]
@@ -519,6 +537,10 @@
             NA_integer_
           }
           vif_df <- .glm_vif_for_effects(fit, outcome, effect_df$term)
+          diverged <- intersect(.glm_not_estimable_terms(fit), effect_df$term)
+          if (length(diverged) > 0) {
+            not_estimable[[outcome]] <- data.frame(outcome = outcome, term = diverged, reason = "separation")
+          }
         }
         if (nrow(effect_df) == 0) {
           simtab_abort_engine(c(
@@ -619,6 +641,9 @@
   )
   if (length(outcome_coding) > 0) {
     out$meta$outcome_coding <- outcome_coding
+  }
+  if (length(not_estimable) > 0) {
+    out$meta$not_estimable <- do.call(rbind, unname(not_estimable))
   }
   out
 }

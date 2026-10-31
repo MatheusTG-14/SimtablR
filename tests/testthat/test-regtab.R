@@ -199,3 +199,31 @@ test_that("regtab Poisson-log accepts a binary factor outcome coded like simtabl
     class = "simtab_error"
   )
 })
+
+test_that("regtab renders separated coefficients as not estimable and keeps raw evidence", {
+  z <- data.frame(
+    e = factor(c(rep("No", 20), rep("Yes", 10))),
+    o = factor(c(rep("No", 15), rep("Yes", 5), rep("No", 10)))
+  )
+  fit <- suppressWarnings(suppressMessages(regtab(z, "o", ~ e, family = binomial("logit"), p_values = TRUE)))
+  expect_identical(fit$meta$not_estimable$term, "eYes")
+  expect_true(fit$data$estimate[fit$data$term == "eYes"] < 1e-6)
+
+  df <- as.data.frame(fit)
+  expect_identical(df[df$Variable == "eYes", 2], "\u2014")
+  expect_identical(df[df$Variable == "eYes", 3], "\u2014")
+  expect_output(print(fit), "Not estimable", fixed = TRUE)
+  expect_true("logistic_separation_firth" %in% vapply(fit$advice, `[[`, character(1), "id"))
+  expect_identical(nrow(SimtablR:::.effect_forest_frame(fit)), 0L)
+
+  # Sparse but estimable data are not flagged.
+  set.seed(1)
+  sparse <- data.frame(y = rbinom(200, 1, 0.1), x = rbinom(200, 1, 0.05))
+  expect_null(suppressMessages(regtab(sparse, "y", ~ x, family = binomial()))$meta$not_estimable)
+
+  skip_if_not_installed("gt")
+  expect_match(as_gt(fit)[["_source_notes"]][[1]], "Not estimable", fixed = TRUE)
+  skip_if_not_installed("flextable")
+  footer <- flextable::as_flextable(fit)$footer$dataset[[1]]
+  expect_true(any(grepl("Not estimable", footer, fixed = TRUE)))
+})
