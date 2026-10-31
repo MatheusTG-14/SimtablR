@@ -203,6 +203,17 @@ with <code>as.data.frame(fit, vif = TRUE)</code> or <code>generics::glance(fit, 
 </div>
 
 <div class="section">
+<h3 id="separation">Separation<a class="anchor" aria-label="anchor" href="#separation"></a></h3>
+
+
+<p>When a binomial or Poisson coefficient diverges (separation), its
+model-based standard error on the link scale exceeds 100 and the table
+shows a dash with a footnote instead of a number such as
+<code>0.00 (0.00 - 0.00)</code>; refit with <code>method = "firth"</code>. The raw estimate is
+kept in <code>$data</code> and the flag in <code>meta$not_estimable</code>.</p>
+</div>
+
+<div class="section">
 <h3 id="missing-data">Missing data<a class="anchor" aria-label="anchor" href="#missing-data"></a></h3>
 
 

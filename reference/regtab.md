@@ -168,6 +168,14 @@ inflation factors (Fox & Monette, 1992) are stored on the result. Show
 them with `as.data.frame(fit, vif = TRUE)` or
 `generics::glance(fit, vif = TRUE)`.
 
+### Separation
+
+When a binomial or Poisson coefficient diverges (separation), its
+model-based standard error on the link scale exceeds 100 and the table
+shows a dash with a footnote instead of a number such as
+`0.00 (0.00 - 0.00)`; refit with `method = "firth"`. The raw estimate is
+kept in `$data` and the flag in `meta$not_estimable`.
+
 ### Missing data
 
 Rows with a missing outcome or predictor are dropped from that outcome's

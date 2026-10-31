@@ -1,11 +1,14 @@
 # Compute E-values for SimtablR ratio estimates
 
 Computes VanderWeele-Ding E-values for ratio-scale estimates and
-confidence limits. Risk ratios are used directly. For common outcomes,
-odds ratios use the square-root approximation and hazard ratios use the
-VanderWeele-Ding conversion `(1 - 0.5^sqrt(HR)) / (1 - 0.5^sqrt(1/HR))`;
-with `rare = TRUE` the supplied ratio is treated as a rare-outcome
-risk-ratio approximation.
+confidence limits. Risk ratios are used directly, and so are prevalence
+ratios: a prevalence ratio is a ratio of proportions, so the risk-ratio
+formula applies to it as the estimand (VanderWeele & Ding, 2017); the
+result keeps the "PR" label. For common outcomes, odds ratios use the
+square-root approximation and hazard ratios use the VanderWeele-Ding
+conversion `(1 - 0.5^sqrt(HR)) / (1 - 0.5^sqrt(1/HR))`; with
+`rare = TRUE` the supplied ratio is treated as a rare-outcome risk-ratio
+approximation.
 
 ## Usage
 
@@ -25,7 +28,11 @@ e_value(x, measure = NULL, rare = FALSE, ...)
   and
   [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
   results, only the rows of the recorded `exposure` are used; without
-  one, every term is returned with a warning.
+  one, every term is returned with a warning. The
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  measure follows the link and design as in its table (OR, RR, or PR,
+  including modified Poisson); incidence-rate ratios from count models
+  are rejected.
 
 - ...:
 
@@ -33,7 +40,7 @@ e_value(x, measure = NULL, rare = FALSE, ...)
 
 - measure:
 
-  Optional ratio measure override: `"RR"`, `"OR"`, or `"HR"`.
+  Optional ratio measure override: `"RR"`, `"PR"`, `"OR"`, or `"HR"`.
 
 - rare:
 

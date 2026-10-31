@@ -156,8 +156,10 @@ rows, e.g. <code>subset = age &gt;= 65</code>.</p></dd>
 
 <dt id="arg-strat">strat<a class="anchor" aria-label="anchor" href="#arg-strat"></a></dt>
 <dd><p>A variable to stratify by: a bare name or string. The table is
-repeated within each stratum and, if an effect measure is requested,
-a Mantel-Haenszel pooled estimate is added.</p></dd>
+repeated within each stratum and, if an effect measure is requested, the
+stratum-specific estimates and a Mantel-Haenszel pooled estimate are
+added. Row and cell percentages use each stratum as the denominator, so
+a row's event percentage is the risk within that stratum.</p></dd>
 
 
 <dt id="arg-rp">rp<a class="anchor" aria-label="anchor" href="#arg-rp"></a></dt>
@@ -412,6 +414,8 @@ effect measures, <code><a href="diag_test.html">diag_test()</a></code> for diagn
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                              Yes |                                                 </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> -------------------------------------------------+-------------------------------------------------</span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                                            Total |                                                 </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                              Stratum Female: Yes |          1.19 (0.81 - 1.76), p = 0.375          </span>
+<span class="r-out co"><span class="r-pr">#&gt;</span>                                Stratum Male: Yes |          1.11 (0.79 - 1.55), p = 0.538          </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span>                      Mantel-Haenszel pooled: Yes | 1.14 (0.89 - 1.48), CMH p = 0.327, BD p = 0.788 </span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #BBBB00;">!</span> <span style="font-weight: bold;">Methodological warning</span></span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   Outcome is common (22.1%); odds ratios can overstate the prevalence/risk</span>

@@ -106,8 +106,11 @@ tb(
 - strat:
 
   A variable to stratify by: a bare name or string. The table is
-  repeated within each stratum and, if an effect measure is requested, a
-  Mantel-Haenszel pooled estimate is added.
+  repeated within each stratum and, if an effect measure is requested,
+  the stratum-specific estimates and a Mantel-Haenszel pooled estimate
+  are added. Row and cell percentages use each stratum as the
+  denominator, so a row's event percentage is the risk within that
+  stratum.
 
 - rp:
 
@@ -375,6 +378,8 @@ tb(epitabl, renal_impairment, adjudicated_acs, strat = sex, flags = "or", ref = 
 #>                                              Yes |                                                 
 #> -------------------------------------------------+-------------------------------------------------
 #>                                            Total |                                                 
+#>                              Stratum Female: Yes |          1.19 (0.81 - 1.76), p = 0.375          
+#>                                Stratum Male: Yes |          1.11 (0.79 - 1.55), p = 0.538          
 #>                      Mantel-Haenszel pooled: Yes | 1.14 (0.89 - 1.48), CMH p = 0.327, BD p = 0.788 
 #> ! Methodological warning
 #>   Outcome is common (22.1%); odds ratios can overstate the prevalence/risk
