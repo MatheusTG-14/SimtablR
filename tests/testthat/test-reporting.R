@@ -240,3 +240,40 @@ test_that("manifest packages list the Suggests each engine used", {
   ))
   expect_true("logistf" %in% names(firth$packages))
 })
+
+test_that("e_value accepts prevalence ratios with the risk-ratio formula", {
+  pr <- suppressMessages(tb(epitabl, hypertension, adjudicated_acs, design = "cross_sectional"))
+  ev <- e_value(pr)
+  expect_identical(ev$data$measure, "PR")
+  expect_false(ev$data$approximation)
+  est <- pr$data$ratios[!pr$data$ratios$ref, ]
+  expect_equal(ev$data$e_value, est$estimate + sqrt(est$estimate * (est$estimate - 1)))
+  expect_match(as_methods(ev), "prevalence ratios used the risk-ratio formula", fixed = TRUE)
+  expect_identical(names(repro_manifest(ev)$estimator), c("e_value", "PR"))
+
+  # The cross-sectional simtablr() report works end to end.
+  rep <- suppressMessages(simtablr(
+    epitabl, outcome = adjudicated_acs, exposure = hypertension,
+    vars = c(age, sex), adjust = c(age, sex), design = "cross_sectional"
+  ))
+  expect_true(all(e_value(rep$table2)$data$measure == "PR"))
+
+  # regtab reads the table's measure: modified Poisson and log-binomial by design.
+  suppressMessages({
+    poisson_pr <- regtab(epitabl, "adjudicated_acs", ~ hypertension + age,
+                         design = "cross_sectional", exposure = hypertension)
+    poisson_rr <- regtab(epitabl, "mace_event", ~ renal_impairment + age,
+                         design = "cohort", exposure = renal_impairment)
+    logbin_pr <- regtab(epitabl, "adjudicated_acs", ~ hypertension + age, family = binomial("log"),
+                        design = "cross_sectional", exposure = hypertension)
+    counts <- regtab(epitabl, "ed_visits", ~ hypertension + age, exposure = hypertension)
+  })
+  expect_identical(e_value(poisson_pr)$data$measure, "PR")
+  expect_identical(e_value(poisson_rr)$data$measure, "RR")
+  expect_identical(e_value(logbin_pr)$data$measure, "PR")
+  expect_error(e_value(counts), "incidence-rate ratios", class = "simtab_error")
+
+  skip_if_not_installed("EValue")
+  oracle <- EValue::evalues.RR(est$estimate, est$lower_ci, est$upper_ci)
+  expect_equal(ev$data$e_value, unname(oracle["E-values", "point"]))
+})

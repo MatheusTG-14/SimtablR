@@ -131,8 +131,9 @@ test_that("regtab labels the measure from link and design in every renderer", {
   expect_true("Adjudicated acute coronary syndrome, RR (95% CI)" %in% names(as.data.frame(rr)))
   expect_true("Adjudicated acute coronary syndrome, OR (95% CI)" %in% names(as.data.frame(or)))
   expect_output(print(pr), "PR (95% CI)", fixed = TRUE)
-  expect_identical(pr$data, suppressMessages(regtab(epitabl, "adjudicated_acs", ~ age + sex,
-                                                    family = binomial("log")))$data)
+  # A second fit can differ in the last bit under optimised BLAS (e.g. MKL).
+  expect_equal(pr$data, suppressMessages(regtab(epitabl, "adjudicated_acs", ~ age + sex,
+                                                family = binomial("log")))$data)
 
   # Count and 0/1 outcomes in one Poisson model keep their own measures.
   dat <- epitabl

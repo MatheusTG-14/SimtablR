@@ -98,7 +98,8 @@ test_that("journal style reaches the GLM renderer across print, data frame, gt a
 test_that("GLM journal style applies through the spec grammar", {
   r <- suppressMessages(regtab(epitabl, "rehospitalized", ~ renal_impairment + age, family = binomial("log")))
   grammar <- suppressMessages(evaluate(style(r$spec, "lancet")))
-  expect_identical(grammar$data, r$data)
+  # evaluate() refits the model; optimised BLAS (e.g. MKL) can differ in the last bit.
+  expect_equal(grammar$data, r$data)
   expect_identical(as.data.frame(grammar), as.data.frame(style(r, "lancet")))
 })
 
