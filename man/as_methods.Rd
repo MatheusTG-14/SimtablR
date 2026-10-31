@@ -2,14 +2,23 @@
 % Please edit documentation in R/methods-sentence.R
 \name{as_methods}
 \alias{as_methods}
+\alias{as_methods.simtab_result}
+\alias{as_methods.simtab_report}
 \title{Generate a manuscript methods sentence}
 \usage{
 as_methods(x, ...)
+
+\method{as_methods}{simtab_result}(x, software = FALSE, ...)
+
+\method{as_methods}{simtab_report}(x, software = FALSE, ...)
 }
 \arguments{
-\item{x}{A \code{simtab_result} or \code{simtab_spec}.}
+\item{x}{A \code{simtab_result}, \code{simtab_spec}, or \code{simtab_report}.}
 
-\item{...}{Ignored.}
+\item{...}{Passed to methods; otherwise ignored.}
+
+\item{software}{Logical. If \code{TRUE}, append a sentence naming the R and
+SimtablR versions and the suggested packages the analysis used.}
 }
 \value{
 A character string of length one.
@@ -22,4 +31,5 @@ other render/extract verbs.
 \examples{
 res <- tb(epitabl, sex, diabetes)
 as_methods(res)
+as_methods(res, software = TRUE)
 }

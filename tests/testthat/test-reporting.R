@@ -99,7 +99,7 @@ test_that("regtab and survtab reviewer tools use the recorded exposure", {
   # The forest plot, why(), as_methods() and the manifest name the exposure.
   expect_identical(nrow(SimtablR:::.effect_forest_frame(fit)), 1L)
   invisible(capture.output(expl <- why(fit)))
-  expect_true("Exposure: renal_impairment; adjustment set: age, sex" %in% expl$lines)
+  expect_true("Exposure: renal_impairment; adjustment set: age, sex" %in% expl)
   expect_match(as_methods(fit), "adjusted for Age at index presentation (years) and Sex", fixed = TRUE)
   expect_identical(repro_manifest(fit)$engine_decisions$adjustment, c("age", "sex"))
   fallacy <- Filter(function(a) identical(a$id, "table2_fallacy"), fit$advice)
@@ -128,7 +128,7 @@ test_that("model reviewer tools without an exposure warn or stop instead of gues
   expect_identical(nrow(ev$data), 2L)
   expect_error(sensitivity(fit, adjust = NULL), class = "simtab_error")
   invisible(capture.output(expl <- why(fit)))
-  expect_true(any(grepl("^Exposure: not recorded", expl$lines)))
+  expect_true(any(grepl("^Exposure: not recorded", expl)))
 })
 
 test_that("e_value and sensitivity use the pooled estimate of a stratified tb result", {
@@ -276,4 +276,77 @@ test_that("e_value accepts prevalence ratios with the risk-ratio formula", {
   skip_if_not_installed("EValue")
   oracle <- EValue::evalues.RR(est$estimate, est$lower_ci, est$upper_ci)
   expect_equal(ev$data$e_value, unname(oracle["E-values", "point"]))
+})
+
+
+test_that("methods prose names variables, writes test sentences and reports missing data", {
+  t1 <- suppressMessages(table1(epitabl, c(age, bmi, presentation_hours, sex), by = adjudicated_acs, test = TRUE))
+  prose <- as_methods(t1)
+  expect_match(prose, "Hours from symptom onset to presentation as median [IQR] owing to skewness", fixed = TRUE)
+  expect_match(prose, "Sex recorded for clinical assessment as counts and percentages", fixed = TRUE)
+  expect_match(prose, "using the Welch t-test for Age at index presentation (years) and Body mass index (kg/m2)", fixed = TRUE)
+  expect_match(prose, "Body mass index (kg/m2) (n = 63)", fixed = TRUE)
+  expect_no_match(prose, "Group comparisons used", fixed = TRUE)
+  manifest <- repro_manifest(t1)
+  expect_true(grepl(manifest$engine_decisions$missing_data, prose, fixed = TRUE))
+
+  dat <- epitabl
+  dat$mace_event[1:30] <- NA
+  fit <- suppressMessages(regtab(dat, "mace_event", ~ renal_impairment + age, family = binomial("log")))
+  expect_match(as_methods(fit), "n = 1470 of 1500", fixed = TRUE)
+
+  acc <- suppressMessages(diag_test(epitabl, poc_hstn_positive, adjudicated_acs, positive = "Yes"))
+  expect_match(as_methods(acc), "against Adjudicated acute coronary syndrome as the reference standard", fixed = TRUE)
+  expect_match(as_methods(acc), "899 of 1500 participants", fixed = TRUE)
+
+  tab <- suppressMessages(tb(epitabl, hypertension, adjudicated_acs, p, ref = "No"))
+  expect_match(as_methods(tab), "compared across Adjudicated acute coronary syndrome using the N-1 chi-squared test", fixed = TRUE)
+})
+
+test_that("as_methods(software = TRUE) names the R and SimtablR versions", {
+  tab <- suppressMessages(tb(epitabl, hypertension, adjudicated_acs, pr, ref = "No"))
+  expect_no_match(as_methods(tab), "Analyses used R", fixed = TRUE)
+  versioned <- as_methods(tab, software = TRUE)
+  expect_match(versioned, paste0("Analyses used R ", R.version$major, ".", R.version$minor), fixed = TRUE)
+  expect_match(versioned, paste("SimtablR", as.character(utils::packageVersion("SimtablR"))), fixed = TRUE)
+
+  rep <- suppressMessages(simtablr(epitabl, outcome = adjudicated_acs, exposure = hypertension,
+                                   vars = c(age, sex), design = "cross_sectional"))
+  expect_match(as_methods(rep, software = TRUE), "Analyses used R", fixed = TRUE)
+
+  skip_if_not_installed("pROC")
+  roc_res <- suppressMessages(roc(epitabl, poc_hstn_value, adjudicated_acs))
+  expect_match(as_methods(roc_res, software = TRUE), "with pROC", fixed = TRUE)
+})
+
+
+test_that("small UX fixes: diag print, NA rows, reference note, checklists, report advice", {
+  acc <- suppressMessages(diag_test(epitabl, poc_hstn_positive, adjudicated_acs, positive = "Yes"))
+  printed <- capture.output(print(acc))
+  expect_false(any(grepl("gold standard", printed, fixed = TRUE)))
+  expect_true(any(grepl("Reference standard: Adjudicated acute coronary syndrome", printed, fixed = TRUE)))
+
+  with_na <- epitabl
+  with_na$mace_event[1:20] <- NA
+  freq <- suppressMessages(tb(with_na, renal_impairment, mace_event, flags = c("row", "miss")))$data$frequencies
+  expect_false(anyNA(rownames(freq)))
+  expect_true(anyNA(colnames(freq)))
+
+  expect_silent(tb(epitabl, hypertension, adjudicated_acs, rr))
+  expect_message(tb(epitabl, sex, adjudicated_acs, rr), "Defaulting to the first level: 'Female'", fixed = TRUE)
+
+  rep <- suppressMessages(simtablr(epitabl, outcome = adjudicated_acs, exposure = hypertension,
+                                   vars = c(age, sex, diabetes), design = "cross_sectional"))
+  checklist <- capture.output(print(strobe(rep)))
+  expect_identical(length(checklist), 2L + 1L + 22L)
+
+  withr::local_options(simtablr.guidance = "teaching")
+  # Advice is emitted as messages; route them to stdout to keep their order.
+  out <- capture.output(withCallingHandlers(print(rep), message = function(m) {
+    cat(conditionMessage(m))
+    invokeRestart("muffleMessage")
+  }))
+  advice_line <- grep("compare groups in a descriptive table", out)
+  expect_length(advice_line, 1L)
+  expect_lt(advice_line, grep("^table2$", out))
 })

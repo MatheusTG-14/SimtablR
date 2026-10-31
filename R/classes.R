@@ -339,16 +339,20 @@ print.simtab_report <- function(x, details = FALSE, ...) {
   if (!is.null(x$methods) && nzchar(x$methods)) {
     cat("  methods: recorded\n")
   }
+  # Each item prints its own advice under its table; only report-level advice
+  # (rules that fired on the report itself) is printed at the end.
+  item_ids <- character()
   for (nm in names(x$items)) {
     cat("\n", nm, "\n", sep = "")
     item <- x$items[[nm]]
-    item$advice <- list()
+    item_ids <- c(item_ids, vapply(item$advice %||% list(), `[[`, character(1), "id"))
     if (inherits(item, "simtab_table1") || inherits(item, "simtab_regtab")) {
       print(item, details = details)
     } else {
       print(item)
     }
   }
+  x$advice <- Filter(function(entry) !entry$id %in% item_ids, x$advice %||% list())
   .print_advice(x)
   invisible(x)
 }

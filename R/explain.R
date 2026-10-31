@@ -14,7 +14,9 @@
 #'
 #' @param x A `simtab_spec`, `simtab_result`, or `simtab_report`.
 #' @param ... Ignored.
-#' @return A `simtab_explanation` object, invisibly when printed.
+#' @return A `simtab_explanation`: a character vector with one line per
+#'   recorded decision. It prints one line per row; `as.character()` or
+#'   `cat(x, sep = "\n")` give the plain lines.
 #' @examples
 #' res <- tb(epitabl, sex, diabetes)
 #' why(res)
@@ -129,20 +131,27 @@ why.simtab_report <- function(x, ...) {
 # EXPLANATION OBJECT CONSTRUCTION AND DISPLAY
 # Builds simtab_explanation structures and formats multi-line console output.
 
-#' Construct and print a simtab_explanation container object
+#' Construct a simtab_explanation: classed explanation lines
+#'
+#' The object is returned visibly and printed by auto-print only, so
+#' `print(why(x))` shows it once.
 #' @keywords internal
 #' @noRd
 .new_simtab_explanation <- function(lines, subject_class) {
-  out <- structure(
-    list(lines = lines, subject_class = subject_class),
+  structure(
+    as.character(lines),
+    subject_class = subject_class,
     class = c("simtab_explanation", "simtab")
   )
-  print(out)
-  invisible(out)
 }
 
 #' @export
 print.simtab_explanation <- function(x, ...) {
-  cat(paste(x$lines, collapse = "\n"), "\n", sep = "")
+  cat(paste(as.character(x), collapse = "\n"), "\n", sep = "")
   invisible(x)
+}
+
+#' @export
+as.character.simtab_explanation <- function(x, ...) {
+  as.vector(unclass(x), mode = "character")
 }

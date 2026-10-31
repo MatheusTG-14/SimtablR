@@ -78,7 +78,7 @@ test_that("a degenerate kappa interval renders without a negative zero", {
   display <- as.data.frame(res)
   kappa_ci <- display$CI[display$Metric == "Cohen's Kappa"]
   expect_false(grepl("-0.00", kappa_ci, fixed = TRUE))
-  expect_output(print(res), "Cohen's Kappa\\s+:\\s+0\\.00\\s+\\(0\\.00 - 0\\.00\\)")
+  expect_output(print(res), "Cohen's Kappa\\s+0\\.00\\s+\\(0\\.00 - 0\\.00\\)")
   # Presentation-only: the raw interval is untouched.
   expect_identical(fmt(res, d = 3)$data, res$data)
 

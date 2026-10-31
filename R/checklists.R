@@ -172,7 +172,22 @@ as.data.frame.simtab_checklist <- function(x, row.names = NULL, optional = FALSE
 print.simtab_checklist <- function(x, ...) {
   cat("<simtab_checklist>\n")
   cat("  guideline: ", x$guideline, "\n", sep = "")
-  print(as.data.frame(x), row.names = FALSE)
+  df <- as.data.frame(x)
+  # One row per line: base printing would wrap the long pointer column into a
+  # separate block, so it is shortened to the console width instead.
+  cols <- intersect(c("item", "requirement", "status"), names(df))
+  fixed <- lapply(cols, function(col) {
+    format(c(col, as.character(df[[col]])), justify = if (col == "item") "right" else "left")
+  })
+  names(fixed) <- cols
+  prefix <- do.call(paste, c(unname(fixed), sep = "  "))
+  if ("pointer" %in% names(df)) {
+    available <- max(getOption("width", 80L) - max(nchar(prefix)) - 3L, 10L)
+    pointer <- .abbreviate_to_width(c("pointer", as.character(df$pointer)), available)
+    pointer[is.na(pointer)] <- ""
+    prefix <- paste(prefix, pointer, sep = "  ")
+  }
+  writeLines(paste0(" ", sub(" +$", "", prefix)))
   invisible(x)
 }
 

@@ -90,7 +90,7 @@ Scientific manuscripts standardly report baseline characteristics (Table 1) alon
 ```{r simtablr-report}
 report <- simtablr(
   epitabl,
-  outcome = adjudicated_acs,
+  outcome = mace_event,
   exposure = renal_impairment,
   vars = c(age, sex, smoking, hypertension, diabetes, renal_impairment),
   adjust = c(age, sex, smoking, hypertension),
@@ -120,7 +120,7 @@ During peer review, reviewers frequently request sensitivity tests, bias assessm
 primary <- tb(
   epitabl,
   renal_impairment,
-  adjudicated_acs,
+  mace_event,
   flags = c("row", "rr"),
   design = "cohort"
 )

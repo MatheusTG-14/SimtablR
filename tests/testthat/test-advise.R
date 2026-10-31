@@ -29,10 +29,18 @@ test_that("advise triggers model complexity or small sample warnings on regressi
 })
 
 test_that("advise identifies multiple unadjusted comparisons", {
+  # A descriptive Table 1 gets reporting guidance, not a multiplicity correction.
   tab <- suppressMessages(table1(epitabl, vars = c("age", "bmi", "cholesterol"), by = "adjudicated_acs", test = TRUE))
-  aud <- advise(tab, audit = TRUE)
-  df <- as.data.frame(aud)
-  expect_true("multiplicity_unadjusted" %in% df$id)
+  df <- as.data.frame(advise(tab, audit = TRUE))
+  expect_true(df$fired[df$id == "descriptive_table_tests"])
+  expect_false("multiplicity_unadjusted" %in% df$id[df$fired])
+
+  # An association table with several tested effects still gets Holm/BH advice.
+  assoc <- suppressMessages(table1(epitabl, vars = c(sex, smoking, diabetes), by = "adjudicated_acs",
+                                   test = TRUE, measure = "PR"))
+  df_assoc <- as.data.frame(advise(assoc, audit = TRUE))
+  expect_true(df_assoc$fired[df_assoc$id == "multiplicity_unadjusted"])
+  expect_false("descriptive_table_tests" %in% df_assoc$id)
 })
 
 test_that("advise with audit = TRUE returns complete rule audit data frame", {
@@ -68,4 +76,38 @@ test_that("advise flags a risk ratio reported under a case-control design", {
   t1_cc <- suppressMessages(table1(epitabl, sex, by = mace_event, measure = "RR", design = "case_control"))
   t1_audit <- as.data.frame(advise(t1_cc, audit = TRUE))
   expect_true(t1_audit$fired[t1_audit$id == "ratio_in_case_control"])
+})
+
+
+test_that("advise() returns a printable simtab_advice that stays a list", {
+  fit <- suppressMessages(regtab(epitabl, "adjudicated_acs", ~ age + sex,
+                                 family = binomial("logit"), design = "cross_sectional"))
+  adv <- advise(fit)
+  expect_s3_class(adv, "simtab_advice")
+  expect_type(adv, "list")
+  ids <- vapply(adv, `[[`, character(1), "id")
+  expect_true("or_as_rr_common_outcome" %in% ids)
+  expect_output(print(adv), "ID: or_as_rr_common_outcome", fixed = TRUE)
+  df <- as.data.frame(adv)
+  expect_identical(df$id, ids)
+  expect_true(all(c("severity", "message", "citation", "fix") %in% names(df)))
+
+  # Results keep plain advice lists internally.
+  expect_false(inherits(fit$advice, "simtab_advice"))
+
+  quiet <- suppressMessages(tb(epitabl, sex, mace_event))
+  empty <- advise(quiet)
+  if (length(empty) == 0) {
+    expect_output(print(empty), "No rule fired.", fixed = TRUE)
+  }
+})
+
+test_that("why() prints once and gives plain lines to cat() and as.character()", {
+  tab <- suppressMessages(tb(epitabl, hypertension, adjudicated_acs, flags = "rr"))
+  expect_silent(wh <- why(tab))
+  out <- capture.output(print(wh))
+  expect_identical(sum(out == "SimtablR explanation"), 1L)
+  expect_identical(as.character(wh)[[1]], "SimtablR explanation")
+  expect_output(cat(wh, sep = "
+"), "Engine: bivariate", fixed = TRUE)
 })

@@ -12,7 +12,9 @@ why(x, ...)
 \item{...}{Ignored.}
 }
 \value{
-A \code{simtab_explanation} object, invisibly when printed.
+A \code{simtab_explanation}: a character vector with one line per
+recorded decision. It prints one line per row; \code{as.character()} or
+\code{cat(x, sep = "\\n")} give the plain lines.
 }
 \description{
 \code{why()} prints the decisions already recorded on a spec, result, or

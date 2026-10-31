@@ -148,7 +148,23 @@
     decisions$interval_method,
     decisions$tests
   )
-  paste0(out, .model_exposure_sentence(x, decisions))
+  paste(paste0(out, .model_exposure_sentence(x, decisions)), decisions$missing_data)
+}
+
+#' Complete-case sentence for a Cox model, with the N and events analysed
+#' @keywords internal
+#' @noRd
+.cox_missing_sentence <- function(x) {
+  total <- nrow(x$spec$data_src$ref$data)
+  n <- as.integer(x$meta$n)
+  events <- as.integer(x$meta$n_events)
+  if (identical(n, total)) {
+    return(sprintf("The model included all %d participants (%d events); no analysed variable had missing values.", total, events))
+  }
+  sprintf(
+    "The model used complete cases: %d of %d participants (%d events), excluding those with missing time, event, or predictor data.",
+    n, total, events
+  )
 }
 
 #' Record the estimator, interval, ties method, and tests of a Cox result
@@ -162,7 +178,8 @@
     interval_method = "Wald CI",
     tests = "Grambsch-Therneau Schoenfeld residual test",
     ties = paste0(toupper(substr(ties, 1, 1)), substr(ties, 2, nchar(ties))),
-    packages = "survival"
+    packages = "survival",
+    missing_data = .cox_missing_sentence(x)
   ), .model_exposure_decisions(x))
 }
 

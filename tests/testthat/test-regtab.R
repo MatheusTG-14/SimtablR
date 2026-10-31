@@ -167,9 +167,9 @@ test_that("why() and as_methods() name the design, measure and convergence of re
   pr <- suppressMessages(regtab(epitabl, "adjudicated_acs", ~ age + sex,
                                 family = binomial("log"), design = "cross_sectional"))
   invisible(capture.output(expl <- why(pr)))
-  expect_true("Measure: PR" %in% expl$lines)
-  expect_true("Measure source: binomial family, log link, cross_sectional design" %in% expl$lines)
-  expect_true("Convergence: all models converged" %in% expl$lines)
+  expect_true("Measure: PR" %in% expl)
+  expect_true("Measure source: binomial family, log link, cross_sectional design" %in% expl)
+  expect_true("Convergence: all models converged" %in% expl)
 
   meth <- as_methods(pr)
   expect_match(meth, "prevalence ratios for a cross-sectional design", fixed = TRUE)

@@ -215,67 +215,33 @@
 #' @keywords internal
 #' @noRd
 .diag_print <- function(x, digits = NULL, ...) {
+  # Digits come from fmt()/style() through the display frame; `digits` is kept
+  # for backward compatibility of print(x, digits = ).
   x <- .diag_validate_result(x)
-  style_spec <- .diag_style_spec(x)
-  if (is.null(digits)) {
-    digits <- x$spec$fmt$d %||% style_spec$digits_est
-  }
-  if (!is.numeric(digits) || length(digits) != 1L || is.na(digits) || digits < 0) {
-    digits <- style_spec$digits_est
-  }
-  digits <- as.integer(digits)
+  data <- x$spec$data_src$ref$data
+  label <- function(var) .simtab_model_column_label(data, var, x$spec$fmt$labels)
+  ci_label <- sprintf("%.0f%% CI", x$meta$conf.level * 100)
 
-  sep_major <- strrep("=", 60L)
-  sep_minor <- strrep("-", 60L)
-  display <- .diag_display_frame(x)
-  ci_label <- sprintf("%.0f%%", x$meta$conf.level * 100)
-
-  cat("\n", sep_major, "\n", sep = "")
-  cat("  DIAGNOSTIC TEST EVALUATION\n")
-  cat(sep_major, "\n\n", sep = "")
-
-  cat(sprintf("  Sample size      : %d\n", x$meta$sample_size))
-  cat(sprintf("  Confidence level : %s\n", ci_label))
-  cat(sprintf("  CI method        : %s\n\n", x$meta$ci))
-
-  cat("  Reference standard (gold standard):\n")
+  cat("Diagnostic Accuracy\n")
+  cat("===================\n")
   cat(sprintf(
-    "    Positive = '%s'   |   Negative = '%s'\n\n",
-    x$meta$positive$ref,
-    x$meta$negative$ref
+    "Index test: %s (positive = '%s')\n",
+    label(x$meta$test_var), x$meta$positive$test
   ))
-
-  cat("  Diagnostic test:\n")
   cat(sprintf(
-    "    Positive = '%s'   |   Negative = '%s'\n\n",
-    x$meta$positive$test,
-    x$meta$negative$test
+    "Reference standard: %s (positive = '%s')\n",
+    label(x$meta$ref_var), x$meta$positive$ref
   ))
+  cat(sprintf("n = %d | CI method: %s | %s\n\n", x$meta$sample_size, x$meta$ci, ci_label))
 
-  cat(sep_minor, "\n  Confusion Matrix\n", sep_minor, "\n", sep = "")
   print(x$data$confusion_matrix)
   cat("\n")
 
-  cat(sep_major, "\n", sep = "")
-  cat(sprintf("  Performance Metrics  (%s CI)\n", ci_label))
-  cat(sep_major, "\n", sep = "")
+  display <- .diag_display_frame(x)
+  names(display)[names(display) == "CI"] <- ci_label
+  print(display, row.names = FALSE, right = FALSE)
 
-  metric_width <- max(nchar(display$Metric))
-  estimate_width <- max(nchar(c("Estimate", display$Estimate)))
-  for (i in seq_len(nrow(display))) {
-    if (i == 7L) {
-      cat(sep_minor, "\n", sep = "")
-    }
-    metric <- formatC(display$Metric[i], width = -metric_width, flag = "-")
-    estimate <- formatC(display$Estimate[i], width = estimate_width)
-    cat(metric, " :  ", estimate, sep = "")
-    if (nzchar(display$CI[i])) {
-      cat("  ", display$CI[i], sep = "")
-    }
-    cat("\n")
-  }
-  cat("\n")
-
+  .print_advice(x)
   invisible(x)
 }
 

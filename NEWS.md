@@ -1,8 +1,95 @@
-# SimtablR
+# SimtablR 3.2.0
 
-3.1.2 patch release
+## New features
+
+* Improved methods for printing text
+`as_methods()` prose reads as manuscript text. Table 1 names the variables
+  under each summary ("Age and BMI were summarised as mean (SD) for
+  approximately symmetric distributions; presentation hours as median [IQR]
+  owing to skewness; and sex as counts and percentages"); categorical
+  variables were previously omitted when continuous ones were present. Test
+  lists became sentences naming the variables each test covered. Every
+  engine now states its missing-data handling and the N analysed (for
+  example "Models used complete cases ... (n = 1470 of 1500)"), and the same
+  sentence is recorded in `repro_manifest()`. `diag_test()` and `roc()`
+  prose use variable labels instead of raw column names
+* `regtab()` and `survtab()` gain `exposure =`, recorded on the specification
+  as an `exposure` role; the other formula terms form the adjustment set.
+  Reviewer tools no longer treat covariates as effects (the Table 2
+  fallacy): `e_value()` keeps only the exposure rows, `sensitivity()` uses
+  the exposure as the primary estimate with its measure label (RR, PR, OR,
+  IRR, HR) instead of the first term labelled "ESTIMATE", and
+  `sensitivity(adjust = NULL)` now drops the formula covariates (and any
+  added with `adjust()`) to give the crude estimate. The forest plot shows
+  the exposure rows, the `table2_fallacy` advice names the covariate rows,
+  and `why()`, `as_methods()` and `repro_manifest()` record the exposure and
+  adjustment set. Without an exposure, `e_value()` returns every term with a
+  warning and `sensitivity()` errors instead of picking a covariate.
+* The engine contract gains an optional `decisions` renderer (see
+  `register_engine()`): it returns the recorded estimator, interval method,
+  tests, corrections, and Suggests packages of a result. `as_methods()` and
+  `repro_manifest()` both read it.
+
 
 ## Bug fixes
+
+* `why()` no longer prints twice. It printed inside the function and then
+  returned the object, so `print(why(x))` (or any visible call in a script)
+  showed the explanation twice; assigning it also printed. It now returns a
+  `simtab_explanation` that is a character vector of lines, printed once by
+  auto-print, so `cat(why(x), sep = "\n")` and `as.character(why(x))` work.
+  Code that read the former `$lines` field should use `as.character()`.
+* `diag_test()` prints in the same layout as the other results (titled
+  header, variable labels, confusion matrix, metric table, advice) and says
+  "Reference standard" instead of "Reference standard (gold standard)".
+* `tb(..., miss)` no longer adds an empty missing-value row or column: they
+  appear only where values are missing (an `NA` outcome column without an
+  all-zero `NA` exposure row).
+* The "No reference level specified" note of `tb()` now appears only when
+  the default first level is not a conventional reference ("No", "0",
+  "Never", "Negative", "None", "Absent", "FALSE", "Unexposed", "Control"),
+  and names the measure.
+* `strobe()` and `stard()` print one line per item, shortening the pointer
+  to the console width instead of wrapping it into a separate block.
+* Printing a `simtablr()` report shows each table's advice under that table,
+  so Table 1's advice no longer appears to describe Table 2.
+* A descriptive Table 1 (no effect measure) with several p-values no longer
+  gets the Holm/BH multiplicity advice. A new `descriptive_table_tests` rule
+  (severity 1) notes that such p-values do not test pre-specified hypotheses,
+  citing the STROBE explanation and elaboration (Vandenbroucke et al., 2007),
+  and suggests standardized mean differences via `test(smd = TRUE)`.
+  `multiplicity_unadjusted` still applies to association tables. Tests in
+  Table 1 remain available with `test = TRUE`.
+* Vignettes no longer treat adjudicated acute coronary syndrome, which is
+  diagnosed at the index presentation, as a cohort outcome with a risk
+  ratio. "Getting started" now shows a cross-sectional prevalence ratio for
+  ACS and a cohort risk ratio for 365-day MACE; the reporting and regression
+  vignettes use `mace_event` for their cohort examples. The former text also
+  claimed a significantly higher ACS incidence with renal impairment, which
+  the data do not show (PR 1.09, 95% CI 0.94 to 1.27).
+* Tests no longer require bit-identical estimates from two independent fits
+  of the same GLM. CRAN's MKL check flagged `test-style.R` because an
+  optimised BLAS can differ in the last bit between refits; these
+  comparisons now use a numerical tolerance. Comparisons where the evidence
+  is copied rather than refitted (`style()`, `label()`, `fmt()` on a result)
+  stay exact.
+* Stratified `tb()` tables now show the stratum-specific estimates
+  ("Stratum Female: Yes", "Stratum Male: Yes") above the Mantel-Haenszel
+  pooled row; they were computed in `$data$mh` but the effect panel showed
+  only the pooled line. Row and cell percentages now use each stratum as the
+  denominator. The `row` percentage previously divided by the row total
+  across all strata (72/1184 = 6.1% for "Female: Yes"), which matches no
+  epidemiological quantity; it is now the risk within the stratum
+  (72/550 = 13.1%), consistent with the stratum RR shown beside it. Column
+  percentages were already within stratum and are unchanged.
+* `regtab()` no longer prints a separated coefficient as an estimate. Under
+  separation a binomial or Poisson coefficient diverges, and the table showed
+  a number such as `0.00 (0.00 - 0.00)` with a falsely narrow robust
+  interval. A coefficient whose link-scale model-based standard error exceeds
+  100 is now flagged in `meta$not_estimable`; `print()`, `as.data.frame()`,
+  `as_gt()` and `as_flextable()` show a dash with a footnote pointing to
+  `method = "firth"`, and the forest plot and `e_value()` skip it. The raw
+  estimate stays in `$data`.
 * `regtab()` now uses the declared `design` beyond IRR labelling. Each outcome
   column in `print()`, `as.data.frame()`, `as_gt()` and `as_flextable()` names
   its measure, resolved from link and design as in the forest plot (for
@@ -29,25 +116,20 @@
   convention `simtablr()` and `binomial()` use, with a note; the coding is
   recorded in `meta$outcome_coding`. Estimates equal those of the
   corresponding 0/1 outcome (modified Poisson).
-* `regtab()` and `survtab()` gain `exposure =`, recorded on the specification
-  as an `exposure` role; the other formula terms form the adjustment set.
-  Reviewer tools no longer treat covariates as effects (the Table 2
-  fallacy): `e_value()` keeps only the exposure rows, `sensitivity()` uses
-  the exposure as the primary estimate with its measure label (RR, PR, OR,
-  IRR, HR) instead of the first term labelled "ESTIMATE", and
-  `sensitivity(adjust = NULL)` now drops the formula covariates (and any
-  added with `adjust()`) to give the crude estimate. The forest plot shows
-  the exposure rows, the `table2_fallacy` advice names the covariate rows,
-  and `why()`, `as_methods()` and `repro_manifest()` record the exposure and
-  adjustment set. Without an exposure, `e_value()` returns every term with a
-  warning and `sensitivity()` errors instead of picking a covariate.
-* The engine contract gains an optional `decisions` renderer (see
-  `register_engine()`): it returns the recorded estimator, interval method,
-  tests, corrections, and Suggests packages of a result. `as_methods()` and
-  `repro_manifest()` both read it.
+* `e_value()` now accepts prevalence ratios, which previously failed with
+  "`measure` must be one of RR, OR, or HR" and broke the cross-sectional
+  workflow (`e_value(report$table2)` on a `simtablr(design =
+  "cross_sectional")` report, or a PR `tb()`). A prevalence ratio is a ratio
+  of proportions, so the risk-ratio formula applies (VanderWeele & Ding,
+  2017); the result keeps the "PR" label and `as_methods()` says so. For
+  `regtab()`, the measure now follows the table (link and design): modified
+  Poisson, the `regtab()` default, is accepted as PR or RR instead of being
+  rejected, and a log-binomial model under a cross-sectional design reads PR
+  instead of RR. Count models (IRR) are rejected with an error that names
+  the outcome. `as_methods()` and `repro_manifest()` record the scale
+  conversion used for each measure (PR, OR, HR).
 
-
-3.1.1 patch release
+# SimtablR 3.1.1
 
 ## Bug fixes
 

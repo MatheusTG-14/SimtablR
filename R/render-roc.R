@@ -200,7 +200,12 @@
   x <- .roc_validate_result(x)
   decisions <- .result_decisions(x)
   ci <- x$meta$conf_pct %||% round((x$meta$conf.level %||% 0.95) * 100)
-  markers <- paste(x$meta$marker %||% x$data$auc$marker, collapse = ", ")
+  data <- x$spec$data_src$ref$data
+  markers <- .methods_join(vapply(
+    x$meta$marker %||% x$data$auc$marker,
+    function(m) .simtab_model_column_label(data, m, x$spec$fmt$labels),
+    character(1)
+  ))
   ci_sentence <- sprintf(
     "%d%% %s were reported for AUC (DeLong et al. 1988).",
     ci, decisions$interval_method
@@ -223,7 +228,8 @@
     sprintf("ROC analysis for %s used the %s (Robin et al. 2011).", markers, decisions$estimator),
     ci_sentence,
     cutpoint_sentence,
-    comparison_sentence
+    comparison_sentence,
+    decisions$missing_data
   )
   paste(parts[nzchar(parts)], collapse = " ")
 }
@@ -240,7 +246,12 @@
     interval_method = if (identical(ci, "delong")) "DeLong confidence intervals" else paste(ci, "confidence intervals"),
     tests = if (is.data.frame(x$data$comparisons) && nrow(x$data$comparisons) > 0) "DeLong's test" else character(),
     cutpoint = if (identical(cutpoint, "youden")) "Youden" else cutpoint,
-    packages = "pROC"
+    packages = "pROC",
+    missing_data = sprintf(
+      "AUC was estimated in the %s of %d participants with marker and outcome data.",
+      .methods_join(unique(as.character(x$data$auc$n))),
+      nrow(x$spec$data_src$ref$data)
+    )
   )
 }
 

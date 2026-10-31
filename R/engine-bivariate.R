@@ -380,16 +380,21 @@
       } else {
         levels(factor(vars[[1]]))
       }
-      message(sprintf(
-        paste0(
-          "Note: No reference level specified for PR/OR calculation. ",
-          "Defaulting to the first level: '%s'."
-        ),
-        levs[1]
-      ))
+      # Only announce a default reference that a reader might not expect.
+      if (!.tb_is_conventional_reference(levs[1])) {
+        message(sprintf(
+          paste0(
+            "Note: No reference level specified for the %s. ",
+            "Defaulting to the first level: '%s'."
+          ),
+          measure,
+          levs[1]
+        ))
+      }
     }
 
-    useNA <- if (args$flags$missing) "always" else "no"
+    # "ifany": a missing-value row or column appears only where values are missing.
+    useNA <- if (args$flags$missing) "ifany" else "no"
     tab <- if (!isTRUE(is_stratified) && identical(useNA, "no")) {
       .tabulate_factor_table(vars)
     } else {
@@ -963,6 +968,15 @@
     p.adjust = tb$p.adjust %||% "none",
     paired = isTRUE(tb$paired),
     smd = isTRUE(spec$comparison$smd)
+  )
+}
+
+#' Whether a level is a conventional unexposed reference (e.g. "No", "0")
+#' @keywords internal
+#' @noRd
+.tb_is_conventional_reference <- function(level) {
+  tolower(trimws(as.character(level))) %in% c(
+    "no", "0", "never", "negative", "none", "absent", "false", "unexposed", "control"
   )
 }
 

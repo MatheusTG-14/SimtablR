@@ -139,7 +139,8 @@
 
   register_rule(
     "multiplicity_unadjusted",
-    applies = function(result) .is_table_result(result),
+    # Descriptive Table 1 p-values are handled by descriptive_table_tests.
+    applies = function(result) .is_table_result(result) && !.is_descriptive_table1(result),
     check = function(result) {
       if (!identical((result$meta$p.adjust %||% result$meta$args$p.adjust %||% "none"), "none")) {
         return(NULL)
@@ -165,6 +166,50 @@
         smoking = factor(rep(c("never", "former", "current"), 20)),
         disease = factor(rep(c("No", "Yes"), each = 30))
       )
+      table1(dat, c("sex", "smoking"), by = "disease", test = TRUE, measure = "OR")
+    },
+    example_silent = function() {
+      dat <- data.frame(
+        age = c(21:50, 26:55),
+        sex = factor(rep(c("female", "male"), 30)),
+        smoking = factor(rep(c("never", "former", "current"), 20)),
+        disease = factor(rep(c("No", "Yes"), each = 30))
+      )
+      table1(dat, c("sex", "smoking"), by = "disease", test = TRUE, measure = "OR") |> test(p.adjust = "BH")
+    }
+  )
+
+  # Rule: Significance tests in a descriptive Table 1
+  # Baseline p-values describe; they do not test pre-specified hypotheses, so
+  # multiplicity adjustment would treat them as a family they are not.
+  register_rule(
+    "descriptive_table_tests",
+    applies = .is_descriptive_table1,
+    check = function(result) {
+      p_values <- .result_test_p_values(result)
+      if (length(p_values) <= 1) {
+        return(NULL)
+      }
+      list(
+        message = sprintf(
+          "%d p-values compare groups in a descriptive table; they do not test pre-specified hypotheses.",
+          length(p_values)
+        ),
+        why = "Reporting guidance advises against significance tests in descriptive tables, and adjusting them for multiplicity would treat them as a family of hypotheses."
+      )
+    },
+    severity = 1,
+    citation = "Vandenbroucke 2007",
+    fix = "Describe group balance with standardized mean differences via test(smd = TRUE), or drop the tests with test = FALSE.",
+    version = version,
+    checklist = c(strobe = "14"),
+    example_fires = function() {
+      dat <- data.frame(
+        age = c(21:50, 26:55),
+        sex = factor(rep(c("female", "male"), 30)),
+        smoking = factor(rep(c("never", "former", "current"), 20)),
+        disease = factor(rep(c("No", "Yes"), each = 30))
+      )
       table1(dat, c("age", "sex", "smoking"), by = "disease", test = TRUE)
     },
     example_silent = function() {
@@ -174,7 +219,7 @@
         smoking = factor(rep(c("never", "former", "current"), 20)),
         disease = factor(rep(c("No", "Yes"), each = 30))
       )
-      table1(dat, c("age", "sex", "smoking"), by = "disease", test = TRUE) |> test(p.adjust = "BH")
+      table1(dat, c("age", "sex", "smoking"), by = "disease")
     }
   )
 
@@ -778,7 +823,7 @@
       dat <- .roc_example_data()
       result <- roc(dat, marker = marker1, outcome = outcome, positive = "Yes", cutpoint = "none")
       result$meta$rule_flags$apparent_auc <- FALSE
-      result$advice <- advise(result)
+      result$advice <- unclass(advise(result))
       result
     }
   )

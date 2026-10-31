@@ -15,8 +15,10 @@ returns a \code{simtab_audit} report of checked, fired, and silent rules
 (single results only).}
 }
 \value{
-A list of advice entries deduplicated by rule id, or a
-\code{simtab_audit} object when \code{audit = TRUE}.
+A \code{simtab_advice} object: a list of advice entries deduplicated by
+rule id, each with \code{id}, \code{severity}, \code{message}, \code{citation}, \code{fix}, and
+\code{why}. It prints one block per rule, most severe first, and converts with
+\code{as.data.frame()}. With \code{audit = TRUE}, a \code{simtab_audit} object.
 }
 \description{
 Evaluates all applicable rules against a computed result. Rule failures are

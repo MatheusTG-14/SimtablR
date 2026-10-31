@@ -12,12 +12,15 @@
 #' SimtablR result. Passing a bare `simtab_spec` computes it first, matching the
 #' other render/extract verbs.
 #'
-#' @param x A `simtab_result` or `simtab_spec`.
-#' @param ... Ignored.
+#' @param x A `simtab_result`, `simtab_spec`, or `simtab_report`.
+#' @param software Logical. If `TRUE`, append a sentence naming the R and
+#'   SimtablR versions and the suggested packages the analysis used.
+#' @param ... Passed to methods; otherwise ignored.
 #' @return A character string of length one.
 #' @examples
 #' res <- tb(epitabl, sex, diabetes)
 #' as_methods(res)
+#' as_methods(res, software = TRUE)
 #' @export
 as_methods <- function(x, ...) {
   UseMethod("as_methods")
@@ -28,8 +31,9 @@ as_methods.simtab_spec <- function(x, ...) {
   as_methods(evaluate(x), ...)
 }
 
+#' @rdname as_methods
 #' @export
-as_methods.simtab_result <- function(x, ...) {
+as_methods.simtab_result <- function(x, software = FALSE, ...) {
   x <- validate_simtab_result(x)
   fn <- .engine_renderer(x, "as_methods")
   if (is.null(fn)) {
@@ -40,16 +44,57 @@ as_methods.simtab_result <- function(x, ...) {
       ">" = "Register one with {.code register_engine(..., renderers = list(as_methods = function(x, ...) ...))}."
     ))
   }
-  fn(x, ...)
+  out <- fn(x, ...)
+  if (isTRUE(software)) {
+    out <- paste(out, .methods_software_sentence(.result_decisions(x)$packages))
+  }
+  out
 }
 
+#' @rdname as_methods
 #' @export
-as_methods.simtab_report <- function(x, ...) {
+as_methods.simtab_report <- function(x, software = FALSE, ...) {
   x <- validate_simtab_report(x)
-  if (!is.null(x$methods) && is.character(x$methods) && length(x$methods) == 1 && nzchar(x$methods)) {
-    return(x$methods)
+  out <- if (!is.null(x$methods) && is.character(x$methods) && length(x$methods) == 1 && nzchar(x$methods)) {
+    x$methods
+  } else {
+    .report_methods(x$items)
   }
-  .report_methods(x$items)
+  if (isTRUE(software)) {
+    packages <- unlist(lapply(x$items, function(item) .result_decisions(item)$packages))
+    out <- paste(out, .methods_software_sentence(packages))
+  }
+  out
+}
+
+#' Sentence naming the R, SimtablR, and suggested package versions used
+#' @keywords internal
+#' @noRd
+.methods_software_sentence <- function(packages = character()) {
+  version <- function(pkg) {
+    tryCatch(as.character(utils::packageVersion(pkg)), error = function(e) NA_character_)
+  }
+  packages <- sort(unique(packages))
+  extra <- if (length(packages) == 0) {
+    ""
+  } else {
+    sprintf(" with %s", .methods_join(paste(packages, vapply(packages, version, character(1)))))
+  }
+  sprintf(
+    "Analyses used R %s.%s and SimtablR %s%s.",
+    R.version$major, R.version$minor, version("SimtablR"), extra
+  )
+}
+
+#' Join prose items as "a", "a and b", or "a, b and c"
+#' @keywords internal
+#' @noRd
+.methods_join <- function(items) {
+  items <- unname(items)
+  if (length(items) <= 1) {
+    return(paste(items, collapse = ""))
+  }
+  paste(paste(utils::head(items, -1), collapse = ", "), "and", utils::tail(items, 1))
 }
 
 #########
@@ -64,7 +109,8 @@ as_methods.simtab_report <- function(x, ...) {
   parts <- c(
     .methods_summary_sentence(x),
     .methods_test_sentence(x),
-    .methods_effect_sentence(x)
+    .methods_effect_sentence(x),
+    .result_decisions(x)$missing_data
   )
   paste(parts[nzchar(parts)], collapse = " ")
 }
@@ -77,7 +123,8 @@ as_methods.simtab_report <- function(x, ...) {
   parts <- c(
     .methods_tb_summary_sentence(x),
     .methods_tb_test_sentence(x),
-    .methods_effect_sentence(x)
+    .methods_effect_sentence(x),
+    .result_decisions(x)$missing_data
   )
   paste(parts[nzchar(parts)], collapse = " ")
 }
@@ -90,12 +137,12 @@ as_methods.simtab_report <- function(x, ...) {
   decisions <- .result_decisions(x)
   ci <- x$meta$conf_pct %||% round((x$meta$conf.level %||% 0.95) * 100)
   if (identical(x$meta$method %||% "glm", "firth")) {
-    return(paste0(sprintf(
+    return(paste(paste0(sprintf(
       "Regression models were fit with %s (Firth 1993; Heinze & Schemper 2002); %d%% %s were reported.",
       decisions$estimator,
       ci,
       decisions$interval_method
-    ), .model_exposure_sentence(x, decisions)))
+    ), .model_exposure_sentence(x, decisions)), decisions$missing_data))
   }
   model <- sprintf("Regression models were fit with a %s", decisions$estimator)
   measure_names <- c(
@@ -119,7 +166,7 @@ as_methods.simtab_report <- function(x, ...) {
   if (!is.null(decisions$convergence)) {
     out <- paste0(out, " ", .regtab_convergence_sentence(decisions$convergence))
   }
-  out
+  paste(out, decisions$missing_data)
 }
 
 #' Record the model, interval, and convergence decisions of a regression result
@@ -131,7 +178,8 @@ as_methods.simtab_report <- function(x, ...) {
       measure = unique(.regtab_measures(x)),
       estimator = "Firth penalised likelihood",
       interval_method = "profile-penalised CI",
-      packages = "logistf"
+      packages = "logistf",
+      missing_data = .regtab_missing_sentence(x)
     ), .model_exposure_decisions(x)))
   }
   c(list(
@@ -142,8 +190,29 @@ as_methods.simtab_report <- function(x, ...) {
     } else {
       "Wald CI (model-based standard errors)"
     },
-    convergence = if (identical(x$meta$link, "log")) .regtab_convergence_text(x)
+    convergence = if (identical(x$meta$link, "log")) .regtab_convergence_text(x),
+    missing_data = .regtab_missing_sentence(x)
   ), .model_exposure_decisions(x))
+}
+
+#' Complete-case sentence for regression models, with the N analysed
+#' @keywords internal
+#' @noRd
+.regtab_missing_sentence <- function(x) {
+  total <- nrow(x$spec$data_src$ref$data)
+  model_n <- x$meta$model_n
+  if (length(model_n) == 0) {
+    return("")
+  }
+  if (all(model_n == total)) {
+    return(sprintf("Models included all %d observations; no analysed variable had missing values.", total))
+  }
+  labels <- .regtab_outcome_labels(x)[names(model_n)]
+  per_outcome <- sprintf("%d of %d for %s", model_n, total, labels)
+  sprintf(
+    "Models used complete cases, excluding observations with a missing outcome or predictor (n = %s).",
+    .methods_join(per_outcome)
+  )
 }
 
 #' Describe whether log-link models converged inside the parameter space
@@ -187,19 +256,30 @@ as_methods.simtab_report <- function(x, ...) {
       "and Cohen's kappa was reported for index-test / reference-standard ",
       "agreement with a %s %d%% CI."
     ),
-    x$meta$ref_var,
+    .simtab_model_column_label(x$spec$data_src$ref$data, x$meta$ref_var, x$spec$fmt$labels),
     intervals[["proportions"]], ci,
     intervals[["likelihood_ratios"]], ci,
     intervals[["diagnostic_odds_ratio"]], ci,
     intervals[["kappa"]], ci
-  )
+  ) |>
+    paste(.result_decisions(x)$missing_data)
 }
 
 #' Record the interval methods of a diagnostic accuracy result
 #' @keywords internal
 #' @noRd
 .decisions_diag <- function(x, ...) {
+  total <- nrow(x$spec$data_src$ref$data)
+  n <- x$meta$sample_size
   list(
+    missing_data = if (identical(as.integer(n), total)) {
+      sprintf("All %d participants had index-test and reference-standard results.", total)
+    } else {
+      sprintf(
+        "Accuracy was estimated in the %d of %d participants with both index-test and reference-standard results.",
+        n, total
+      )
+    },
     interval_method = c(
       proportions = if (identical(x$meta$ci, "wilson")) "Wilson" else "exact binomial",
       likelihood_ratios = "asymptotic (log-method)",
@@ -217,67 +297,130 @@ as_methods.simtab_report <- function(x, ...) {
 #' @keywords internal
 #' @noRd
 .methods_summary_sentence <- function(x) {
-  stats <- vapply(names(x$data), function(v) {
+  summaries <- vapply(names(x$data), function(v) {
     rec <- x$data[[v]]
     if (!identical(rec$type, "continuous")) {
-      return(NA_character_)
+      return("counts and percentages")
     }
-    label <- if (identical(rec$stat, "mean")) "mean (SD)" else "median [IQR]"
-    auto <- x$meta$summary_auto[[v]] %||% rec$auto_summary
-    if (!is.null(auto)) {
-      if (identical(auto$decision, "mean")) {
-        return(paste0(label, ", distribution approximately symmetric"))
-      }
-      if (grepl("skewness", auto$reason %||% "", fixed = TRUE)) {
-        return(paste0(label, " owing to skewness"))
-      }
-    }
-    label
+    .methods_continuous_summary(rec$stat, x$meta$summary_auto[[v]] %||% rec$auto_summary)
   }, character(1))
-  stats <- unique(stats[!is.na(stats)])
-  if (length(stats) == 0) {
-    return("Categorical variables were summarised with counts and percentages.")
+  labels <- vapply(names(x$data), function(v) x$data[[v]]$label %||% v, character(1))
+  .methods_summary_groups(labels, summaries)
+}
+
+#' Name a continuous summary and, for automatic choices, its reason
+#' @keywords internal
+#' @noRd
+.methods_continuous_summary <- function(stat, auto = NULL) {
+  label <- if (identical(stat, "mean")) "mean (SD)" else "median [IQR]"
+  if (!is.null(auto)) {
+    if (identical(auto$decision, "mean")) {
+      return(paste0(label, " for approximately symmetric distributions"))
+    }
+    if (grepl("skewness", auto$reason %||% "", fixed = TRUE)) {
+      return(paste0(label, " owing to skewness"))
+    }
   }
-  paste0("Continuous variables were summarised as ", paste(stats, collapse = " and "), ".")
+  label
+}
+
+#' Sentence grouping variables by the summary they were reported with
+#' @keywords internal
+#' @noRd
+.methods_summary_groups <- function(labels, summaries) {
+  groups <- unique(summaries)
+  clauses <- vapply(seq_along(groups), function(i) {
+    vars <- labels[summaries == groups[[i]]]
+    if (i == 1) {
+      sprintf("%s %s summarised as %s", .methods_join(vars), if (length(vars) == 1) "was" else "were", groups[[i]])
+    } else {
+      sprintf("%s as %s", .methods_join(vars), groups[[i]])
+    }
+  }, character(1))
+  if (length(clauses) == 2) {
+    return(paste0(clauses[[1]], " and ", clauses[[2]], "."))
+  }
+  if (length(clauses) > 2) {
+    clauses[length(clauses)] <- paste("and", clauses[length(clauses)])
+  }
+  paste0(paste(clauses, collapse = "; "), ".")
 }
 
 #' Construct summary statistics methodology sentence for tb bivariate comparisons
 #' @keywords internal
 #' @noRd
 .methods_tb_summary_sentence <- function(x) {
+  row_label <- unname(x$meta$row_label %||% x$meta$row_var_name)
+  col_label <- unname(.tb_unstratified_label(x$meta$col_label %||% x$meta$col_var_name))
   if (isTRUE(x$meta$is_continuous)) {
-    stat <- if (identical(x$meta$stat.cont, "mean")) "mean (SD)" else "median [IQR]"
-    auto <- x$meta$summary_auto
-    if (!is.null(auto)) {
-      if (identical(auto$decision, "mean")) {
-        return(paste0("Continuous variables were summarised as ", stat, ", distribution approximately symmetric."))
-      }
-      if (grepl("skewness", auto$reason %||% "", fixed = TRUE)) {
-        return(paste0("Continuous variables were summarised as ", stat, " owing to skewness."))
-      }
-    }
-    return(paste0("Continuous variables were summarised as ", stat, "."))
+    return(sprintf(
+      "%s was summarised as %s by %s.",
+      row_label, .methods_continuous_summary(x$meta$stat.cont, x$meta$summary_auto), col_label
+    ))
   }
-  "Categorical variables were summarised with counts and percentages."
+  flags <- x$meta$flags %||% list()
+  percent <- if (isTRUE(flags$percent)) {
+    sprintf(" and %s percentages", switch(flags$by %||% "row", col = "column", total = "cell", "row"))
+  } else {
+    ""
+  }
+  within <- if (isTRUE(x$meta$is_stratified) && nzchar(percent)) {
+    sprintf(" within strata of %s", .resolve_label(x$meta$strat_var_name, x$used$ref$data, x$spec$fmt$labels))
+  } else {
+    ""
+  }
+  sprintf("%s was cross-tabulated with %s as counts%s%s.", row_label, col_label, percent, within)
+}
+
+#' Drop the "(Stratified)" display suffix from a column label
+#' @keywords internal
+#' @noRd
+.tb_unstratified_label <- function(label) {
+  sub(" \\(Stratified\\)$", "", label)
 }
 
 #' Construct hypothesis testing methodology clause for Table 1 results
 #' @keywords internal
 #' @noRd
 .methods_test_sentence <- function(x) {
-  decisions <- .result_decisions(x)
-  methods <- setdiff(decisions$tests, decisions$homogeneity)
-  if (length(methods) == 0) {
+  tests <- vapply(x$data, function(rec) {
+    if (is.null(rec$test)) NA_character_ else rec$test$method %||% NA_character_
+  }, character(1))
+  keep <- !is.na(tests)
+  if (!any(keep)) {
     return("")
   }
-  paste0("Group comparisons used ", paste(methods, collapse = "; "), ".")
+  tests <- .clean_test_methods(tests[keep])
+  labels <- vapply(names(x$data)[keep], function(v) x$data[[v]]$label %||% v, character(1))
+  by_label <- .resolve_label(x$meta$strat_var, x$used$ref$data, x$spec$fmt$labels)
+  clauses <- vapply(unique(tests), function(test) {
+    sprintf("%s for %s", .methods_test_phrase(test), .methods_join(labels[tests == test]))
+  }, character(1))
+  sprintf("Groups defined by %s were compared using %s.", by_label, .methods_join(clauses))
 }
 
 #' Construct hypothesis testing methodology clause for tb results
 #' @keywords internal
 #' @noRd
 .methods_tb_test_sentence <- function(x) {
-  .methods_test_sentence(x)
+  decisions <- .result_decisions(x)
+  methods <- setdiff(decisions$tests, decisions$homogeneity)
+  if (length(methods) == 0) {
+    return("")
+  }
+  sprintf(
+    "%s was compared across %s using %s.",
+    unname(x$meta$row_label %||% x$meta$row_var_name),
+    unname(.tb_unstratified_label(x$meta$col_label %||% x$meta$col_var_name)),
+    .methods_join(vapply(methods, .methods_test_phrase, character(1)))
+  )
+}
+
+#' Article-led test name, adding "test" only where the name lacks it
+#' @keywords internal
+#' @noRd
+.methods_test_phrase <- function(test) {
+  paste0("the ", test, if (grepl("test$", test)) "" else " test")
 }
 
 #' Standardize and format statistical test names for manuscript prose
@@ -286,6 +429,12 @@ as_methods.simtab_report <- function(x, ...) {
 .clean_test_methods <- function(methods) {
   methods <- gsub("Pearson's Chi-squared", "Pearson chi-squared", methods, fixed = TRUE)
   methods <- gsub(" with Yates' continuity correction", "", methods, fixed = TRUE)
+  methods <- gsub(" with continuity correction", "", methods, fixed = TRUE)
+  methods <- sub("^Welch Two Sample t-test$", "Welch t-test", methods)
+  methods <- sub("^ Two Sample t-test$|^Two Sample t-test$", "Student t-test", methods)
+  methods <- sub("^Wilcoxon rank sum( exact)? test$", "Wilcoxon rank-sum", methods)
+  methods <- sub("^Kruskal-Wallis rank sum test$", "Kruskal-Wallis", methods)
+  methods <- sub("^Fisher's Exact Test for Count Data$", "Fisher's exact test", methods)
   methods
 }
 
@@ -335,7 +484,8 @@ as_methods.simtab_report <- function(x, ...) {
   out <- list(
     tests = c(tests, homogeneity),
     homogeneity = homogeneity,
-    corrections = .decisions_zero_cell_corrections(x)
+    corrections = .decisions_zero_cell_corrections(x),
+    missing_data = if (inherits(x, "simtab_table1")) .table1_missing_sentence(x) else .tb_missing_sentence(x)
   )
   measure <- toupper(x$spec$effect$measure %||% x$meta$effect %||% "")
   if (!nzchar(measure)) {
@@ -385,6 +535,53 @@ as_methods.simtab_report <- function(x, ...) {
   out$estimator <- estimator
   out$interval_method <- interval
   out
+}
+
+#' Missing-data sentence for a Table 1 result: denominator policy and counts
+#' @keywords internal
+#' @noRd
+.table1_missing_sentence <- function(x) {
+  n_total <- x$meta$n_total
+  if (identical(x$meta$missing$denominator, "complete")) {
+    return(sprintf(
+      "Analyses were restricted to the %d of %d participants with complete data on all variables.",
+      x$meta$complete_case_n, n_total
+    ))
+  }
+  missing <- vapply(x$data, function(rec) as.integer(rec$n_missing[["Overall"]] %||% sum(rec$n_missing) %||% 0L), integer(1))
+  out <- if (!any(missing > 0)) {
+    sprintf("No variable had missing values (n = %d).", n_total)
+  } else {
+    labels <- vapply(names(x$data), function(v) x$data[[v]]$label %||% v, character(1))
+    sprintf(
+      "Each variable was summarised with the data available for it (N = %d); values were missing for %s.",
+      n_total,
+      .methods_join(sprintf("%s (n = %d)", labels[missing > 0], missing[missing > 0]))
+    )
+  }
+  model_n <- x$meta$model_n %||% integer()
+  if (length(model_n) > 0 && any(model_n < n_total)) {
+    out <- paste(out, sprintf(
+      "Adjusted models used complete cases (n = %s of %d).",
+      .methods_join(unique(as.character(model_n))), n_total
+    ))
+  }
+  out
+}
+
+#' Missing-data sentence for a tb result: the complete-case n analysed
+#' @keywords internal
+#' @noRd
+.tb_missing_sentence <- function(x) {
+  freq <- x$data$frequencies
+  if (is.null(freq)) {
+    return("")
+  }
+  dims <- dimnames(freq)
+  if (length(dim(freq)) == 2) {
+    freq <- freq[!is.na(dims[[1]]), !is.na(dims[[2]]), drop = FALSE]
+  }
+  sprintf("The analysis included the %d participants with complete data on the tabulated variables.", as.integer(sum(freq)))
 }
 
 #' Describe Haldane-Anscombe zero-cell corrections recorded on a table result

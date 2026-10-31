@@ -219,8 +219,10 @@ list_rules <- function() {
 #'   `TRUE` runs every applicable rule regardless of the guidance dial and
 #'   returns a `simtab_audit` report of checked, fired, and silent rules
 #'   (single results only).
-#' @return A list of advice entries deduplicated by rule id, or a
-#'   `simtab_audit` object when `audit = TRUE`.
+#' @return A `simtab_advice` object: a list of advice entries deduplicated by
+#'   rule id, each with `id`, `severity`, `message`, `citation`, `fix`, and
+#'   `why`. It prints one block per rule, most severe first, and converts with
+#'   `as.data.frame()`. With `audit = TRUE`, a `simtab_audit` object.
 #' @seealso [simtablr_references] for the full references behind the
 #'   citations shown in advice, and [simtablr_guidance()] to control display.
 #' @examples
@@ -240,7 +242,7 @@ advise.simtab_result <- function(result, audit = FALSE) {
   if (isTRUE(audit)) {
     return(.audit_result(result))
   }
-  .dedupe_advice(.run_advice_rules(result))
+  .new_simtab_advice(.dedupe_advice(.run_advice_rules(result)))
 }
 
 #' @export
@@ -256,7 +258,50 @@ advise.simtab_report <- function(result, audit = FALSE) {
   advice <- result$advice %||% list()
   advice <- c(advice, .report_advice_from_items(result$items))
   advice <- c(advice, .run_advice_rules(result))
-  .dedupe_advice(advice)
+  .new_simtab_advice(.dedupe_advice(advice))
+}
+
+#' Class a list of advice entries for printing, keeping list behaviour
+#' @keywords internal
+#' @noRd
+.new_simtab_advice <- function(advice) {
+  structure(unclass(advice), class = "simtab_advice")
+}
+
+#' @export
+print.simtab_advice <- function(x, ...) {
+  width <- getOption("width", 80L)
+  entries <- .order_advice_by_severity(unclass(x))
+  cat("SimtablR advice\n")
+  if (length(entries) == 0) {
+    cat("No rule fired.\n")
+    return(invisible(x))
+  }
+  cat("Fired: ", length(entries), "\n", sep = "")
+  for (entry in entries) {
+    cat("\n  ID: ", entry$id, "\n", sep = "")
+    cat("    Severity: ", entry$severity, "\n", sep = "")
+    .wrap_labelled_field("Message", entry$message, width)
+    .wrap_labelled_field("Citation", entry$citation %||% "", width)
+    .wrap_labelled_field("Fix", entry$fix %||% "", width)
+  }
+  invisible(x)
+}
+
+#' @export
+as.data.frame.simtab_advice <- function(x, row.names = NULL, optional = FALSE, ...) {
+  entries <- unclass(x)
+  field <- function(name, empty) {
+    vapply(entries, function(entry) as.character(entry[[name]] %||% empty), character(1))
+  }
+  data.frame(
+    id = field("id", NA_character_),
+    severity = vapply(entries, function(entry) as.integer(entry$severity %||% NA_integer_), integer(1)),
+    message = field("message", NA_character_),
+    citation = field("citation", ""),
+    fix = field("fix", ""),
+    stringsAsFactors = FALSE
+  )
 }
 
 #' Evaluate every registered rule against a result/report; rule failures are
@@ -286,7 +331,7 @@ advise.simtab_report <- function(result, audit = FALSE) {
 .attach_advice <- function(result) {
   result <- validate_simtab_result(result)
   result$meta$ruleset_version <- .simtab_ruleset_version()
-  result$advice <- tryCatch(advise(result), error = function(e) list())
+  result$advice <- tryCatch(unclass(advise(result)), error = function(e) list())
   result
 }
 
@@ -676,6 +721,14 @@ print.simtab_audit <- function(x, ...) {
 #' @noRd
 .is_table_result <- function(result) {
   inherits(result, "simtab_table1") || inherits(result, "simtab_tb")
+}
+
+#' A Table 1 without an effect measure: a descriptive comparison of groups
+#' @keywords internal
+#' @noRd
+.is_descriptive_table1 <- function(result) {
+  inherits(result, "simtab_table1") &&
+    is.null(result$meta$effect %||% result$spec$effect$measure)
 }
 
 #' Computes event/outcome prevalence proportion from contingency table or baseline table

@@ -42,7 +42,7 @@ In SimtablR, the study design can be explicitly declared via `design = "cohort"`
 tb_cohort <- tb(
   epitabl,
   renal_impairment,
-  adjudicated_acs,
+  mace_event,
   flags = "row",
   design = "cohort",
   ref = "No"
