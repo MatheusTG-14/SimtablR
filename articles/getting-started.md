@@ -77,9 +77,9 @@ baseline
 #> 
 #> Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test; Wilcoxon rank-sum
 #> ℹ Methodological guidance
-#>   8 unadjusted p-values are reported in this table. Pipe into test(p.adjust =
-#>   'holm') for family-wise control or test(p.adjust = 'BH') for
-#>   false-discovery-rate control.
+#>   8 p-values compare groups in a descriptive table; they do not test
+#>   pre-specified hypotheses. Describe group balance with standardized mean
+#>   differences via test(smd = TRUE), or drop the tests with test = FALSE.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```
 
@@ -177,24 +177,25 @@ isolates individual exposures and outcomes to compute contingency
 tables, percentage distributions, and design-appropriate effect
 measures.
 
-### 2.1 Study Design Resolution: Relative Risk in Prospective Cohorts
+### 2.1 Study Design Resolution: Prevalence Ratio at Presentation, Risk Ratio in Follow-up
 
-In prospective cohorts, the primary parameter of interest is the **Risk
-Ratio (RR)**. Specifying `design = "cohort"` instructs SimtablR’s design
-resolver to estimate the Relative Risk with Greenland-Robins or Katz log
-confidence intervals:
+Confirmed ACS is adjudicated at the index presentation, so its
+association with a baseline characteristic is a cross-sectional
+comparison, and the parameter of interest is the **Prevalence Ratio
+(PR)**. Specifying `design = "cross_sectional"` instructs SimtablR’s
+design resolver to estimate the PR with Katz log confidence intervals:
 
 ``` r
 
-tab_rr <- tb(
+tab_pr <- tb(
   epitabl,
   renal_impairment,
   adjudicated_acs,
-  flags = c("row", "rr"),
-  design = "cohort", # By specifying our study design, SimtablR automatically selects the appropriate effect measure (RR) and confidence interval method.
+  flags = c("row", "pr"),
+  design = "cross_sectional", # By specifying our study design, SimtablR automatically selects the appropriate effect measure (PR) and confidence interval method.
   ref = "No"
 )
-tab_rr
+tab_pr
 #>                                                  | Adjudicated acute coronary syndrome 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     
 #> -------------------------------------------------+--------------------------
@@ -211,7 +212,7 @@ tab_rr
 #> -------------------------------------------------+-------
 #>                                            Total | 1500  
 #> 
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          PR (95% CI)          
 #> -------------------------------------------------+-------------------------------
 #>                                               No |          1.00 (Ref)           
 #>                                              Yes | 1.09 (0.94 - 1.27), p = 0.261 
@@ -219,10 +220,53 @@ tab_rr
 #>                                            Total |
 ```
 
-With this quick and easy code, we can find that patients presenting with
-baseline renal impairment experienced a significantly higher absolute
-incidence of confirmed ACS compared to those with preserved renal
-function.
+With this quick and easy code, we can find that confirmed ACS was about
+as prevalent among patients presenting with baseline renal impairment as
+among those with preserved renal function (40.8% vs 37.4%; the PR
+confidence interval includes 1).
+
+Major adverse cardiovascular events (MACE) are instead recorded during
+the 365-day follow-up. In prospective cohorts, the primary parameter of
+interest is the **Risk Ratio (RR)**, and `design = "cohort"` resolves
+it:
+
+``` r
+
+tab_rr <- tb(
+  epitabl,
+  renal_impairment,
+  mace_event,
+  flags = c("row", "rr"),
+  design = "cohort",
+  ref = "No"
+)
+tab_rr
+#>                                                  | Observed MACE event before censoring 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |      No           Yes     
+#> -------------------------------------------------+---------------------------
+#>                                               No | 1039 (87.8%)  145 (12.2%) 
+#>                                              Yes | 241 (76.3%)   75 (23.7%)  
+#> -------------------------------------------------+---------------------------
+#>                                            Total |     1280          220     
+#> 
+#>                                                  | Observed MACE event before censoring 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total 
+#> -------------------------------------------------+-------
+#>                                               No | 1184  
+#>                                              Yes |  316  
+#> -------------------------------------------------+-------
+#>                                            Total | 1500  
+#> 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          
+#> -------------------------------------------------+-------------------------------
+#>                                               No |          1.00 (Ref)           
+#>                                              Yes | 1.94 (1.51 - 2.49), p < 0.001 
+#> -------------------------------------------------+-------------------------------
+#>                                            Total |
+```
+
+Here, patients with baseline renal impairment had roughly twice the
+365-day risk of MACE of those with preserved renal function.
 
 ### 2.2 Flags for quick coding
 
@@ -271,8 +315,8 @@ tb(epitabl,
 ## 3. Stratified Analysis & Mantel-Haenszel Pooling
 
 > Does biological sex confound or modify the association between renal
-> impairment and confirmed ACS, and what is the common pooled Risk Ratio
-> after adjusting for sex?
+> impairment and confirmed ACS, and what is the common pooled Prevalence
+> Ratio after adjusting for sex?
 
 Stratification allows evaluating potential confounding and effect
 modification across subgroups. Passing `strat = sex` calculates
@@ -286,10 +330,9 @@ tab_strat <- tb(
   renal_impairment,
   adjudicated_acs,
   strat = sex, # Stratify by biological sex to evaluate effect measure modification
-  flags = c("row", "rr"),
-  design = "cohort" 
+  flags = c("row", "pr"),
+  design = "cross_sectional"
 )
-#> Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.
 tab_strat
 #>                                                  | Adjudicated acute coronary syndrome (Stratified) 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Female : No  Female : Yes 
@@ -316,7 +359,7 @@ tab_strat
 #>                                            Total | 1500  
 #> 
 #>                                                  |      Adjudicated acute coronary syndrome (Stratified)      
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                      RR MH (95% CI)                      
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                      PR MH (95% CI)                      
 #> -------------------------------------------------+----------------------------------------------------------
 #>                                               No |                                                          
 #>                                              Yes |                                                          
@@ -327,8 +370,8 @@ tab_strat
 #>                      Mantel-Haenszel pooled: Yes | 1.09 (0.93 - 1.26), CMH p = 0.327, homogeneity p = 0.751
 ```
 
-The stratum-specific Risk Ratios for males and females remain
-consistent, and the test of homogeneity confirms no significant effect
+The stratum-specific Prevalence Ratios for males and females remain
+consistent, and the test of homogeneity shows no evidence of effect
 measure modification by sex.
 
 ------------------------------------------------------------------------

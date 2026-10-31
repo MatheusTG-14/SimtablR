@@ -110,21 +110,21 @@ tables or Hazard Ratio (HR) in time-to-event analysis.</li>
 <span><span class="va">tb_cohort</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span></span>
 <span>  <span class="va">epitabl</span>,</span>
 <span>  <span class="va">renal_impairment</span>,</span>
-<span>  <span class="va">adjudicated_acs</span>,</span>
+<span>  <span class="va">mace_event</span>,</span>
 <span>  flags <span class="op">=</span> <span class="st">"row"</span>,</span>
 <span>  design <span class="op">=</span> <span class="st">"cohort"</span>,</span>
 <span>  ref <span class="op">=</span> <span class="st">"No"</span></span>
 <span><span class="op">)</span></span>
 <span><span class="va">tb_cohort</span></span>
-<span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
-<span><span class="co">#&gt;                                               No | 741 (62.6%)  443 (37.4%) </span></span>
-<span><span class="co">#&gt;                                              Yes | 187 (59.2%)  129 (40.8%) </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
-<span><span class="co">#&gt;                                            Total |     928          572     </span></span>
+<span><span class="co">#&gt;                                                  | Observed MACE event before censoring </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |      No           Yes     </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+---------------------------</span></span>
+<span><span class="co">#&gt;                                               No | 1039 (87.8%)  145 (12.2%) </span></span>
+<span><span class="co">#&gt;                                              Yes | 241 (76.3%)   75 (23.7%)  </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+---------------------------</span></span>
+<span><span class="co">#&gt;                                            Total |     1280          220     </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
+<span><span class="co">#&gt;                                                  | Observed MACE event before censoring </span></span>
 <span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
 <span><span class="co">#&gt;                                               No | 1184  </span></span>
@@ -135,7 +135,7 @@ tables or Hazard Ratio (HR) in time-to-event analysis.</li>
 <span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
 <span><span class="co">#&gt;                                               No |          1.00 (Ref)           </span></span>
-<span><span class="co">#&gt;                                              Yes | 1.09 (0.94 - 1.27), p = 0.261 </span></span>
+<span><span class="co">#&gt;                                              Yes | 1.94 (1.51 - 2.49), p &lt; 0.001 </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
 <span><span class="co">#&gt;                                            Total |</span></span></code></pre></div>
 <hr>
@@ -367,7 +367,7 @@ audit proportional hazards assumptions:</p>
 describing the Cox modeling strategy:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_methods.html">as_methods</a></span><span class="op">(</span><span class="va">fit_cox</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972) using the Efron method for ties; hazard ratios with 95% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994).</span></span></code></pre></div>
+<span><span class="co">#&gt; Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972) using the Efron method for ties; hazard ratios with 95% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994). The model included all 1500 participants (220 events); no analysed variable had missing values.</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

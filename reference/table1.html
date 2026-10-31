@@ -355,9 +355,9 @@ to modify the table, <code><a href="journal_style.html">journal_style()</a></cod
 <span class="r-out co"><span class="r-pr">#&gt;</span> </span>
 <span class="r-out co"><span class="r-pr">#&gt;</span> Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span> <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   3 unadjusted p-values are reported in this table. Pipe into test(p.adjust =</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   'holm') for family-wise control or test(p.adjust = 'BH') for</span>
-<span class="r-msg co"><span class="r-pr">#&gt;</span>   false-discovery-rate control.</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   3 p-values compare groups in a descriptive table; they do not test</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   pre-specified hypotheses. Describe group balance with standardized mean</span>
+<span class="r-msg co"><span class="r-pr">#&gt;</span>   differences via test(smd = TRUE), or drop the tests with test = FALSE.</span>
 <span class="r-msg co"><span class="r-pr">#&gt;</span>   Run simtablr_guidance("off") separately before printing to hide advice.</span>
 <span class="r-in"><span></span></span>
 <span class="r-in"><span><span class="co"># Crude and age- and sex-adjusted prevalence ratios</span></span></span>

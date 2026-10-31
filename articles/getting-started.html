@@ -144,9 +144,9 @@ sample denominators and distribution shapes:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test; Wilcoxon rank-sum</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
-<span><span class="co">#&gt;   8 unadjusted p-values are reported in this table. Pipe into test(p.adjust =</span></span>
-<span><span class="co">#&gt;   'holm') for family-wise control or test(p.adjust = 'BH') for</span></span>
-<span><span class="co">#&gt;   false-discovery-rate control.</span></span>
+<span><span class="co">#&gt;   8 p-values compare groups in a descriptive table; they do not test</span></span>
+<span><span class="co">#&gt;   pre-specified hypotheses. Describe group balance with standardized mean</span></span>
+<span><span class="co">#&gt;   differences via test(smd = TRUE), or drop the tests with test = FALSE.</span></span>
 <span><span class="co">#&gt;   Run simtablr_guidance("off") separately before printing to hide advice.</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="key-statistical-behaviors-of-table1">Key Statistical Behaviors of <code>table1()</code><a class="anchor" aria-label="anchor" href="#key-statistical-behaviors-of-table1"></a>
@@ -250,24 +250,25 @@ many covariates, <code><a href="../reference/tb.html">tb()</a></code> isolates i
 outcomes to compute contingency tables, percentage distributions, and
 design-appropriate effect measures.</p>
 <div class="section level3">
-<h3 id="study-design-resolution-relative-risk-in-prospective-cohorts">2.1 Study Design Resolution: Relative Risk in Prospective
-Cohorts<a class="anchor" aria-label="anchor" href="#study-design-resolution-relative-risk-in-prospective-cohorts"></a>
+<h3 id="study-design-resolution-prevalence-ratio-at-presentation-risk-ratio-in-follow-up">2.1 Study Design Resolution: Prevalence Ratio at Presentation, Risk
+Ratio in Follow-up<a class="anchor" aria-label="anchor" href="#study-design-resolution-prevalence-ratio-at-presentation-risk-ratio-in-follow-up"></a>
 </h3>
-<p>In prospective cohorts, the primary parameter of interest is the
-<strong>Risk Ratio (RR)</strong>. Specifying
-<code>design = "cohort"</code> instructs SimtablR’s design resolver to
-estimate the Relative Risk with Greenland-Robins or Katz log confidence
-intervals:</p>
+<p>Confirmed ACS is adjudicated at the index presentation, so its
+association with a baseline characteristic is a cross-sectional
+comparison, and the parameter of interest is the <strong>Prevalence
+Ratio (PR)</strong>. Specifying <code>design = "cross_sectional"</code>
+instructs SimtablR’s design resolver to estimate the PR with Katz log
+confidence intervals:</p>
 <div class="sourceCode" id="cb3"><pre class="downlit sourceCode r">
-<code class="sourceCode R"><span><span class="va">tab_rr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span></span>
+<code class="sourceCode R"><span><span class="va">tab_pr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span></span>
 <span>  <span class="va">epitabl</span>,</span>
 <span>  <span class="va">renal_impairment</span>,</span>
 <span>  <span class="va">adjudicated_acs</span>,</span>
-<span>  flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"rr"</span><span class="op">)</span>,</span>
-<span>  design <span class="op">=</span> <span class="st">"cohort"</span>, <span class="co"># By specifying our study design, SimtablR automatically selects the appropriate effect measure (RR) and confidence interval method.</span></span>
+<span>  flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"pr"</span><span class="op">)</span>,</span>
+<span>  design <span class="op">=</span> <span class="st">"cross_sectional"</span>, <span class="co"># By specifying our study design, SimtablR automatically selects the appropriate effect measure (PR) and confidence interval method.</span></span>
 <span>  ref <span class="op">=</span> <span class="st">"No"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="va">tab_rr</span></span>
+<span><span class="va">tab_pr</span></span>
 <span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
 <span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
@@ -284,16 +285,54 @@ intervals:</p>
 <span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
 <span><span class="co">#&gt;                                            Total | 1500  </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          PR (95% CI)          </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
 <span><span class="co">#&gt;                                               No |          1.00 (Ref)           </span></span>
 <span><span class="co">#&gt;                                              Yes | 1.09 (0.94 - 1.27), p = 0.261 </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
 <span><span class="co">#&gt;                                            Total |</span></span></code></pre></div>
-<p>With this quick and easy code, we can find that patients presenting
-with baseline renal impairment experienced a significantly higher
-absolute incidence of confirmed ACS compared to those with preserved
-renal function.</p>
+<p>With this quick and easy code, we can find that confirmed ACS was
+about as prevalent among patients presenting with baseline renal
+impairment as among those with preserved renal function (40.8% vs 37.4%;
+the PR confidence interval includes 1).</p>
+<p>Major adverse cardiovascular events (MACE) are instead recorded
+during the 365-day follow-up. In prospective cohorts, the primary
+parameter of interest is the <strong>Risk Ratio (RR)</strong>, and
+<code>design = "cohort"</code> resolves it:</p>
+<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<code class="sourceCode R"><span><span class="va">tab_rr</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span></span>
+<span>  <span class="va">epitabl</span>,</span>
+<span>  <span class="va">renal_impairment</span>,</span>
+<span>  <span class="va">mace_event</span>,</span>
+<span>  flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"rr"</span><span class="op">)</span>,</span>
+<span>  design <span class="op">=</span> <span class="st">"cohort"</span>,</span>
+<span>  ref <span class="op">=</span> <span class="st">"No"</span></span>
+<span><span class="op">)</span></span>
+<span><span class="va">tab_rr</span></span>
+<span><span class="co">#&gt;                                                  | Observed MACE event before censoring </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |      No           Yes     </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+---------------------------</span></span>
+<span><span class="co">#&gt;                                               No | 1039 (87.8%)  145 (12.2%) </span></span>
+<span><span class="co">#&gt;                                              Yes | 241 (76.3%)   75 (23.7%)  </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+---------------------------</span></span>
+<span><span class="co">#&gt;                                            Total |     1280          220     </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;                                                  | Observed MACE event before censoring </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
+<span><span class="co">#&gt;                                               No | 1184  </span></span>
+<span><span class="co">#&gt;                                              Yes |  316  </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
+<span><span class="co">#&gt;                                            Total | 1500  </span></span>
+<span><span class="co">#&gt; </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
+<span><span class="co">#&gt;                                               No |          1.00 (Ref)           </span></span>
+<span><span class="co">#&gt;                                              Yes | 1.94 (1.51 - 2.49), p &lt; 0.001 </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-------------------------------</span></span>
+<span><span class="co">#&gt;                                            Total |</span></span></code></pre></div>
+<p>Here, patients with baseline renal impairment had roughly twice the
+365-day risk of MACE of those with preserved renal function.</p>
 </div>
 <div class="section level3">
 <h3 id="flags-for-quick-coding">2.2 Flags for quick coding<a class="anchor" aria-label="anchor" href="#flags-for-quick-coding"></a>
@@ -342,7 +381,7 @@ columns.</li>
 </ul>
 </li>
 </ul>
-<div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Cell percentages with explicit chi-squared p-value</span></span>
 <span><span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span><span class="va">epitabl</span>, </span>
 <span>   <span class="va">smoking</span>, <span class="va">adjudicated_acs</span>, <span class="co"># Evaluate the association between smoking status and confirmed ACS</span></span>
@@ -368,23 +407,22 @@ columns.</li>
 </h2>
 <blockquote>
 <p>Does biological sex confound or modify the association between renal
-impairment and confirmed ACS, and what is the common pooled Risk Ratio
-after adjusting for sex?</p>
+impairment and confirmed ACS, and what is the common pooled Prevalence
+Ratio after adjusting for sex?</p>
 </blockquote>
 <p>Stratification allows evaluating potential confounding and effect
 modification across subgroups. Passing <code>strat = sex</code>
 calculates stratum-specific estimates alongside the Greenland-Robins
 Mantel-Haenszel pooled estimate and a test of homogeneity:</p>
-<div class="sourceCode" id="cb5"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">tab_strat</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span> </span>
 <span>  <span class="va">epitabl</span>,</span>
 <span>  <span class="va">renal_impairment</span>,</span>
 <span>  <span class="va">adjudicated_acs</span>,</span>
 <span>  strat <span class="op">=</span> <span class="va">sex</span>, <span class="co"># Stratify by biological sex to evaluate effect measure modification</span></span>
-<span>  flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"rr"</span><span class="op">)</span>,</span>
-<span>  design <span class="op">=</span> <span class="st">"cohort"</span> </span>
+<span>  flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"pr"</span><span class="op">)</span>,</span>
+<span>  design <span class="op">=</span> <span class="st">"cross_sectional"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.</span></span>
 <span><span class="va">tab_strat</span></span>
 <span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome (Stratified) </span></span>
 <span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Female : No  Female : Yes </span></span>
@@ -411,7 +449,7 @@ Mantel-Haenszel pooled estimate and a test of homogeneity:</p>
 <span><span class="co">#&gt;                                            Total | 1500  </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;                                                  |      Adjudicated acute coronary syndrome (Stratified)      </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                      RR MH (95% CI)                      </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |                      PR MH (95% CI)                      </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+----------------------------------------------------------</span></span>
 <span><span class="co">#&gt;                                               No |                                                          </span></span>
 <span><span class="co">#&gt;                                              Yes |                                                          </span></span>
@@ -420,8 +458,8 @@ Mantel-Haenszel pooled estimate and a test of homogeneity:</p>
 <span><span class="co">#&gt;                              Stratum Female: Yes |              1.12 (0.88 - 1.43), p = 0.366               </span></span>
 <span><span class="co">#&gt;                                Stratum Male: Yes |              1.06 (0.88 - 1.29), p = 0.533               </span></span>
 <span><span class="co">#&gt;                      Mantel-Haenszel pooled: Yes | 1.09 (0.93 - 1.26), CMH p = 0.327, homogeneity p = 0.751</span></span></code></pre></div>
-<p>The stratum-specific Risk Ratios for males and females remain
-consistent, and the test of homogeneity confirms no significant effect
+<p>The stratum-specific Prevalence Ratios for males and females remain
+consistent, and the test of homogeneity shows no evidence of effect
 measure modification by sex.</p>
 <hr>
 </div>
@@ -437,7 +475,7 @@ modeling?</p>
 battery of unadjusted bivariate associations in a single summary table.
 SimtablR implements an <code><a href="https://rdrr.io/r/base/cbind.html" class="external-link">rbind()</a></code> method specifically for
 <code>simtab_tb</code> objects:</p>
-<div class="sourceCode" id="cb6"><pre class="downlit sourceCode r">
+<div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">t_smoke</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span><span class="va">epitabl</span>, <span class="va">smoking</span>, <span class="va">adjudicated_acs</span>, flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"or"</span><span class="op">)</span>, ref <span class="op">=</span> <span class="st">"Never"</span><span class="op">)</span></span>
 <span><span class="va">t_htn</span>   <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span><span class="va">epitabl</span>, <span class="va">hypertension</span>, <span class="va">adjudicated_acs</span>, flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"or"</span><span class="op">)</span>, ref <span class="op">=</span> <span class="st">"No"</span><span class="op">)</span></span>
 <span><span class="va">t_dm</span>    <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span><span class="va">epitabl</span>, <span class="va">diabetes</span>, <span class="va">adjudicated_acs</span>, flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"or"</span><span class="op">)</span>, ref <span class="op">=</span> <span class="st">"No"</span><span class="op">)</span></span>

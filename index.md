@@ -30,8 +30,10 @@ specification layer for formal peer review and reproduction.
   `"case_control"`, or `"cross_sectional"`).
 - **Separation of Evidence from Presentation:** Statistical engines
   calculate raw, unrounded values into `$data`. Display formatting,
-  rounding, journal conventions (NEJM, Lancet, JAMA), and table
-  rendering (`gt`, `flextable`, Word, Excel) occur only at the
+  rounding, journal conventions (built-in `default`, `jama`, `lancet`,
+  `nejm`, and `strobe-default` presets, or your own via
+  [`journal_style()`](https://MatheusTG-14.github.io/SimtablR/reference/journal_style.md)),
+  and table rendering (`gt`, `flextable`, Word, Excel) occur only at the
   presentation boundary.
 - **Welcoming to Learners & Fast for Experts:** Direct functions accept
   unquoted variable names, character strings, or tidyselect expressions.
@@ -88,7 +90,8 @@ by an exposure, treatment, or clinical outcome.
 
 ``` r
 
-table1(data, vars, by = NULL, summary = "auto", test = FALSE, labels = NULL, ...)
+table1(data, vars, by = NULL, ..., measure = NULL, adjust = NULL, test = FALSE,
+       summary = "auto", missing = TRUE, labels = NULL, design = NULL)
 ```
 
 #### Key Parameters:
@@ -106,9 +109,9 @@ table1(data, vars, by = NULL, summary = "auto", test = FALSE, labels = NULL, ...
   $`\chi^2`$, or Fisher’s exact test).
 - `labels`: Named character vector mapping raw variable names to
   human-readable labels and measurement units.
-- `missingness`: By default, reports explicit counts and percentages of
-  missing observations (`N Missing (%)`) to maintain clinical
-  denominator transparency.
+- `missing`: `TRUE` *(default)* reports explicit counts and percentages
+  of missing observations to maintain denominator transparency;
+  `denominator = "complete"` restricts the table to complete cases.
 - `test(smd = TRUE)`: Via verb closure, Standardized Mean Differences
   (SMDs) can be appended to any baseline table for observational
   propensity or balance assessments.
@@ -142,7 +145,7 @@ hypothesis tests, and epidemiological association measures.
 
 ``` r
 
-tb(data, row_var, col_var, flags = ..., design = ..., strat = ..., ref = ...)
+tb(data, row_var, col_var, ..., flags = NULL, design = NULL, strat = NULL, ref = NULL)
 ```
 
 #### Key Parameters & Terse Flags:
@@ -159,9 +162,10 @@ tb(data, row_var, col_var, flags = ..., design = ..., strat = ..., ref = ...)
   `"cross_sectional"`). When specified without explicit measure flags,
   SimtablR automatically resolves the correct effect measure (e.g., RR
   for cohorts, OR for case-control).
-- `strat`: Stratifying variable. Calculates stratum-specific effects,
-  tests for homogeneity of odds/risk ratios across strata, and computes
-  Greenland-Robins Mantel-Haenszel pooled estimates.
+- `strat`: Stratifying variable. Shows stratum-specific effects, tests
+  homogeneity across strata, and adds a Mantel-Haenszel pooled estimate
+  (Greenland-Robins interval for PR/RR). Row and cell percentages are
+  computed within each stratum.
 - `ref`: Overrides the reference level for exposure or outcome
   categories without requiring
   [`relevel()`](https://rdrr.io/r/stats/relevel.html) data
@@ -169,11 +173,14 @@ tb(data, row_var, col_var, flags = ..., design = ..., strat = ..., ref = ...)
 
 ``` r
 
-# Example 2.1: Exposure-stratified cohort 2x2 table with Risk Ratio
-tb(epitabl, renal_impairment, adjudicated_acs, flags = c("row", "rr"), design = "cohort")
+# Example 2.1: Cohort 2x2 table with risk ratio for 365-day MACE
+tb(epitabl, renal_impairment, mace_event, flags = c("row", "rr"), design = "cohort")
 
-# Example 2.2: Stratified analysis with Mantel-Haenszel pooling across sex
-tb(epitabl, renal_impairment, adjudicated_acs, strat = sex, flags = c("row", "or"))
+# Example 2.2: Stratum-specific and Mantel-Haenszel pooled risk ratios across sex
+tb(epitabl, renal_impairment, mace_event, strat = sex, flags = c("row", "rr"), design = "cohort")
+
+# Example 2.3: Prevalence ratio for a diagnosis made at the index presentation
+tb(epitabl, hypertension, adjudicated_acs, flags = c("row", "p"), design = "cross_sectional")
 ```
 
 Multiple bivariate tables can also be stacked into a single consolidated
@@ -197,7 +204,8 @@ measures with confidence intervals.
 
 ``` r
 
-regtab(data, outcomes, predictors, family = binomial("logit"), robust = TRUE, method = "glm", ...)
+regtab(data, outcomes, predictors, family = poisson("log"), robust = TRUE, method = "glm",
+       design = NULL, exposure = NULL, ...)
 ```
 
 #### Key Parameters:
@@ -205,13 +213,21 @@ regtab(data, outcomes, predictors, family = binomial("logit"), robust = TRUE, me
 - `outcomes`: Character vector of outcome variables. Specifying multiple
   outcomes fits separate models simultaneously and binds them into a
   consolidated publication table.
-- `predictors`: Two-sided formula (e.g.,
+- `predictors`: One-sided formula (e.g.,
   `~ age + sex + smoking + renal_impairment`).
-- `family`: Standard GLM error distribution and link function
-  (`binomial("logit")`,
-  [`gaussian()`](https://rdrr.io/r/stats/family.html),
-  [`poisson()`](https://rdrr.io/r/stats/family.html),
-  [`quasipoisson()`](https://rdrr.io/r/stats/family.html)).
+- `family`: GLM family and link. The default `poisson("log")` with
+  robust errors is modified Poisson for 0/1 or two-level outcomes
+  (prevalence or risk ratios) and gives rate ratios for counts; use
+  `binomial("log")` for log-binomial PR/RR, `binomial("logit")` for odds
+  ratios, or [`gaussian()`](https://rdrr.io/r/stats/family.html).
+- `design`: Labels log-link estimates on binary outcomes as PR
+  (`"cross_sectional"`) or RR (`"cohort"`) and flags odds ratios for
+  common outcomes. It never changes the family.
+- `exposure`: The exposure term. The other terms form the adjustment
+  set, and
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md),
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md),
+  and the forest plot use the exposure instead of every coefficient.
 - `robust`: Robust sandwich covariance estimation. Defaults to `TRUE`
   (HC0 heteroscedasticity-consistent variance). Supports `"HC3"` for
   small samples, or `FALSE` for classical model-based variance.
@@ -223,13 +239,14 @@ regtab(data, outcomes, predictors, family = binomial("logit"), robust = TRUE, me
 
 ``` r
 
-# Example 3.1: Multivariable logistic regression with HC0 robust standard errors
+# Example 3.1: Adjusted risk ratio for 365-day MACE (log-binomial, HC0 robust errors)
 fit_glm <- regtab(
   epitabl,
-  outcomes = "adjudicated_acs",
-  predictors = ~ age + sex + smoking + hypertension + diabetes + renal_impairment,
-  family = binomial("logit"),
-  robust = TRUE
+  outcomes = "mace_event",
+  predictors = ~ renal_impairment + age + sex + smoking + diabetes,
+  family = binomial("log"),
+  design = "cohort",
+  exposure = renal_impairment
 )
 fit_glm
 
@@ -255,7 +272,7 @@ diagnostics.
 
 ``` r
 
-survtab(data, time, event, predictors, robust = FALSE, ...)
+survtab(data, time, event, predictors, design = NULL, exposure = NULL, ...)
 ```
 
 #### Key Parameters:
@@ -264,6 +281,10 @@ survtab(data, time, event, predictors, robust = FALSE, ...)
 - `event`: Binary event indicator (`"Yes"`/`"No"`, `1`/`0`, or
   `TRUE`/`FALSE`).
 - `predictors`: Formula defining covariates.
+- `exposure`: The exposure term, used by
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md),
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md),
+  and the forest plot.
 - Diagnostics: Automatically computes Schoenfeld residual tests
   (`cox.zph`) to verify the proportional hazards assumption.
 - Graphical output: Forest plots of estimated hazard ratios are
@@ -276,7 +297,8 @@ fit_cox <- survtab(
   epitabl,
   time = mace_time_days,
   event = mace_event,
-  predictors = ~ age + sex + smoking + renal_impairment
+  predictors = ~ renal_impairment + age + sex + smoking,
+  exposure = renal_impairment
 )
 fit_cox
 ```
@@ -356,7 +378,9 @@ res <- evaluate(plan)
 #### Composite Manuscript Reports with `simtablr()`
 
 Automatically couples a descriptive Table 1 and an inferential Table 2
-into a single report object:
+into a single report object. Acute coronary syndrome is adjudicated at
+the index presentation, so the association is a prevalence ratio from a
+cross-sectional design:
 
 ``` r
 
@@ -366,7 +390,7 @@ report <- simtablr(
   exposure = renal_impairment,
   vars = c(age, sex, smoking, hypertension, diabetes),
   adjust = c(age, sex, smoking),
-  design = "cohort"
+  design = "cross_sectional"
 )
 
 # Access individual tables
@@ -390,18 +414,38 @@ advise(fit_glm, audit = TRUE)
 
 #### Automated Methods Section Prose: `as_methods()`
 
-Produces concise, ready-to-paste Methods text detailing statistical
-tests, degrees of freedom, and software implementations:
+Produces ready-to-paste Methods text naming the variables under each
+summary and test, the estimators and intervals, missing-data handling
+with the N analysed, and, with `software = TRUE`, the R and package
+versions:
 
 ``` r
 
-as_methods(tab_baseline)
+as_methods(tab_baseline, software = TRUE)
+```
+
+#### Table 1 and Table 2 in one report: `simtablr()`
+
+Composes a descriptive Table 1 and an association Table 2 with crude and
+adjusted effects:
+
+``` r
+
+report <- simtablr(
+  epitabl,
+  outcome = adjudicated_acs,
+  exposure = hypertension,
+  vars = c(age, sex, diabetes),
+  adjust = c(age, sex),
+  design = "cross_sectional"
+)
+report
 ```
 
 #### Sensitivity to Unmeasured Confounding: `e_value()`
 
 Calculates the minimum strength of unmeasured confounding required to
-explain away an observed association:
+explain away an observed association (RR, PR, OR, or HR):
 
 ``` r
 
@@ -433,17 +477,17 @@ export_xlsx(tab_baseline, path = "Table1.xlsx")
 |:---|:---|:---|:---|
 | Multi-variable Baseline Table | [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md) | `vars`, `by`, `summary`, `test`, `labels` | `simtab_result` (descriptive) |
 | Focused Bivariate & 2x2 Tables | [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md) | `row_var`, `col_var`, `flags`, `design`, `strat` | `simtab_result` (bivariate) |
-| Multivariable GLM & Firth | [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md) | `outcomes`, `predictors`, `family`, `robust`, `method` | `simtab_result` (glm) |
-| Cox Proportional Hazards | [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md) | `time`, `event`, `predictors`, `robust` | `simtab_result` (cox) |
+| Multivariable GLM & Firth | [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md) | `outcomes`, `predictors`, `family`, `robust`, `method`, `design`, `exposure` | `simtab_result` (glm) |
+| Cox Proportional Hazards | [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md) | `time`, `event`, `predictors`, `exposure` | `simtab_result` (cox) |
 | Binary Diagnostic Accuracy | [`diag_test()`](https://MatheusTG-14.github.io/SimtablR/reference/diag_test.md) | `test`, `ref`, `positive`, `test_positive`, `ci` | `simtab_result` (accuracy) |
 | Biomarker ROC Discrimination | [`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md) | `marker`, `outcome`, `positive`, `cutpoint` | `simtab_result` (roc) |
 | Declarative Analysis Plan | [`simtab()`](https://MatheusTG-14.github.io/SimtablR/reference/simtab.md) | `data`, grammar verbs (`describe`, `stratify`, …) | `simtab_spec` (inert plan) |
 | Composite Table 1 + Table 2 | [`simtablr()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr.md) | `outcome`, `exposure`, `vars`, `adjust`, `design` | `simtab_report` |
-| Methodological Rules & Audit | [`advise()`](https://MatheusTG-14.github.io/SimtablR/reference/advise.md) | `result`, `audit = TRUE` | `simtab_audit` |
-| Manuscript Methods Prose | [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md) | `result` or `report` | Formatted character / prose |
+| Methodological Rules & Audit | [`advise()`](https://MatheusTG-14.github.io/SimtablR/reference/advise.md) | `result`, `audit` | `simtab_advice`, or `simtab_audit` with `audit = TRUE` |
+| Manuscript Methods Prose | [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md) | `result` or `report`, `software` | Character string of prose |
 | Sensitivity & Unmeasured Bias | [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md) | `result` | E-value point estimate & CI |
-| Participant Accountability Flow | [`flow()`](https://MatheusTG-14.github.io/SimtablR/reference/flow.md) | `data`, exclusion steps | `simtab_flow` |
-| Export to Word / Excel / HTML | [`export_docx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_docx.md) | `object`, `path`, `methods = TRUE` | Formatted Office document |
+| Participant Accountability Flow | [`flow()`](https://MatheusTG-14.github.io/SimtablR/reference/flow.md) | `result` or `report` (recorded Ns, no new exclusions) | `simtab_flow` |
+| Export to Word / Excel / HTML | [`export_docx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_docx.md) | `x`, `path`, `methods = TRUE` | Formatted Office document |
 
 ------------------------------------------------------------------------
 

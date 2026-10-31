@@ -52,7 +52,13 @@ other render/extract verbs.</p>
 
     <div class="section level2">
     <h2 id="ref-usage">Usage<a class="anchor" aria-label="anchor" href="#ref-usage"></a></h2>
-    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">as_methods</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
+    <div class="sourceCode"><pre class="sourceCode r"><code><span><span class="fu">as_methods</span><span class="op">(</span><span class="va">x</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'simtab_result'</span></span>
+<span><span class="fu">as_methods</span><span class="op">(</span><span class="va">x</span>, software <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span>
+<span></span>
+<span><span class="co"># S3 method for class 'simtab_report'</span></span>
+<span><span class="fu">as_methods</span><span class="op">(</span><span class="va">x</span>, software <span class="op">=</span> <span class="cn">FALSE</span>, <span class="va">...</span><span class="op">)</span></span></code></pre></div>
     </div>
 
     <div class="section level2">
@@ -60,11 +66,16 @@ other render/extract verbs.</p>
 
 
 <dl><dt id="arg-x">x<a class="anchor" aria-label="anchor" href="#arg-x"></a></dt>
-<dd><p>A <code>simtab_result</code> or <code>simtab_spec</code>.</p></dd>
+<dd><p>A <code>simtab_result</code>, <code>simtab_spec</code>, or <code>simtab_report</code>.</p></dd>
 
 
 <dt id="arg--">...<a class="anchor" aria-label="anchor" href="#arg--"></a></dt>
-<dd><p>Ignored.</p></dd>
+<dd><p>Passed to methods; otherwise ignored.</p></dd>
+
+
+<dt id="arg-software">software<a class="anchor" aria-label="anchor" href="#arg-software"></a></dt>
+<dd><p>Logical. If <code>TRUE</code>, append a sentence naming the R and
+SimtablR versions and the suggested packages the analysis used.</p></dd>
 
 </dl></div>
     <div class="section level2">
@@ -76,7 +87,9 @@ other render/extract verbs.</p>
     <h2 id="ref-examples">Examples<a class="anchor" aria-label="anchor" href="#ref-examples"></a></h2>
     <div class="sourceCode"><pre class="sourceCode r"><code><span class="r-in"><span><span class="va">res</span> <span class="op">&lt;-</span> <span class="fu"><a href="tb.html">tb</a></span><span class="op">(</span><span class="va">epitabl</span>, <span class="va">sex</span>, <span class="va">diabetes</span><span class="op">)</span></span></span>
 <span class="r-in"><span><span class="fu">as_methods</span><span class="op">(</span><span class="va">res</span><span class="op">)</span></span></span>
-<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Categorical variables were summarised with counts and percentages."</span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Sex recorded for clinical assessment was cross-tabulated with History of diabetes as counts. The analysis included the 1500 participants with complete data on the tabulated variables."</span>
+<span class="r-in"><span><span class="fu">as_methods</span><span class="op">(</span><span class="va">res</span>, software <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span></span>
+<span class="r-out co"><span class="r-pr">#&gt;</span> [1] "Sex recorded for clinical assessment was cross-tabulated with History of diabetes as counts. The analysis included the 1500 participants with complete data on the tabulated variables. Analyses used R 4.6.2 and SimtablR 3.1.2."</span>
 </code></pre></div>
     </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

@@ -1,5 +1,463 @@
 # Changelog
 
+## SimtablR 3.2.0
+
+### New features
+
+- Improved methods for printing text
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  prose reads as manuscript text. Table 1 names the variables under each
+  summary (“Age and BMI were summarised as mean (SD) for approximately
+  symmetric distributions; presentation hours as median \[IQR\] owing to
+  skewness; and sex as counts and percentages”); categorical variables
+  were previously omitted when continuous ones were present. Test lists
+  became sentences naming the variables each test covered. Every engine
+  now states its missing-data handling and the N analysed (for example
+  “Models used complete cases … (n = 1470 of 1500)”), and the same
+  sentence is recorded in
+  [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md).
+  [`diag_test()`](https://MatheusTG-14.github.io/SimtablR/reference/diag_test.md)
+  and
+  [`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md)
+  prose use variable labels instead of raw column names
+- [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  and
+  [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  gain `exposure =`, recorded on the specification as an `exposure`
+  role; the other formula terms form the adjustment set. Reviewer tools
+  no longer treat covariates as effects (the Table 2 fallacy):
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  keeps only the exposure rows,
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md)
+  uses the exposure as the primary estimate with its measure label (RR,
+  PR, OR, IRR, HR) instead of the first term labelled “ESTIMATE”, and
+  `sensitivity(adjust = NULL)` now drops the formula covariates (and any
+  added with
+  [`adjust()`](https://MatheusTG-14.github.io/SimtablR/reference/adjust.md))
+  to give the crude estimate. The forest plot shows the exposure rows,
+  the `table2_fallacy` advice names the covariate rows, and
+  [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md),
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  and
+  [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md)
+  record the exposure and adjustment set. Without an exposure,
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  returns every term with a warning and
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md)
+  errors instead of picking a covariate.
+- The engine contract gains an optional `decisions` renderer (see
+  [`register_engine()`](https://MatheusTG-14.github.io/SimtablR/reference/register_engine.md)):
+  it returns the recorded estimator, interval method, tests,
+  corrections, and Suggests packages of a result.
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  and
+  [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md)
+  both read it.
+
+### Bug fixes
+
+- [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md) no
+  longer prints twice. It printed inside the function and then returned
+  the object, so `print(why(x))` (or any visible call in a script)
+  showed the explanation twice; assigning it also printed. It now
+  returns a `simtab_explanation` that is a character vector of lines,
+  printed once by auto-print, so `cat(why(x), sep = "\n")` and
+  `as.character(why(x))` work. Code that read the former `$lines` field
+  should use [`as.character()`](https://rdrr.io/r/base/character.html).
+- [`diag_test()`](https://MatheusTG-14.github.io/SimtablR/reference/diag_test.md)
+  prints in the same layout as the other results (titled header,
+  variable labels, confusion matrix, metric table, advice) and says
+  “Reference standard” instead of “Reference standard (gold standard)”.
+- `tb(..., miss)` no longer adds an empty missing-value row or column:
+  they appear only where values are missing (an `NA` outcome column
+  without an all-zero `NA` exposure row).
+- The “No reference level specified” note of
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md) now
+  appears only when the default first level is not a conventional
+  reference (“No”, “0”, “Never”, “Negative”, “None”, “Absent”, “FALSE”,
+  “Unexposed”, “Control”), and names the measure.
+- [`strobe()`](https://MatheusTG-14.github.io/SimtablR/reference/strobe.md)
+  and
+  [`stard()`](https://MatheusTG-14.github.io/SimtablR/reference/stard.md)
+  print one line per item, shortening the pointer to the console width
+  instead of wrapping it into a separate block.
+- Printing a
+  [`simtablr()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr.md)
+  report shows each table’s advice under that table, so Table 1’s advice
+  no longer appears to describe Table 2.
+- A descriptive Table 1 (no effect measure) with several p-values no
+  longer gets the Holm/BH multiplicity advice. A new
+  `descriptive_table_tests` rule (severity 1) notes that such p-values
+  do not test pre-specified hypotheses, citing the STROBE explanation
+  and elaboration (Vandenbroucke et al., 2007), and suggests
+  standardized mean differences via `test(smd = TRUE)`.
+  `multiplicity_unadjusted` still applies to association tables. Tests
+  in Table 1 remain available with `test = TRUE`.
+- Vignettes no longer treat adjudicated acute coronary syndrome, which
+  is diagnosed at the index presentation, as a cohort outcome with a
+  risk ratio. “Getting started” now shows a cross-sectional prevalence
+  ratio for ACS and a cohort risk ratio for 365-day MACE; the reporting
+  and regression vignettes use `mace_event` for their cohort examples.
+  The former text also claimed a significantly higher ACS incidence with
+  renal impairment, which the data do not show (PR 1.09, 95% CI 0.94 to
+  1.27).
+- Tests no longer require bit-identical estimates from two independent
+  fits of the same GLM. CRAN’s MKL check flagged `test-style.R` because
+  an optimised BLAS can differ in the last bit between refits; these
+  comparisons now use a numerical tolerance. Comparisons where the
+  evidence is copied rather than refitted
+  ([`style()`](https://MatheusTG-14.github.io/SimtablR/reference/style.md),
+  [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md),
+  [`fmt()`](https://MatheusTG-14.github.io/SimtablR/reference/fmt.md) on
+  a result) stay exact.
+- Stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  tables now show the stratum-specific estimates (“Stratum Female: Yes”,
+  “Stratum Male: Yes”) above the Mantel-Haenszel pooled row; they were
+  computed in `$data$mh` but the effect panel showed only the pooled
+  line. Row and cell percentages now use each stratum as the
+  denominator. The `row` percentage previously divided by the row total
+  across all strata (72/1184 = 6.1% for “Female: Yes”), which matches no
+  epidemiological quantity; it is now the risk within the stratum
+  (72/550 = 13.1%), consistent with the stratum RR shown beside it.
+  Column percentages were already within stratum and are unchanged.
+- [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  no longer prints a separated coefficient as an estimate. Under
+  separation a binomial or Poisson coefficient diverges, and the table
+  showed a number such as `0.00 (0.00 - 0.00)` with a falsely narrow
+  robust interval. A coefficient whose link-scale model-based standard
+  error exceeds 100 is now flagged in `meta$not_estimable`;
+  [`print()`](https://rdrr.io/r/base/print.html),
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html),
+  [`as_gt()`](https://MatheusTG-14.github.io/SimtablR/reference/as_gt.md)
+  and `as_flextable()` show a dash with a footnote pointing to
+  `method = "firth"`, and the forest plot and
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  skip it. The raw estimate stays in `$data`.
+- [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  now uses the declared `design` beyond IRR labelling. Each outcome
+  column in [`print()`](https://rdrr.io/r/base/print.html),
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html),
+  [`as_gt()`](https://MatheusTG-14.github.io/SimtablR/reference/as_gt.md)
+  and `as_flextable()` names its measure, resolved from link and design
+  as in the forest plot (for example “Adjudicated acute coronary
+  syndrome, PR (95% CI)”). A logistic model with a cohort or
+  cross-sectional design and an outcome above 10% now fires the
+  `or_as_rr_common_outcome` advice.
+  [`why()`](https://MatheusTG-14.github.io/SimtablR/reference/why.md)
+  reports the measure, its source (family, link and design) and, under a
+  log link, convergence;
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  names the measure, the design and, under a log link, whether the
+  models converged. The family is never switched; evidence is unchanged.
+- [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md)
+  now records the same decisions that
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  writes, so `estimator`, `interval_method`, `tests`, and any
+  Haldane-Anscombe zero-cell correction are filled for every engine
+  instead of `NULL` (for example the Katz log prevalence-ratio estimator
+  of a cross-sectional
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)).
+  The prose now also names what it previously omitted: the
+  Mantel-Haenszel pooled estimator, Greenland-Robins (or
+  Robins-Breslow-Greenland) interval and homogeneity test of a
+  stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md), the
+  interval of each crude and adjusted estimate, zero-cell corrections,
+  and the Cox ties method. `packages` now lists SimtablR, its Imports,
+  and only the Suggests the result’s engine used (pROC, survival,
+  logistf), instead of every package loaded in the session.
+- [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  with the default Poisson-log family now accepts a two-level factor,
+  character, or logical outcome instead of erroring and pointing to
+  [`binomial()`](https://rdrr.io/r/stats/family.html). The outcome is
+  coded 1 for the second level, the same convention
+  [`simtablr()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr.md)
+  and [`binomial()`](https://rdrr.io/r/stats/family.html) use, with a
+  note; the coding is recorded in `meta$outcome_coding`. Estimates equal
+  those of the corresponding 0/1 outcome (modified Poisson).
+- [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  now accepts prevalence ratios, which previously failed with “`measure`
+  must be one of RR, OR, or HR” and broke the cross-sectional workflow
+  (`e_value(report$table2)` on a `simtablr(design = "cross_sectional")`
+  report, or a PR
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)). A
+  prevalence ratio is a ratio of proportions, so the risk-ratio formula
+  applies (VanderWeele & Ding, 2017); the result keeps the “PR” label
+  and
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  says so. For
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md),
+  the measure now follows the table (link and design): modified Poisson,
+  the
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  default, is accepted as PR or RR instead of being rejected, and a
+  log-binomial model under a cross-sectional design reads PR instead of
+  RR. Count models (IRR) are rejected with an error that names the
+  outcome.
+  [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  and
+  [`repro_manifest()`](https://MatheusTG-14.github.io/SimtablR/reference/repro_manifest.md)
+  record the scale conversion used for each measure (PR, OR, HR).
+
+## SimtablR 3.1.1
+
+CRAN release: 2026-10-10
+
+### Bug fixes
+
+- Journal styles now reach the bivariate
+  ([`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md))
+  and GLM
+  ([`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md))
+  renderers. Previously `style(result, "lancet")` or a
+  [`journal_style()`](https://MatheusTG-14.github.io/SimtablR/reference/journal_style.md)
+  object left estimate/CI text unchanged (for example
+  `1.94 (1.51 - 2.49)` instead of `1.94 (1.51, 2.49)`).
+- [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  results now honour journal styles for the hazard-ratio interval
+  (separator, brackets, digits); the unstyled output is unchanged.
+- [`style()`](https://MatheusTG-14.github.io/SimtablR/reference/style.md)
+  now works on a
+  [`simtablr()`](https://MatheusTG-14.github.io/SimtablR/reference/simtablr.md)
+  report and restyles every table in it; it previously failed with “no
+  applicable method”.
+- [`stratify()`](https://MatheusTG-14.github.io/SimtablR/reference/stratify.md)
+  on a [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result now stratifies the table (Mantel-Haenszel pooling included),
+  matching `tb(..., strat = )`. Previously the verb recorded the
+  stratifier but recomputed an unstratified table.
+- [`adjust()`](https://MatheusTG-14.github.io/SimtablR/reference/adjust.md)
+  on a
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  or
+  [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  result now refits the models with the added covariates. Previously the
+  covariates were recorded but silently left out of the model, so the
+  “adjusted” estimates were unchanged. This also makes
+  `sensitivity(x, adjust = NULL)` meaningful for covariates added this
+  way.
+- [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md)
+  on a
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  result now relabels predictor rows; previously only outcome labels
+  changed.
+- [`measure()`](https://MatheusTG-14.github.io/SimtablR/reference/measure.md)
+  on a computed result keeps the recorded reference level and confidence
+  level unless new ones are supplied. Previously it reset them to the
+  first factor level and 95%, which could silently invert the
+  comparison.
+- [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  on a [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result no longer reports an E-value for the reference row, and labels
+  each row with its level (e.g. `smoking: Former`) so multi-level
+  variables can be told apart.
+- Stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  tables use the column variable’s label (not its raw column name) in
+  the “(Stratified)” header.
+- A stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md) now
+  tests the exposure-outcome association with the
+  Cochran-Mantel-Haenszel test, as documented. Without an effect measure
+  it previously ran a Pearson chi-squared test on the stratum-by-outcome
+  columns, testing the exposure against stratum and outcome jointly;
+  with a multi-level exposure the table-level test was the first level’s
+  2x2 CMH test instead of the generalized CMH test. 2x2 results are
+  unchanged.
+- [`register_engine()`](https://MatheusTG-14.github.io/SimtablR/reference/register_engine.md)
+  no longer silently replaces a built-in engine (`descriptive`,
+  `bivariate`, `glm`, `accuracy`, `roc`, `cox`, `e_value`); doing so is
+  a classed error unless `overwrite = TRUE`. Replacing `"descriptive"`
+  previously broke
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md)
+  for the rest of the session. Re-registering your own engines is
+  unchanged.
+- `table1(na_model = "explicit")` now shows the adjusted estimate for
+  the “(Missing)” category in the Missing row; it was computed but never
+  displayed. A table note states that missing values were modelled as
+  their own category.
+- [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md)
+  now notes when the Overall column includes participants whose `by`
+  value is missing (e.g. “Overall includes 50 participants with missing
+  sex”), so Overall no longer silently exceeds the sum of the groups.
+  The note appears in print,
+  [`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html)
+  (attribute `"notes"`),
+  [`as_gt()`](https://MatheusTG-14.github.io/SimtablR/reference/as_gt.md),
+  and `as_flextable()`; the numbers are unchanged.
+- Evidence verbs that an engine does not use now warn and return the
+  result unchanged instead of being silently accepted: for example
+  [`measure()`](https://MatheusTG-14.github.io/SimtablR/reference/measure.md)
+  or
+  [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md)
+  on a
+  [`diag_test()`](https://MatheusTG-14.github.io/SimtablR/reference/diag_test.md),
+  [`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md),
+  or
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  result, or
+  [`adjust()`](https://MatheusTG-14.github.io/SimtablR/reference/adjust.md)
+  on a [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result.
+  [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md),
+  [`fmt()`](https://MatheusTG-14.github.io/SimtablR/reference/fmt.md),
+  and
+  [`style()`](https://MatheusTG-14.github.io/SimtablR/reference/style.md)
+  still apply everywhere.
+  [`register_engine()`](https://MatheusTG-14.github.io/SimtablR/reference/register_engine.md)
+  gains `verbs` to declare which of
+  [`stratify()`](https://MatheusTG-14.github.io/SimtablR/reference/stratify.md),
+  [`adjust()`](https://MatheusTG-14.github.io/SimtablR/reference/adjust.md),
+  [`measure()`](https://MatheusTG-14.github.io/SimtablR/reference/measure.md),
+  [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md),
+  [`set_summary()`](https://MatheusTG-14.github.io/SimtablR/reference/set_summary.md),
+  and
+  [`missingness()`](https://MatheusTG-14.github.io/SimtablR/reference/missingness.md)
+  an engine uses (`NULL`, the default, accepts all).
+- [`stratify()`](https://MatheusTG-14.github.io/SimtablR/reference/stratify.md)
+  on a
+  [`survtab()`](https://MatheusTG-14.github.io/SimtablR/reference/survtab.md)
+  result now fits a stratified Cox model
+  ([`survival::strata()`](https://rdrr.io/pkg/survival/man/strata.html),
+  separate baseline hazards); it previously recorded the stratifier and
+  refitted the same unstratified model. A stratifier that is also a
+  predictor is removed from the linear predictor.
+- Continuous standardized mean differences now use the unweighted
+  average of the group variances (Austin, 2009), the same convention as
+  categorical SMDs, and are reported as absolute values. They previously
+  used the sample-size-weighted pooled SD and could be negative, so
+  values differ when group sizes are unequal (e.g. 0.339 vs 0.347 for
+  1280 vs 220).
+- `table1(d =)` now also sets the decimals of continuous summaries, as
+  documented, when supplied directly or through `fmt(d = )`. `d`
+  defaults to `NULL`, which keeps the previous output (one-decimal
+  percentages, continuous digits from the journal style).
+- Tidy categorical
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  output attaches each ratio only to the event-outcome row of its level
+  (other rows are `NA`); it previously repeated the ratio on the
+  non-event rows. Stratified tables gain a `stratum` column with the
+  stratum-specific ratios and one row per pooled Mantel-Haenszel
+  estimate.
+- Numeric haven/labelled columns with only some values labelled (for
+  example ages with `999 = "Unknown"`) now stay numeric, with a message,
+  instead of becoming a factor with one level per value. Fully labelled
+  columns are still converted to factors.
+- A stratified numeric
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md) now
+  compares groups within strata: the F-test for the group term in a
+  linear model with stratum (mean summaries), or the van Elteren
+  stratified Wilcoxon test for two groups (median summaries). It
+  previously ran a one-way ANOVA or Kruskal-Wallis test across the
+  stratum-by-group cells. Where no stratified test applies (a rank test
+  with more than two groups, or paired data) no p-value is reported and
+  a warning says why.
+- Stratified PR/RR tables now test homogeneity of the ratio with
+  Cochran’s Q on the stratum log ratios (printed as “homogeneity p”).
+  They previously reported the Breslow-Day test, which tests homogeneity
+  of odds ratios, as “BD p”. Odds-ratio tables still use Breslow-Day.
+  The test name is stored in the new `homogeneity_method` column of
+  `$data$mh`.
+- Interval separators that would be misread are replaced for that
+  interval only: a comma separator becomes `"; "` when a bound contains
+  a comma (`1,94 (1,51; 2,49)` rather than `1,94 (1,51, 2,49)`), and a
+  dash separator becomes `" to "` when a bound is negative
+  (`1.38 (-0.58 to 3.34)` rather than `1.38 (-0.58 - 3.34)`).
+  Unambiguous output is unchanged.
+- [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md) no
+  longer reports a “Chi-squared test for given probabilities” when the
+  complete-case table has a single observed row or column level. That
+  goodness-of-fit test is not a test of association; no p-value is
+  reported and a warning explains why.
+- [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  now marks an outcome that takes a single value among complete cases as
+  failed in
+  [`model_info()`](https://MatheusTG-14.github.io/SimtablR/reference/model_info.md)
+  and the “Failed outcomes” footer, instead of warning about
+  non-convergence and reporting `1.00 (1.00 - 1.00)`.
+- [`as_methods()`](https://MatheusTG-14.github.io/SimtablR/reference/as_methods.md)
+  on a
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md)
+  result with an adjusted column now describes both estimands and names
+  the adjustment covariates. An adjusted odds ratio was previously
+  described as the crude Woolf estimator, with no mention of logistic
+  regression, and adjusted PR/RR prose omitted the covariates.
+- `table1(ref = list(sex = "Female", smoking = "Never"))` and
+  `measure(spec, ref = list(...))` now work as documented; a
+  per-variable reference list previously failed with “`ref` must be one
+  non-missing reference value”. A reference level that is never applied
+  (not a level of any categorical variable, or of the named variable)
+  now warns instead of silently falling back to the first level.
+- [`test()`](https://MatheusTG-14.github.io/SimtablR/reference/test.md)
+  on a [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result honours `"t"`, `"wilcoxon"`, `"anova"`, and `"kruskal"` for
+  numeric variables, and a test that does not fit the variable type
+  (e.g. `"fisher"` on a numeric variable, `"t"` on a categorical one) is
+  now a classed error, as in
+  [`table1()`](https://MatheusTG-14.github.io/SimtablR/reference/table1.md).
+  Previously the request was silently replaced by the summary-driven
+  default or dropped.
+- `test(x, smd = TRUE)` on a
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result now warns that
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  tables do not report SMDs instead of silently ignoring the request.
+- `sensitivity(x, adjust = NULL)` warns when the result records no
+  adjustment covariates to drop (for example a
+  [`regtab()`](https://MatheusTG-14.github.io/SimtablR/reference/regtab.md)
+  whose covariates are in the model formula), instead of reporting the
+  unchanged estimate as “materially unchanged”.
+- [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md),
+  [`sensitivity()`](https://MatheusTG-14.github.io/SimtablR/reference/sensitivity.md),
+  and `autoplot()` on a stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result now use its Mantel-Haenszel estimates;
+  [`e_value()`](https://MatheusTG-14.github.io/SimtablR/reference/e_value.md)
+  and `autoplot()` previously failed with “No ratio-scale estimates” /
+  “No effect estimates”.
+- [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  forest plots draw each ratio once. They previously repeated every
+  estimate in a panel for each outcome level, including the non-event
+  level.
+- [`style()`](https://MatheusTG-14.github.io/SimtablR/reference/style.md)
+  now works on an [`rbind()`](https://rdrr.io/r/base/cbind.html) of
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  results; it previously failed with “no applicable method”.
+- [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md)
+  on a stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result now updates the “(Stratified)” column header, and
+  [`label()`](https://MatheusTG-14.github.io/SimtablR/reference/label.md)
+  on a
+  [`roc()`](https://MatheusTG-14.github.io/SimtablR/reference/roc.md)
+  result relabels markers, the outcome, and the DeLong comparison lines.
+- `as.data.frame(x, tidy = TRUE)` on a categorical
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  result (and on stacked tables) gains an `n` column with the cell
+  count.
+- Stratified
+  [`tb()`](https://MatheusTG-14.github.io/SimtablR/reference/tb.md)
+  printing shows the Mantel-Haenszel row once, in the effect panel,
+  rather than as an empty row in every frequency panel, and draws the
+  rule above the Total row.
+- Values that round to zero no longer print with a minus sign (for
+  example a degenerate
+  [`diag_test()`](https://MatheusTG-14.github.io/SimtablR/reference/diag_test.md)
+  kappa interval `(-0.00 - 0.00)`). Raw evidence is unchanged.
+- [`register_engine()`](https://MatheusTG-14.github.io/SimtablR/reference/register_engine.md)
+  now rejects renderers that are not functions with a classed error at
+  registration, instead of failing later with “could not find function”.
+- [`export_docx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_docx.md),
+  [`export_pptx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_pptx.md),
+  and
+  [`export_xlsx()`](https://MatheusTG-14.github.io/SimtablR/reference/export_xlsx.md)
+  reject inputs that are neither SimtablR objects nor data frames;
+  `export_xlsx(NULL, path)` previously wrote an empty workbook.
+- New advice rule `ratio_in_case_control` flags a risk or prevalence
+  ratio reported for a case-control design. The explicit measure is
+  still used; the advice is non-blocking.
+
 ## SimtablR 3.1.0
 
 ### New features

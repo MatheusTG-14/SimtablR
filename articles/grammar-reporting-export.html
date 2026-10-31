@@ -157,9 +157,9 @@ numerical evidence:</p>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Tests: Welch t-test; N-1 chi-squared</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
-<span><span class="co">#&gt;   4 unadjusted p-values are reported in this table. Pipe into test(p.adjust =</span></span>
-<span><span class="co">#&gt;   'holm') for family-wise control or test(p.adjust = 'BH') for</span></span>
-<span><span class="co">#&gt;   false-discovery-rate control.</span></span>
+<span><span class="co">#&gt;   4 p-values compare groups in a descriptive table; they do not test</span></span>
+<span><span class="co">#&gt;   pre-specified hypotheses. Describe group balance with standardized mean</span></span>
+<span><span class="co">#&gt;   differences via test(smd = TRUE), or drop the tests with test = FALSE.</span></span>
 <span><span class="co">#&gt;   Run simtablr_guidance("off") separately before printing to hide advice.</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -207,7 +207,7 @@ call:</p>
 <div class="sourceCode" id="cb4"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="va">report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/simtablr.html">simtablr</a></span><span class="op">(</span></span>
 <span>  <span class="va">epitabl</span>,</span>
-<span>  outcome <span class="op">=</span> <span class="va">adjudicated_acs</span>,</span>
+<span>  outcome <span class="op">=</span> <span class="va">mace_event</span>,</span>
 <span>  exposure <span class="op">=</span> <span class="va">renal_impairment</span>,</span>
 <span>  vars <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">sex</span>, <span class="va">smoking</span>, <span class="va">hypertension</span>, <span class="va">diabetes</span>, <span class="va">renal_impairment</span><span class="op">)</span>,</span>
 <span>  adjust <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="va">age</span>, <span class="va">sex</span>, <span class="va">smoking</span>, <span class="va">hypertension</span><span class="op">)</span>,</span>
@@ -241,20 +241,20 @@ call:</p>
 <span><span class="co">#&gt;   Yes                                                        316 (21.1%)       0 (0.0%)  316 (100.0%)          </span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test</span></span>
+<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
+<span><span class="co">#&gt;   6 p-values compare groups in a descriptive table; they do not test</span></span>
+<span><span class="co">#&gt;   pre-specified hypotheses. Describe group balance with standardized mean</span></span>
+<span><span class="co">#&gt;   differences via test(smd = TRUE), or drop the tests with test = FALSE.</span></span>
+<span><span class="co">#&gt;   Run simtablr_guidance("off") separately before printing to hide advice.</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt; table2</span></span>
-<span><span class="co">#&gt; Characteristic                                          Overall (N=1500)   No (N=928)  Yes (N=572)  P-value         RR (95% CI)  Adjusted RR (95% CI) </span></span>
-<span><span class="co">#&gt; -----------------------------------------------------------------------------------------------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)                                                0.268                                           </span></span>
-<span><span class="co">#&gt;   No                                                        1184 (78.9%)  741 (79.8%)  443 (77.4%)                   1.00 (Ref)            1.00 (Ref) </span></span>
-<span><span class="co">#&gt;   Yes                                                        316 (21.1%)  187 (20.2%)  129 (22.6%)           1.09 (0.94 - 1.27)    0.90 (0.76 - 1.05) </span></span>
+<span><span class="co">#&gt; Characteristic                                          Overall (N=1500)   No (N=1280)  Yes (N=220)  P-value         RR (95% CI)  Adjusted RR (95% CI) </span></span>
+<span><span class="co">#&gt; ------------------------------------------------------------------------------------------------------------------------------------------------------</span></span>
+<span><span class="co">#&gt; Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)                                                &lt;0.001                                           </span></span>
+<span><span class="co">#&gt;   No                                                        1184 (78.9%)  1039 (81.2%)  145 (65.9%)                   1.00 (Ref)            1.00 (Ref) </span></span>
+<span><span class="co">#&gt;   Yes                                                        316 (21.1%)   241 (18.8%)   75 (34.1%)           1.94 (1.51 - 2.49)    1.54 (1.16 - 2.04) </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; Tests: N-1 chi-squared</span></span>
-<span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
-<span><span class="co">#&gt;   6 unadjusted p-values are reported in this table. Pipe into test(p.adjust =</span></span>
-<span><span class="co">#&gt;   'holm') for family-wise control or test(p.adjust = 'BH') for</span></span>
-<span><span class="co">#&gt;   false-discovery-rate control.</span></span>
-<span><span class="co">#&gt;   Run simtablr_guidance("off") separately before printing to hide advice.</span></span></code></pre></div>
+<span><span class="co">#&gt; Tests: N-1 chi-squared</span></span></code></pre></div>
 <p>You can inspect individual components directly: -
 <code>report$table1</code>: Baseline descriptive table. -
 <code>report$table2</code>: Bivariate and multivariable association
@@ -281,11 +281,10 @@ modeling decisions without overwriting the primary analysis:</p>
 <span><span class="va">primary</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/tb.html">tb</a></span><span class="op">(</span></span>
 <span>  <span class="va">epitabl</span>,</span>
 <span>  <span class="va">renal_impairment</span>,</span>
-<span>  <span class="va">adjudicated_acs</span>,</span>
+<span>  <span class="va">mace_event</span>,</span>
 <span>  flags <span class="op">=</span> <span class="fu"><a href="https://rdrr.io/r/base/c.html" class="external-link">c</a></span><span class="op">(</span><span class="st">"row"</span>, <span class="st">"rr"</span><span class="op">)</span>,</span>
 <span>  design <span class="op">=</span> <span class="st">"cohort"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.</span></span>
 <span></span>
 <span><span class="co"># Test sensitivity to odds ratio scale and complete-case denominator</span></span>
 <span><span class="va">sens_res</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/sensitivity.html">sensitivity</a></span><span class="op">(</span></span>
@@ -293,14 +292,12 @@ modeling decisions without overwriting the primary analysis:</p>
 <span>  measure <span class="op">=</span> <span class="st">"OR"</span>,</span>
 <span>  denominator <span class="op">=</span> <span class="st">"complete"</span></span>
 <span><span class="op">)</span></span>
-<span><span class="co">#&gt; Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.</span></span>
-<span><span class="co">#&gt; Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.</span></span>
 <span><span class="va">sens_res</span></span>
 <span><span class="co">#&gt; &lt;simtab_sensitivity&gt;</span></span>
 <span><span class="co">#&gt;    Variation Measure Estimate 95% CI low 95% CI high Delta %</span></span>
-<span><span class="co">#&gt;      primary      RR 1.091065  0.9373810    1.269945       0</span></span>
-<span><span class="co">#&gt;      measure      OR 1.153885  0.8956577    1.486562      NA</span></span>
-<span><span class="co">#&gt;  denominator      RR 1.091065  0.9373810    1.269945       0</span></span>
+<span><span class="co">#&gt;      primary      RR 1.938018   1.509900    2.487525       0</span></span>
+<span><span class="co">#&gt;      measure      OR 2.229933   1.632256    3.046458      NA</span></span>
+<span><span class="co">#&gt;  denominator      RR 1.938018   1.509900    2.487525       0</span></span>
 <span><span class="co">#&gt;                                                 Note</span></span>
 <span><span class="co">#&gt;                                                     </span></span>
 <span><span class="co">#&gt;  Estimand changed from RR to OR; delta not computed.</span></span>
@@ -309,7 +306,7 @@ modeling decisions without overwriting the primary analysis:</p>
 <span><span class="co">#&gt; Notes:</span></span>
 <span><span class="co">#&gt;   - Estimand changed from RR to OR; delta not computed.</span></span>
 <span><span class="co">#&gt; <span style="color: #BBBB00;">!</span> <span style="font-weight: bold;">Methodological warning</span></span></span>
-<span><span class="co">#&gt;   Outcome is common (38.1%); odds ratios can overstate the prevalence/risk</span></span>
+<span><span class="co">#&gt;   Outcome is common (14.7%); odds ratios can overstate the prevalence/risk</span></span>
 <span><span class="co">#&gt;   ratio. Consider measure = 'PR' for cross-sectional tables or</span></span>
 <span><span class="co">#&gt;   Poisson/log-binomial models for adjusted estimates.</span></span>
 <span><span class="co">#&gt;   1 additional methodological note hidden. Run simtablr_guidance("teaching")</span></span>
@@ -328,9 +325,9 @@ explain away the observed estimate:</p>
 <span><span class="co">#&gt; E-values</span></span>
 <span><span class="co">#&gt; </span></span>
 <span><span class="co">#&gt;     source outcome                  term measure estimate conf.low conf.high</span></span>
-<span><span class="co">#&gt;  bivariate    &lt;NA&gt; renal_impairment: Yes      RR 1.091065 0.937381  1.269945</span></span>
+<span><span class="co">#&gt;  bivariate    &lt;NA&gt; renal_impairment: Yes      RR 1.938018   1.5099  2.487525</span></span>
 <span><span class="co">#&gt;   e_value e_value_ci approximation  rare</span></span>
-<span><span class="co">#&gt;  1.406276          1         FALSE FALSE</span></span>
+<span><span class="co">#&gt;  3.286312   2.387339         FALSE FALSE</span></span>
 <span><span class="co">#&gt; <span style="color: #00BBBB;">ℹ</span> <span style="font-weight: bold;">Methodological guidance</span></span></span>
 <span><span class="co">#&gt;   E-values summarise the minimum unmeasured-confounding strength needed to</span></span>
 <span><span class="co">#&gt;   explain away a ratio estimate. Interpret E-values alongside design quality,</span></span>
@@ -345,7 +342,8 @@ practices:</p>
 <div class="sourceCode" id="cb7"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="co"># Review fired advice entries</span></span>
 <span><span class="fu"><a href="../reference/advise.html">advise</a></span><span class="op">(</span><span class="va">primary</span><span class="op">)</span></span>
-<span><span class="co">#&gt; list()</span></span>
+<span><span class="co">#&gt; SimtablR advice</span></span>
+<span><span class="co">#&gt; No rule fired.</span></span>
 <span></span>
 <span><span class="co"># Conduct an exhaustive audit of all rules (fired and silent)</span></span>
 <span><span class="va">audit_report</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/advise.html">advise</a></span><span class="op">(</span><span class="va">primary</span>, audit <span class="op">=</span> <span class="cn">TRUE</span><span class="op">)</span></span>
@@ -457,15 +455,15 @@ guidelines and exported natively to Office formats.</p>
 <span><span class="co"># Apply JAMA styling (formatting, confidence intervals, p-value thresholds)</span></span>
 <span><span class="va">jama_table</span> <span class="op">&lt;-</span> <span class="fu"><a href="../reference/style.html">style</a></span><span class="op">(</span><span class="va">primary</span>, <span class="st">"jama"</span><span class="op">)</span></span>
 <span><span class="va">jama_table</span></span>
-<span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
-<span><span class="co">#&gt;                                               No | 741 (62.6%)  443 (37.4%) </span></span>
-<span><span class="co">#&gt;                                              Yes | 187 (59.2%)  129 (40.8%) </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+--------------------------</span></span>
-<span><span class="co">#&gt;                                            Total |     928          572     </span></span>
+<span><span class="co">#&gt;                                                  | Observed MACE event before censoring </span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |      No           Yes     </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+---------------------------</span></span>
+<span><span class="co">#&gt;                                               No | 1039 (87.8%)  145 (12.2%) </span></span>
+<span><span class="co">#&gt;                                              Yes | 241 (76.3%)   75 (23.7%)  </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+---------------------------</span></span>
+<span><span class="co">#&gt;                                            Total |     1280          220     </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;                                                  | Adjudicated acute coronary syndrome </span></span>
+<span><span class="co">#&gt;                                                  | Observed MACE event before censoring </span></span>
 <span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total </span></span>
 <span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
 <span><span class="co">#&gt;                                               No | 1184  </span></span>
@@ -473,11 +471,11 @@ guidelines and exported natively to Office formats.</p>
 <span><span class="co">#&gt; -------------------------------------------------+-------</span></span>
 <span><span class="co">#&gt;                                            Total | 1500  </span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |        RR (95% CI)         </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+----------------------------</span></span>
-<span><span class="co">#&gt;                                               No |         1.00 (Ref)         </span></span>
-<span><span class="co">#&gt;                                              Yes | 1.09 (0.94, 1.27), p = .26 </span></span>
-<span><span class="co">#&gt; -------------------------------------------------+----------------------------</span></span>
+<span><span class="co">#&gt;  Renal impairment (eGFR below 60 mL/min/1.73 m2) |         RR (95% CI)         </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-----------------------------</span></span>
+<span><span class="co">#&gt;                                               No |         1.00 (Ref)          </span></span>
+<span><span class="co">#&gt;                                              Yes | 1.94 (1.51, 2.49), p &lt; .001 </span></span>
+<span><span class="co">#&gt; -------------------------------------------------+-----------------------------</span></span>
 <span><span class="co">#&gt;                                            Total |</span></span></code></pre></div>
 </div>
 <div class="section level3">
@@ -942,45 +940,45 @@ guidelines and exported natively to Office formats.</p>
 <tr class="gt_col_headings gt_spanner_row">
 <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="2" colspan="1" scope="col" id="Characteristic">Characteristic</th>
       <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="2" colspan="1" scope="col" id="Overall-(N=1500)">Overall (N=1500)</th>
-      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="2" scope="colgroup" id="Adjudicated-acute-coronary-syndrome">
-        <div class="gt_column_spanner">Adjudicated acute coronary syndrome</div>
+      <th class="gt_center gt_columns_top_border gt_column_spanner_outer" rowspan="1" colspan="2" scope="colgroup" id="Observed-MACE-event-before-censoring">
+        <div class="gt_column_spanner">Observed MACE event before censoring</div>
       </th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="2" colspan="1" scope="col" id="P-value">P-value</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="2" colspan="1" scope="col" id="P-value">P-value</th>
       <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="2" colspan="1" scope="col" id="RR-(95%-CI)">RR (95% CI)</th>
       <th class="gt_col_heading gt_columns_bottom_border gt_left" rowspan="2" colspan="1" scope="col" id="Adjusted-RR-(95%-CI)">Adjusted RR (95% CI)</th>
     </tr>
 <tr class="gt_col_headings">
-<th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="No-(N=928)">No (N=928)</th>
-      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Yes-(N=572)">Yes (N=572)</th>
+<th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="No-(N=1280)">No (N=1280)</th>
+      <th class="gt_col_heading gt_columns_bottom_border gt_right" rowspan="1" colspan="1" scope="col" id="Yes-(N=220)">Yes (N=220)</th>
     </tr>
 </thead>
 <tbody class="gt_table_body">
 <tr>
 <td headers="Characteristic" class="gt_row gt_left">Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)</td>
 <td headers="Overall-(N=1500)" class="gt_row gt_right"></td>
-<td headers="No-(N=928)" class="gt_row gt_right"></td>
-<td headers="Yes-(N=572)" class="gt_row gt_right"></td>
-<td headers="P-value" class="gt_row gt_right">0.268</td>
+<td headers="No-(N=1280)" class="gt_row gt_right"></td>
+<td headers="Yes-(N=220)" class="gt_row gt_right"></td>
+<td headers="P-value" class="gt_row gt_left">&lt;0.001</td>
 <td headers="RR-(95%-CI)" class="gt_row gt_left"></td>
 <td headers="Adjusted-RR-(95%-CI)" class="gt_row gt_left"></td>
 </tr>
 <tr>
 <td headers="Characteristic" class="gt_row gt_left">  No</td>
 <td headers="Overall-(N=1500)" class="gt_row gt_right">1184 (78.9%)</td>
-<td headers="No-(N=928)" class="gt_row gt_right">741 (79.8%)</td>
-<td headers="Yes-(N=572)" class="gt_row gt_right">443 (77.4%)</td>
-<td headers="P-value" class="gt_row gt_right"></td>
+<td headers="No-(N=1280)" class="gt_row gt_right">1039 (81.2%)</td>
+<td headers="Yes-(N=220)" class="gt_row gt_right">145 (65.9%)</td>
+<td headers="P-value" class="gt_row gt_left"></td>
 <td headers="RR-(95%-CI)" class="gt_row gt_left">1.00 (Ref)</td>
 <td headers="Adjusted-RR-(95%-CI)" class="gt_row gt_left">1.00 (Ref)</td>
 </tr>
 <tr>
 <td headers="Characteristic" class="gt_row gt_left">  Yes</td>
 <td headers="Overall-(N=1500)" class="gt_row gt_right">316 (21.1%)</td>
-<td headers="No-(N=928)" class="gt_row gt_right">187 (20.2%)</td>
-<td headers="Yes-(N=572)" class="gt_row gt_right">129 (22.6%)</td>
-<td headers="P-value" class="gt_row gt_right"></td>
-<td headers="RR-(95%-CI)" class="gt_row gt_left">1.09 (0.94 - 1.27)</td>
-<td headers="Adjusted-RR-(95%-CI)" class="gt_row gt_left">0.90 (0.76 - 1.05)</td>
+<td headers="No-(N=1280)" class="gt_row gt_right">241 (18.8%)</td>
+<td headers="Yes-(N=220)" class="gt_row gt_right">75 (34.1%)</td>
+<td headers="P-value" class="gt_row gt_left"></td>
+<td headers="RR-(95%-CI)" class="gt_row gt_left">1.94 (1.51 - 2.49)</td>
+<td headers="Adjusted-RR-(95%-CI)" class="gt_row gt_left">1.54 (1.16 - 2.04)</td>
 </tr>
 </tbody>
 </table>
@@ -988,20 +986,20 @@ guidelines and exported natively to Office formats.</p>
 <div class="sourceCode" id="cb15"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu">flextable</span><span class="fu">::</span><span class="fu"><a href="https://davidgohel.github.io/flextable/reference/as_flextable.html" class="external-link">as_flextable</a></span><span class="op">(</span><span class="va">report</span><span class="op">$</span><span class="va">table2</span><span class="op">)</span></span></code></pre></div>
 <div class="tabwid">
-<style>.cl-d8bad469{}.cl-5430bca3{font-family:'DejaVu Sans';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-8a796ab5{font-family:'DejaVu Sans';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-a87b1e2d{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-6477613b{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-690290e9{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:18pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-ed58742f{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-d123a7cd{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-07ddb7a9{width:1.23in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-36809070{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-3d3602ef{width:0.85in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-14815423{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-752a6fd8{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0c8d25ea{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5cfcf49a{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5f631f6e{width:1.23in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-bb606946{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-60a4373d{width:0.85in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-02a4ff9f{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-b4d5a1f8{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-1a8c2a6f{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7cca822c{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-76a3f321{width:1.23in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-83d0da02{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-618b206e{width:0.85in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8da4cafd{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-c57bd888{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-63bc639f{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-40433cc1{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-115b7f99{width:1.23in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-96bbd433{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-ae310796{width:0.85in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-07c56663{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-d8886879{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6590ceee{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-de86a637{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-9066f757{width:1.23in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-240ff2cd{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-a076948b{width:0.85in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-715267cd{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-e79548dd{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style>
+<style>.cl-d8bad469{}.cl-5430bca3{font-family:'DejaVu Sans';font-size:11pt;font-weight:normal;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-8a796ab5{font-family:'DejaVu Sans';font-size:11pt;font-weight:bold;font-style:normal;text-decoration:none;color:rgba(0, 0, 0, 1.00);background-color:transparent;}.cl-a87b1e2d{margin:0;text-align:center;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-6477613b{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:5pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-690290e9{margin:0;text-align:left;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);padding-bottom:5pt;padding-top:5pt;padding-left:18pt;padding-right:5pt;line-height: 1;background-color:transparent;}.cl-ed58742f{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-d123a7cd{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-19f6ade7{width:1.327in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-36809070{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-d43291c0{width:0.896in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-14815423{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-752a6fd8{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(102, 102, 102, 1.00);border-top: 1.5pt solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-0c8d25ea{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5cfcf49a{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-358b08a5{width:1.327in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-bb606946{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7f8c7e01{width:0.896in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-02a4ff9f{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-b4d5a1f8{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(102, 102, 102, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-1a8c2a6f{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7cca822c{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-afaee5e1{width:1.327in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-83d0da02{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-5f14c9e2{width:0.896in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-8da4cafd{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-c57bd888{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 0 solid rgba(0, 0, 0, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-63bc639f{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-40433cc1{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-7c3b3c54{width:1.327in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-96bbd433{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-07e6b291{width:0.896in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-07c56663{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-d8886879{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-6590ceee{width:5.298in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-de86a637{width:1.63in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-bd792843{width:1.327in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-240ff2cd{width:1.254in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-78dc06be{width:0.896in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-715267cd{width:1.626in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}.cl-e79548dd{width:1.925in;background-color:transparent;vertical-align: middle;border-bottom: 1.5pt solid rgba(102, 102, 102, 1.00);border-top: 0 solid rgba(0, 0, 0, 1.00);border-left: 0 solid rgba(0, 0, 0, 1.00);border-right: 0 solid rgba(0, 0, 0, 1.00);margin-bottom:0;margin-top:0;margin-left:0;margin-right:0;}</style>
 <table data-quarto-disable-processing="true" class="table cl-d8bad469">
 <thead>
 <tr style="overflow-wrap:break-word;">
 <th colspan="2" class="cl-ed58742f"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></th>
-<th colspan="2" class="cl-07ddb7a9"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Adjudicated acute coronary syndrome</span></p></th>
-<th colspan="3" class="cl-3d3602ef"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></th>
+<th colspan="2" class="cl-19f6ade7"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Observed MACE event before censoring</span></p></th>
+<th colspan="3" class="cl-d43291c0"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></th>
 </tr>
 <tr style="overflow-wrap:break-word;">
 <th class="cl-0c8d25ea"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Characteristic</span></p></th>
 <th class="cl-5cfcf49a"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Overall (N=1500)</span></p></th>
-<th class="cl-5f631f6e"><p class="cl-a87b1e2d"><span class="cl-5430bca3">No (N=928)</span></p></th>
-<th class="cl-bb606946"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Yes (N=572)</span></p></th>
-<th class="cl-60a4373d"><p class="cl-a87b1e2d"><span class="cl-5430bca3">P-value</span></p></th>
+<th class="cl-358b08a5"><p class="cl-a87b1e2d"><span class="cl-5430bca3">No (N=1280)</span></p></th>
+<th class="cl-bb606946"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Yes (N=220)</span></p></th>
+<th class="cl-7f8c7e01"><p class="cl-a87b1e2d"><span class="cl-5430bca3">P-value</span></p></th>
 <th class="cl-02a4ff9f"><p class="cl-a87b1e2d"><span class="cl-5430bca3">RR (95% CI)</span></p></th>
 <th class="cl-b4d5a1f8"><p class="cl-a87b1e2d"><span class="cl-5430bca3">Adjusted RR (95% CI)</span></p></th>
 </tr>
@@ -1010,29 +1008,29 @@ guidelines and exported natively to Office formats.</p>
 <tr style="overflow-wrap:break-word;">
 <td class="cl-1a8c2a6f"><p class="cl-6477613b"><span class="cl-8a796ab5">Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)</span></p></td>
 <td class="cl-7cca822c"><p class="cl-a87b1e2d"><span class="cl-8a796ab5"></span></p></td>
-<td class="cl-76a3f321"><p class="cl-a87b1e2d"><span class="cl-8a796ab5"></span></p></td>
+<td class="cl-afaee5e1"><p class="cl-a87b1e2d"><span class="cl-8a796ab5"></span></p></td>
 <td class="cl-83d0da02"><p class="cl-a87b1e2d"><span class="cl-8a796ab5"></span></p></td>
-<td class="cl-618b206e"><p class="cl-a87b1e2d"><span class="cl-8a796ab5">0.268</span></p></td>
+<td class="cl-5f14c9e2"><p class="cl-a87b1e2d"><span class="cl-8a796ab5">&lt;0.001</span></p></td>
 <td class="cl-8da4cafd"><p class="cl-a87b1e2d"><span class="cl-8a796ab5"></span></p></td>
 <td class="cl-c57bd888"><p class="cl-a87b1e2d"><span class="cl-8a796ab5"></span></p></td>
 </tr>
 <tr style="overflow-wrap:break-word;">
 <td class="cl-1a8c2a6f"><p class="cl-690290e9"><span class="cl-5430bca3">  No</span></p></td>
 <td class="cl-7cca822c"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1184 (78.9%)</span></p></td>
-<td class="cl-76a3f321"><p class="cl-a87b1e2d"><span class="cl-5430bca3">741 (79.8%)</span></p></td>
-<td class="cl-83d0da02"><p class="cl-a87b1e2d"><span class="cl-5430bca3">443 (77.4%)</span></p></td>
-<td class="cl-618b206e"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></td>
+<td class="cl-afaee5e1"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1039 (81.2%)</span></p></td>
+<td class="cl-83d0da02"><p class="cl-a87b1e2d"><span class="cl-5430bca3">145 (65.9%)</span></p></td>
+<td class="cl-5f14c9e2"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></td>
 <td class="cl-8da4cafd"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1.00 (Ref)</span></p></td>
 <td class="cl-c57bd888"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1.00 (Ref)</span></p></td>
 </tr>
 <tr style="overflow-wrap:break-word;">
 <td class="cl-63bc639f"><p class="cl-690290e9"><span class="cl-5430bca3">  Yes</span></p></td>
 <td class="cl-40433cc1"><p class="cl-a87b1e2d"><span class="cl-5430bca3">316 (21.1%)</span></p></td>
-<td class="cl-115b7f99"><p class="cl-a87b1e2d"><span class="cl-5430bca3">187 (20.2%)</span></p></td>
-<td class="cl-96bbd433"><p class="cl-a87b1e2d"><span class="cl-5430bca3">129 (22.6%)</span></p></td>
-<td class="cl-ae310796"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></td>
-<td class="cl-07c56663"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1.09 (0.94 - 1.27)</span></p></td>
-<td class="cl-d8886879"><p class="cl-a87b1e2d"><span class="cl-5430bca3">0.90 (0.76 - 1.05)</span></p></td>
+<td class="cl-7c3b3c54"><p class="cl-a87b1e2d"><span class="cl-5430bca3">241 (18.8%)</span></p></td>
+<td class="cl-96bbd433"><p class="cl-a87b1e2d"><span class="cl-5430bca3">75 (34.1%)</span></p></td>
+<td class="cl-07e6b291"><p class="cl-a87b1e2d"><span class="cl-5430bca3"></span></p></td>
+<td class="cl-07c56663"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1.94 (1.51 - 2.49)</span></p></td>
+<td class="cl-d8886879"><p class="cl-a87b1e2d"><span class="cl-5430bca3">1.54 (1.16 - 2.04)</span></p></td>
 </tr>
 </tbody>
 <tfoot><tr style="overflow-wrap:break-word;"><td colspan="7" class="cl-6590ceee"><p class="cl-6477613b"><span class="cl-5430bca3">Tests: N-1 chi-squared.</span></p></td></tr></tfoot>
@@ -1049,9 +1047,9 @@ guidelines and exported natively to Office formats.</p>
 <span><span class="va">tmp_xlsx</span> <span class="op">&lt;-</span> <span class="fu"><a href="https://rdrr.io/r/base/tempfile.html" class="external-link">tempfile</a></span><span class="op">(</span>fileext <span class="op">=</span> <span class="st">".xlsx"</span><span class="op">)</span></span>
 <span></span>
 <span><span class="fu"><a href="../reference/export_docx.html">export_docx</a></span><span class="op">(</span><span class="va">report</span>, path <span class="op">=</span> <span class="va">tmp_docx</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Report exported to: /tmp/RtmpKISCNr/file1f8d6ba270c7.docx</span></span>
+<span><span class="co">#&gt; Report exported to: /tmp/RtmpbKBBzJ/file1f69d8912f1.docx</span></span>
 <span><span class="fu"><a href="../reference/export_xlsx.html">export_xlsx</a></span><span class="op">(</span><span class="va">report</span>, path <span class="op">=</span> <span class="va">tmp_xlsx</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Report exported to: /tmp/RtmpKISCNr/file1f8d3483274f.xlsx</span></span>
+<span><span class="co">#&gt; Report exported to: /tmp/RtmpbKBBzJ/file1f69352a4fba.xlsx</span></span>
 <span></span>
 <span><span class="co"># Verify exported files exist</span></span>
 <span><span class="fu"><a href="https://rdrr.io/r/base/files.html" class="external-link">file.exists</a></span><span class="op">(</span><span class="va">tmp_docx</span><span class="op">)</span></span>
@@ -1069,7 +1067,7 @@ guidelines and exported natively to Office formats.</p>
 section describing the analytical steps taken:</p>
 <div class="sourceCode" id="cb17"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_methods.html">as_methods</a></span><span class="op">(</span><span class="va">report</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. Crude RR was estimated using the Katz log risk-ratio estimator with 95% Katz log confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% Wald confidence intervals (model-based standard errors). The RR was chosen from the recorded study design (cohort).</span></span></code></pre></div>
+<span><span class="co">#&gt; Age at index presentation (years) was summarised as mean (SD) for approximately symmetric distributions and Sex recorded for clinical assessment, Smoking status, History of hypertension, History of diabetes and Renal impairment (eGFR below 60 mL/min/1.73 m2) as counts and percentages. Groups defined by Renal impairment (eGFR below 60 mL/min/1.73 m2) were compared using the Welch t-test for Age at index presentation (years), the N-1 chi-squared test for Sex recorded for clinical assessment, History of hypertension, History of diabetes and Renal impairment (eGFR below 60 mL/min/1.73 m2) and the Pearson chi-squared test for Smoking status. No variable had missing values (n = 1500). Renal impairment (eGFR below 60 mL/min/1.73 m2) was summarised as counts and percentages. Groups defined by Observed MACE event before censoring were compared using the N-1 chi-squared test for Renal impairment (eGFR below 60 mL/min/1.73 m2). Crude RR was estimated using the Katz log risk-ratio estimator with 95% Katz log confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% Wald confidence intervals (model-based standard errors). The RR was chosen from the recorded study design (cohort). No variable had missing values (n = 1500).</span></span></code></pre></div>
 </div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>

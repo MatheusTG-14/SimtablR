@@ -8,17 +8,28 @@ first, matching the other render/extract verbs.
 
 ``` r
 as_methods(x, ...)
+
+# S3 method for class 'simtab_result'
+as_methods(x, software = FALSE, ...)
+
+# S3 method for class 'simtab_report'
+as_methods(x, software = FALSE, ...)
 ```
 
 ## Arguments
 
 - x:
 
-  A `simtab_result` or `simtab_spec`.
+  A `simtab_result`, `simtab_spec`, or `simtab_report`.
 
 - ...:
 
-  Ignored.
+  Passed to methods; otherwise ignored.
+
+- software:
+
+  Logical. If `TRUE`, append a sentence naming the R and SimtablR
+  versions and the suggested packages the analysis used.
 
 ## Value
 
@@ -29,5 +40,7 @@ A character string of length one.
 ``` r
 res <- tb(epitabl, sex, diabetes)
 as_methods(res)
-#> [1] "Categorical variables were summarised with counts and percentages."
+#> [1] "Sex recorded for clinical assessment was cross-tabulated with History of diabetes as counts. The analysis included the 1500 participants with complete data on the tabulated variables."
+as_methods(res, software = TRUE)
+#> [1] "Sex recorded for clinical assessment was cross-tabulated with History of diabetes as counts. The analysis included the 1500 participants with complete data on the tabulated variables. Analyses used R 4.6.2 and SimtablR 3.1.2."
 ```

@@ -93,9 +93,9 @@ baseline_result
 #> 
 #> Tests: Welch t-test; N-1 chi-squared
 #> ℹ Methodological guidance
-#>   4 unadjusted p-values are reported in this table. Pipe into test(p.adjust =
-#>   'holm') for family-wise control or test(p.adjust = 'BH') for
-#>   false-discovery-rate control.
+#>   4 p-values compare groups in a descriptive table; they do not test
+#>   pre-specified hypotheses. Describe group balance with standardized mean
+#>   differences via test(smd = TRUE), or drop the tests with test = FALSE.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```
 
@@ -147,7 +147,7 @@ builds this combined report in one call:
 
 report <- simtablr(
   epitabl,
-  outcome = adjudicated_acs,
+  outcome = mace_event,
   exposure = renal_impairment,
   vars = c(age, sex, smoking, hypertension, diabetes, renal_impairment),
   adjust = c(age, sex, smoking, hypertension),
@@ -181,20 +181,20 @@ report
 #>   Yes                                                        316 (21.1%)       0 (0.0%)  316 (100.0%)          
 #> 
 #> Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test
+#> ℹ Methodological guidance
+#>   6 p-values compare groups in a descriptive table; they do not test
+#>   pre-specified hypotheses. Describe group balance with standardized mean
+#>   differences via test(smd = TRUE), or drop the tests with test = FALSE.
+#>   Run simtablr_guidance("off") separately before printing to hide advice.
 #> 
 #> table2
-#> Characteristic                                          Overall (N=1500)   No (N=928)  Yes (N=572)  P-value         RR (95% CI)  Adjusted RR (95% CI) 
-#> -----------------------------------------------------------------------------------------------------------------------------------------------------
-#> Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)                                                0.268                                           
-#>   No                                                        1184 (78.9%)  741 (79.8%)  443 (77.4%)                   1.00 (Ref)            1.00 (Ref) 
-#>   Yes                                                        316 (21.1%)  187 (20.2%)  129 (22.6%)           1.09 (0.94 - 1.27)    0.90 (0.76 - 1.05) 
+#> Characteristic                                          Overall (N=1500)   No (N=1280)  Yes (N=220)  P-value         RR (95% CI)  Adjusted RR (95% CI) 
+#> ------------------------------------------------------------------------------------------------------------------------------------------------------
+#> Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%)                                                <0.001                                           
+#>   No                                                        1184 (78.9%)  1039 (81.2%)  145 (65.9%)                   1.00 (Ref)            1.00 (Ref) 
+#>   Yes                                                        316 (21.1%)   241 (18.8%)   75 (34.1%)           1.94 (1.51 - 2.49)    1.54 (1.16 - 2.04) 
 #> 
 #> Tests: N-1 chi-squared
-#> ℹ Methodological guidance
-#>   6 unadjusted p-values are reported in this table. Pipe into test(p.adjust =
-#>   'holm') for family-wise control or test(p.adjust = 'BH') for
-#>   false-discovery-rate control.
-#>   Run simtablr_guidance("off") separately before printing to hide advice.
 ```
 
 You can inspect individual components directly: - `report$table1`:
@@ -224,11 +224,10 @@ overwriting the primary analysis:
 primary <- tb(
   epitabl,
   renal_impairment,
-  adjudicated_acs,
+  mace_event,
   flags = c("row", "rr"),
   design = "cohort"
 )
-#> Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.
 
 # Test sensitivity to odds ratio scale and complete-case denominator
 sens_res <- sensitivity(
@@ -236,14 +235,12 @@ sens_res <- sensitivity(
   measure = "OR",
   denominator = "complete"
 )
-#> Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.
-#> Note: No reference level specified for PR/OR calculation. Defaulting to the first level: 'No'.
 sens_res
 #> <simtab_sensitivity>
 #>    Variation Measure Estimate 95% CI low 95% CI high Delta %
-#>      primary      RR 1.091065  0.9373810    1.269945       0
-#>      measure      OR 1.153885  0.8956577    1.486562      NA
-#>  denominator      RR 1.091065  0.9373810    1.269945       0
+#>      primary      RR 1.938018   1.509900    2.487525       0
+#>      measure      OR 2.229933   1.632256    3.046458      NA
+#>  denominator      RR 1.938018   1.509900    2.487525       0
 #>                                                 Note
 #>                                                     
 #>  Estimand changed from RR to OR; delta not computed.
@@ -252,7 +249,7 @@ sens_res
 #> Notes:
 #>   - Estimand changed from RR to OR; delta not computed.
 #> ! Methodological warning
-#>   Outcome is common (38.1%); odds ratios can overstate the prevalence/risk
+#>   Outcome is common (14.7%); odds ratios can overstate the prevalence/risk
 #>   ratio. Consider measure = 'PR' for cross-sectional tables or
 #>   Poisson/log-binomial models for adjusted estimates.
 #>   1 additional methodological note hidden. Run simtablr_guidance("teaching")
@@ -274,9 +271,9 @@ ev
 #> E-values
 #> 
 #>     source outcome                  term measure estimate conf.low conf.high
-#>  bivariate    <NA> renal_impairment: Yes      RR 1.091065 0.937381  1.269945
+#>  bivariate    <NA> renal_impairment: Yes      RR 1.938018   1.5099  2.487525
 #>   e_value e_value_ci approximation  rare
-#>  1.406276          1         FALSE FALSE
+#>  3.286312   2.387339         FALSE FALSE
 #> ℹ Methodological guidance
 #>   E-values summarise the minimum unmeasured-confounding strength needed to
 #>   explain away a ratio estimate. Interpret E-values alongside design quality,
@@ -293,7 +290,8 @@ practices:
 
 # Review fired advice entries
 advise(primary)
-#> list()
+#> SimtablR advice
+#> No rule fired.
 
 # Conduct an exhaustive audit of all rules (fired and silent)
 audit_report <- advise(primary, audit = TRUE)
@@ -425,15 +423,15 @@ list_journals()
 # Apply JAMA styling (formatting, confidence intervals, p-value thresholds)
 jama_table <- style(primary, "jama")
 jama_table
-#>                                                  | Adjudicated acute coronary syndrome 
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     
-#> -------------------------------------------------+--------------------------
-#>                                               No | 741 (62.6%)  443 (37.4%) 
-#>                                              Yes | 187 (59.2%)  129 (40.8%) 
-#> -------------------------------------------------+--------------------------
-#>                                            Total |     928          572     
+#>                                                  | Observed MACE event before censoring 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |      No           Yes     
+#> -------------------------------------------------+---------------------------
+#>                                               No | 1039 (87.8%)  145 (12.2%) 
+#>                                              Yes | 241 (76.3%)   75 (23.7%)  
+#> -------------------------------------------------+---------------------------
+#>                                            Total |     1280          220     
 #> 
-#>                                                  | Adjudicated acute coronary syndrome 
+#>                                                  | Observed MACE event before censoring 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total 
 #> -------------------------------------------------+-------
 #>                                               No | 1184  
@@ -441,11 +439,11 @@ jama_table
 #> -------------------------------------------------+-------
 #>                                            Total | 1500  
 #> 
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |        RR (95% CI)         
-#> -------------------------------------------------+----------------------------
-#>                                               No |         1.00 (Ref)         
-#>                                              Yes | 1.09 (0.94, 1.27), p = .26 
-#> -------------------------------------------------+----------------------------
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |         RR (95% CI)         
+#> -------------------------------------------------+-----------------------------
+#>                                               No |         1.00 (Ref)          
+#>                                              Yes | 1.94 (1.51, 2.49), p < .001 
+#> -------------------------------------------------+-----------------------------
 #>                                            Total |
 ```
 
@@ -466,12 +464,12 @@ as_gt(report$table2)
 flextable::as_flextable(report$table2)
 ```
 
-|  |  | Adjudicated acute coronary syndrome |  |  |  |  |
+|  |  | Observed MACE event before censoring |  |  |  |  |
 |----|----|----|----|----|----|----|
-| Characteristic | Overall (N=1500) | No (N=928) | Yes (N=572) | P-value | RR (95% CI) | Adjusted RR (95% CI) |
-| Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%) |  |  |  | 0.268 |  |  |
-|  No | 1184 (78.9%) | 741 (79.8%) | 443 (77.4%) |  | 1.00 (Ref) | 1.00 (Ref) |
-|  Yes | 316 (21.1%) | 187 (20.2%) | 129 (22.6%) |  | 1.09 (0.94 - 1.27) | 0.90 (0.76 - 1.05) |
+| Characteristic | Overall (N=1500) | No (N=1280) | Yes (N=220) | P-value | RR (95% CI) | Adjusted RR (95% CI) |
+| Renal impairment (eGFR below 60 mL/min/1.73 m2), n (%) |  |  |  | \<0.001 |  |  |
+|  No | 1184 (78.9%) | 1039 (81.2%) | 145 (65.9%) |  | 1.00 (Ref) | 1.00 (Ref) |
+|  Yes | 316 (21.1%) | 241 (18.8%) | 75 (34.1%) |  | 1.94 (1.51 - 2.49) | 1.54 (1.16 - 2.04) |
 | Tests: N-1 chi-squared. |  |  |  |  |  |  |
 
 ### 4.3 Native Export to Word and Excel
@@ -485,9 +483,9 @@ tmp_docx <- tempfile(fileext = ".docx")
 tmp_xlsx <- tempfile(fileext = ".xlsx")
 
 export_docx(report, path = tmp_docx)
-#> Report exported to: /tmp/RtmpKISCNr/file1f8d6ba270c7.docx
+#> Report exported to: /tmp/RtmpbKBBzJ/file1f69d8912f1.docx
 export_xlsx(report, path = tmp_xlsx)
-#> Report exported to: /tmp/RtmpKISCNr/file1f8d3483274f.xlsx
+#> Report exported to: /tmp/RtmpbKBBzJ/file1f69352a4fba.xlsx
 
 # Verify exported files exist
 file.exists(tmp_docx)
@@ -507,5 +505,5 @@ describing the analytical steps taken:
 ``` r
 
 cat(as_methods(report))
-#> Continuous variables were summarised as mean (SD), distribution approximately symmetric. Group comparisons used Welch t-test; N-1 chi-squared; Pearson chi-squared test. Categorical variables were summarised with counts and percentages. Group comparisons used N-1 chi-squared. Crude RR was estimated using the Katz log risk-ratio estimator with 95% Katz log confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% Wald confidence intervals (model-based standard errors). The RR was chosen from the recorded study design (cohort).
+#> Age at index presentation (years) was summarised as mean (SD) for approximately symmetric distributions and Sex recorded for clinical assessment, Smoking status, History of hypertension, History of diabetes and Renal impairment (eGFR below 60 mL/min/1.73 m2) as counts and percentages. Groups defined by Renal impairment (eGFR below 60 mL/min/1.73 m2) were compared using the Welch t-test for Age at index presentation (years), the N-1 chi-squared test for Sex recorded for clinical assessment, History of hypertension, History of diabetes and Renal impairment (eGFR below 60 mL/min/1.73 m2) and the Pearson chi-squared test for Smoking status. No variable had missing values (n = 1500). Renal impairment (eGFR below 60 mL/min/1.73 m2) was summarised as counts and percentages. Groups defined by Observed MACE event before censoring were compared using the N-1 chi-squared test for Renal impairment (eGFR below 60 mL/min/1.73 m2). Crude RR was estimated using the Katz log risk-ratio estimator with 95% Katz log confidence intervals. Adjusted RR was estimated by log-binomial regression adjusting for Age at index presentation (years), Sex recorded for clinical assessment, Smoking status and History of hypertension, with 95% Wald confidence intervals (model-based standard errors). The RR was chosen from the recorded study design (cohort). No variable had missing values (n = 1500).
 ```

@@ -138,45 +138,30 @@ positive result level in the index test (<code>"Positive"</code>).</p>
 <span><span class="op">)</span></span>
 <span><span class="co">#&gt; Removed 21 observation(s) with missing values (2.3%).</span></span>
 <span><span class="va">accuracy</span></span>
+<span><span class="co">#&gt; Diagnostic Accuracy</span></span>
+<span><span class="co">#&gt; ===================</span></span>
+<span><span class="co">#&gt; Index test: poc_hstn_positive (positive = 'Positive')</span></span>
+<span><span class="co">#&gt; Reference standard: adjudicated_acs (positive = 'Yes')</span></span>
+<span><span class="co">#&gt; n = 899 | CI method: exact | 95% CI</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ============================================================</span></span>
-<span><span class="co">#&gt;   DIAGNOSTIC TEST EVALUATION</span></span>
-<span><span class="co">#&gt; ============================================================</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Sample size      : 899</span></span>
-<span><span class="co">#&gt;   Confidence level : 95%</span></span>
-<span><span class="co">#&gt;   CI method        : exact</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Reference standard (gold standard):</span></span>
-<span><span class="co">#&gt;     Positive = 'Yes'   |   Negative = 'No'</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt;   Diagnostic test:</span></span>
-<span><span class="co">#&gt;     Positive = 'Positive'   |   Negative = 'Negative'</span></span>
-<span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ------------------------------------------------------------</span></span>
-<span><span class="co">#&gt;   Confusion Matrix</span></span>
-<span><span class="co">#&gt; ------------------------------------------------------------</span></span>
 <span><span class="co">#&gt;           Ref</span></span>
 <span><span class="co">#&gt; Test       Yes  No</span></span>
 <span><span class="co">#&gt;   Positive 249  56</span></span>
 <span><span class="co">#&gt;   Negative  95 499</span></span>
 <span><span class="co">#&gt; </span></span>
-<span><span class="co">#&gt; ============================================================</span></span>
-<span><span class="co">#&gt;   Performance Metrics  (95% CI)</span></span>
-<span><span class="co">#&gt; ============================================================</span></span>
-<span><span class="co">#&gt; Sensitivity           :    72.38%  (67.33% - 77.04%)</span></span>
-<span><span class="co">#&gt; Specificity           :    89.91%  (87.10% - 92.29%)</span></span>
-<span><span class="co">#&gt; Pos Pred Value (PPV)  :    81.64%  (76.83% - 85.82%)</span></span>
-<span><span class="co">#&gt; Neg Pred Value (NPV)  :    84.01%  (80.81% - 86.86%)</span></span>
-<span><span class="co">#&gt; Accuracy              :    83.20%  (80.60% - 85.59%)</span></span>
-<span><span class="co">#&gt; Prevalence            :    38.26%  (35.07% - 41.53%)</span></span>
-<span><span class="co">#&gt; ------------------------------------------------------------</span></span>
-<span><span class="co">#&gt; Likelihood Ratio +    :      7.17  (5.55 - 9.27)</span></span>
-<span><span class="co">#&gt; Likelihood Ratio -    :      0.31  (0.26 - 0.37)</span></span>
-<span><span class="co">#&gt; Youden Index          :      0.62</span></span>
-<span><span class="co">#&gt; F1 Score              :      0.77</span></span>
-<span><span class="co">#&gt; Diagnostic Odds Ratio :     23.36  (16.24 - 33.59)</span></span>
-<span><span class="co">#&gt; Cohen's Kappa         :      0.64  (0.58 - 0.69)</span></span></code></pre></div>
+<span><span class="co">#&gt;  Metric                Estimate 95% CI           </span></span>
+<span><span class="co">#&gt;  Sensitivity           72.38%   (67.33% - 77.04%)</span></span>
+<span><span class="co">#&gt;  Specificity           89.91%   (87.10% - 92.29%)</span></span>
+<span><span class="co">#&gt;  Pos Pred Value (PPV)  81.64%   (76.83% - 85.82%)</span></span>
+<span><span class="co">#&gt;  Neg Pred Value (NPV)  84.01%   (80.81% - 86.86%)</span></span>
+<span><span class="co">#&gt;  Accuracy              83.20%   (80.60% - 85.59%)</span></span>
+<span><span class="co">#&gt;  Prevalence            38.26%   (35.07% - 41.53%)</span></span>
+<span><span class="co">#&gt;  Likelihood Ratio +    7.17     (5.55 - 9.27)    </span></span>
+<span><span class="co">#&gt;  Likelihood Ratio -    0.31     (0.26 - 0.37)    </span></span>
+<span><span class="co">#&gt;  Youden Index          0.62                      </span></span>
+<span><span class="co">#&gt;  F1 Score              0.77                      </span></span>
+<span><span class="co">#&gt;  Diagnostic Odds Ratio 23.36    (16.24 - 33.59)  </span></span>
+<span><span class="co">#&gt;  Cohen's Kappa         0.64     (0.58 - 0.69)</span></span></code></pre></div>
 <div class="section level3">
 <h3 id="key-metrics-computed">Key Metrics Computed:<a class="anchor" aria-label="anchor" href="#key-metrics-computed"></a>
 </h3>
@@ -362,7 +347,7 @@ analytical choices, confidence interval formulas, and software
 implementations into concise prose ready for manuscript submission:</p>
 <div class="sourceCode" id="cb9"><pre class="downlit sourceCode r">
 <code class="sourceCode R"><span><span class="fu"><a href="https://rdrr.io/r/base/cat.html" class="external-link">cat</a></span><span class="op">(</span><span class="fu"><a href="../reference/as_methods.html">as_methods</a></span><span class="op">(</span><span class="va">accuracy</span><span class="op">)</span><span class="op">)</span></span>
-<span><span class="co">#&gt; Diagnostic accuracy was evaluated against adjudicated_acs as the reference standard; sensitivity, specificity, predictive values, accuracy, and prevalence were reported with exact binomial 95% CI, likelihood ratios with asymptotic (log-method) 95% confidence intervals, the diagnostic odds ratio with a log 95% CI, and Cohen's kappa was reported for index-test / reference-standard agreement with a large-sample 95% CI.</span></span></code></pre></div>
+<span><span class="co">#&gt; Diagnostic accuracy was evaluated against adjudicated_acs as the reference standard; sensitivity, specificity, predictive values, accuracy, and prevalence were reported with exact binomial 95% CI, likelihood ratios with asymptotic (log-method) 95% confidence intervals, the diagnostic odds ratio with a log 95% CI, and Cohen's kappa was reported for index-test / reference-standard agreement with a large-sample 95% CI. Accuracy was estimated in the 899 of 920 participants with both index-test and reference-standard results.</span></span></code></pre></div>
 </div>
   </main><aside class="col-md-3"><nav id="toc" aria-label="Table of contents"><h2>On this page</h2>
     </nav></aside>

@@ -69,45 +69,30 @@ accuracy <- diag_test(
 )
 #> Removed 21 observation(s) with missing values (2.3%).
 accuracy
+#> Diagnostic Accuracy
+#> ===================
+#> Index test: poc_hstn_positive (positive = 'Positive')
+#> Reference standard: adjudicated_acs (positive = 'Yes')
+#> n = 899 | CI method: exact | 95% CI
 #> 
-#> ============================================================
-#>   DIAGNOSTIC TEST EVALUATION
-#> ============================================================
-#> 
-#>   Sample size      : 899
-#>   Confidence level : 95%
-#>   CI method        : exact
-#> 
-#>   Reference standard (gold standard):
-#>     Positive = 'Yes'   |   Negative = 'No'
-#> 
-#>   Diagnostic test:
-#>     Positive = 'Positive'   |   Negative = 'Negative'
-#> 
-#> ------------------------------------------------------------
-#>   Confusion Matrix
-#> ------------------------------------------------------------
 #>           Ref
 #> Test       Yes  No
 #>   Positive 249  56
 #>   Negative  95 499
 #> 
-#> ============================================================
-#>   Performance Metrics  (95% CI)
-#> ============================================================
-#> Sensitivity           :    72.38%  (67.33% - 77.04%)
-#> Specificity           :    89.91%  (87.10% - 92.29%)
-#> Pos Pred Value (PPV)  :    81.64%  (76.83% - 85.82%)
-#> Neg Pred Value (NPV)  :    84.01%  (80.81% - 86.86%)
-#> Accuracy              :    83.20%  (80.60% - 85.59%)
-#> Prevalence            :    38.26%  (35.07% - 41.53%)
-#> ------------------------------------------------------------
-#> Likelihood Ratio +    :      7.17  (5.55 - 9.27)
-#> Likelihood Ratio -    :      0.31  (0.26 - 0.37)
-#> Youden Index          :      0.62
-#> F1 Score              :      0.77
-#> Diagnostic Odds Ratio :     23.36  (16.24 - 33.59)
-#> Cohen's Kappa         :      0.64  (0.58 - 0.69)
+#>  Metric                Estimate 95% CI           
+#>  Sensitivity           72.38%   (67.33% - 77.04%)
+#>  Specificity           89.91%   (87.10% - 92.29%)
+#>  Pos Pred Value (PPV)  81.64%   (76.83% - 85.82%)
+#>  Neg Pred Value (NPV)  84.01%   (80.81% - 86.86%)
+#>  Accuracy              83.20%   (80.60% - 85.59%)
+#>  Prevalence            38.26%   (35.07% - 41.53%)
+#>  Likelihood Ratio +    7.17     (5.55 - 9.27)    
+#>  Likelihood Ratio -    0.31     (0.26 - 0.37)    
+#>  Youden Index          0.62                      
+#>  F1 Score              0.77                      
+#>  Diagnostic Odds Ratio 23.36    (16.24 - 33.59)  
+#>  Cohen's Kappa         0.64     (0.58 - 0.69)
 ```
 
 ### Key Metrics Computed:
@@ -314,5 +299,5 @@ submission:
 ``` r
 
 cat(as_methods(accuracy))
-#> Diagnostic accuracy was evaluated against adjudicated_acs as the reference standard; sensitivity, specificity, predictive values, accuracy, and prevalence were reported with exact binomial 95% CI, likelihood ratios with asymptotic (log-method) 95% confidence intervals, the diagnostic odds ratio with a log 95% CI, and Cohen's kappa was reported for index-test / reference-standard agreement with a large-sample 95% CI.
+#> Diagnostic accuracy was evaluated against adjudicated_acs as the reference standard; sensitivity, specificity, predictive values, accuracy, and prevalence were reported with exact binomial 95% CI, likelihood ratios with asymptotic (log-method) 95% confidence intervals, the diagnostic odds ratio with a log 95% CI, and Cohen's kappa was reported for index-test / reference-standard agreement with a large-sample 95% CI. Accuracy was estimated in the 899 of 920 participants with both index-test and reference-standard results.
 ```

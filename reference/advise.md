@@ -24,8 +24,11 @@ advise(result, audit = FALSE)
 
 ## Value
 
-A list of advice entries deduplicated by rule id, or a `simtab_audit`
-object when `audit = TRUE`.
+A `simtab_advice` object: a list of advice entries deduplicated by rule
+id, each with `id`, `severity`, `message`, `citation`, `fix`, and `why`.
+It prints one block per rule, most severe first, and converts with
+[`as.data.frame()`](https://rdrr.io/r/base/as.data.frame.html). With
+`audit = TRUE`, a `simtab_audit` object.
 
 ## See also
 
@@ -39,7 +42,8 @@ to control display.
 ``` r
 res <- tb(epitabl, sex, diabetes)
 advise(res)
-#> list()
+#> SimtablR advice
+#> No rule fired.
 advise(res, audit = TRUE)
 #> SimtablR audit
 #> Ruleset version: downscale-2026-09-23

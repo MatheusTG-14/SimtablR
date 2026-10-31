@@ -37,21 +37,21 @@ deviate from sound epidemiological practice:
 tb_cohort <- tb(
   epitabl,
   renal_impairment,
-  adjudicated_acs,
+  mace_event,
   flags = "row",
   design = "cohort",
   ref = "No"
 )
 tb_cohort
-#>                                                  | Adjudicated acute coronary syndrome 
-#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |     No           Yes     
-#> -------------------------------------------------+--------------------------
-#>                                               No | 741 (62.6%)  443 (37.4%) 
-#>                                              Yes | 187 (59.2%)  129 (40.8%) 
-#> -------------------------------------------------+--------------------------
-#>                                            Total |     928          572     
+#>                                                  | Observed MACE event before censoring 
+#>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |      No           Yes     
+#> -------------------------------------------------+---------------------------
+#>                                               No | 1039 (87.8%)  145 (12.2%) 
+#>                                              Yes | 241 (76.3%)   75 (23.7%)  
+#> -------------------------------------------------+---------------------------
+#>                                            Total |     1280          220     
 #> 
-#>                                                  | Adjudicated acute coronary syndrome 
+#>                                                  | Observed MACE event before censoring 
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) | Total 
 #> -------------------------------------------------+-------
 #>                                               No | 1184  
@@ -62,7 +62,7 @@ tb_cohort
 #>  Renal impairment (eGFR below 60 mL/min/1.73 m2) |          RR (95% CI)          
 #> -------------------------------------------------+-------------------------------
 #>                                               No |          1.00 (Ref)           
-#>                                              Yes | 1.09 (0.94 - 1.27), p = 0.261 
+#>                                              Yes | 1.94 (1.51 - 2.49), p < 0.001 
 #> -------------------------------------------------+-------------------------------
 #>                                            Total |
 ```
@@ -325,5 +325,5 @@ produces publication-ready text describing the Cox modeling strategy:
 ``` r
 
 cat(as_methods(fit_cox))
-#> Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972) using the Efron method for ties; hazard ratios with 95% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994).
+#> Time-to-event associations were estimated with Cox proportional hazards models (Cox, 1972) using the Efron method for ties; hazard ratios with 95% Wald CI were reported and proportional hazards were assessed with the Grambsch-Therneau Schoenfeld residual test (1994). The model included all 1500 participants (220 events); no analysed variable had missing values.
 ```

@@ -22,7 +22,10 @@ why(x, ...)
 
 ## Value
 
-A `simtab_explanation` object, invisibly when printed.
+A `simtab_explanation`: a character vector with one line per recorded
+decision. It prints one line per row;
+[`as.character()`](https://rdrr.io/r/base/character.html) or
+`cat(x, sep = "\n")` give the plain lines.
 
 ## Examples
 

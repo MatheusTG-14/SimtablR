@@ -327,9 +327,9 @@ table1(epitabl, c(age, sex, smoking), by = adjudicated_acs, flags = "p")
 #> 
 #> Tests: Welch t-test; N-1 chi-squared; Pearson's Chi-squared test
 #> ℹ Methodological guidance
-#>   3 unadjusted p-values are reported in this table. Pipe into test(p.adjust =
-#>   'holm') for family-wise control or test(p.adjust = 'BH') for
-#>   false-discovery-rate control.
+#>   3 p-values compare groups in a descriptive table; they do not test
+#>   pre-specified hypotheses. Describe group balance with standardized mean
+#>   differences via test(smd = TRUE), or drop the tests with test = FALSE.
 #>   Run simtablr_guidance("off") separately before printing to hide advice.
 
 # Crude and age- and sex-adjusted prevalence ratios

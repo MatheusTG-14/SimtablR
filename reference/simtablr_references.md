@@ -243,6 +243,14 @@ Sensitivity analysis in observational research: introducing the E-value.
 
 ### Reporting guidelines
 
+**Vandenbroucke 2007.** Vandenbroucke, J. P., von Elm, E., Altman, D.
+G., et al. (2007). Strengthening the Reporting of Observational Studies
+in Epidemiology (STROBE): explanation and elaboration. *PLoS Medicine*,
+4(10), e297.
+[doi:10.1371/journal.pmed.0040297](https://doi.org/10.1371/journal.pmed.0040297)
+. The explanation of item 14 advises against significance tests in
+descriptive tables.
+
 **STROBE item 14.** von Elm, E., Altman, D. G., Egger, M., et al.
 (2007). The Strengthening the Reporting of Observational Studies in
 Epidemiology (STROBE) statement: guidelines for reporting observational
