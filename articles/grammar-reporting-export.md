@@ -483,9 +483,9 @@ tmp_docx <- tempfile(fileext = ".docx")
 tmp_xlsx <- tempfile(fileext = ".xlsx")
 
 export_docx(report, path = tmp_docx)
-#> Report exported to: /tmp/RtmpbKBBzJ/file1f69d8912f1.docx
+#> Report exported to: /tmp/Rtmp5VfaTe/file1ecd474f3cea.docx
 export_xlsx(report, path = tmp_xlsx)
-#> Report exported to: /tmp/RtmpbKBBzJ/file1f69352a4fba.xlsx
+#> Report exported to: /tmp/Rtmp5VfaTe/file1ecd68ceb111.xlsx
 
 # Verify exported files exist
 file.exists(tmp_docx)
